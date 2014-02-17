@@ -240,7 +240,7 @@ public:
      */
     virtual void construct(ast_stack &st) {
         //check the stack node
-        if (st.empty()) throw std::logic_error("invalid AST stack");
+        if (st.empty()) throw std::logic_error("empty AST stack");
     
         //get the node
         ast_node *node = st.back();
