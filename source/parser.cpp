@@ -220,8 +220,14 @@ public:
 
     //parse terminal
     virtual bool parse_term(_context &con) const = 0;
+
+    virtual void dump() = 0;
 };
 
+void expr::dump()
+{
+	m_expr->dump();
+}
 
 //single character expression.
 class _char : public _expr {
@@ -241,6 +247,10 @@ public:
     virtual bool parse_term(_context &con) const {
         return _parse(con);
     }
+    virtual void dump()
+	{
+		fprintf(stderr, "'%c'", (char)m_char);
+	}
 
 private:
     //character
@@ -304,6 +314,15 @@ private:
         con.set_error_pos();
         return false;
     }
+    virtual void dump()
+	{
+		fprintf(stderr, "\"");
+		for (int c : m_string)
+		{
+			fprintf(stderr, "%c", (char)c);
+		}
+		fprintf(stderr, "\"");
+	}
 };
 
 
@@ -343,6 +362,19 @@ public:
     virtual bool parse_term(_context &con) const {
         return _parse(con);
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "[");
+		char c;
+		for (bool v : m_set)
+		{
+			if (v)
+				fprintf(stderr, "%c", c);
+			c++;
+		}
+		fprintf(stderr, "]");
+	}
 
 private:
     //set is kept as an array of flags, for quick access
@@ -409,6 +441,12 @@ public:
     virtual bool parse_term(_context &con) const {
         return m_expr->parse_term(con);
     }
+
+	virtual void dump()
+	{
+		m_expr->dump();
+	}
+
 };
 
 
@@ -464,6 +502,12 @@ public:
 
         return true;
     }
+	virtual void dump()
+	{
+		fprintf(stderr, "*( ");
+		m_expr->dump();
+		fprintf(stderr, " )");
+	}
 };
 
 
@@ -511,6 +555,13 @@ public:
 
         return true;
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "+( ");
+		m_expr->dump();
+		fprintf(stderr, " )");
+	}
 };
 
 
@@ -536,6 +587,13 @@ public:
         if (!m_expr->parse_term(con)) con.restore(st);
         return true;
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "-( ");
+		m_expr->dump();
+		fprintf(stderr, " )");
+	}
 };
 
 
@@ -563,6 +621,13 @@ public:
         con.restore(st);
         return ok;
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "&( ");
+		m_expr->dump();
+		fprintf(stderr, " )");
+	}
 };
 
 
@@ -590,6 +655,13 @@ public:
         con.restore(st);
         return ok;
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "!( ");
+		m_expr->dump();
+		fprintf(stderr, " )");
+	}
 };
 
 
@@ -615,6 +687,13 @@ public:
         con.next_line();
         return true;
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "nl( ");
+		m_expr->dump();
+		fprintf(stderr, " )");
+	}
 };
 
 
@@ -660,6 +739,13 @@ public:
         if (!m_left->parse_term(con)) return false;
         return m_right->parse_term(con);
     }
+
+	virtual void dump()
+	{
+		m_left->dump();
+		fprintf(stderr, " >> ");
+		m_right->dump();
+	}
 };
 
 
@@ -687,6 +773,13 @@ public:
         con.restore(st);
         return m_right->parse_term(con);
     }
+
+	virtual void dump()
+	{
+		m_left->dump();
+		fprintf(stderr, " | ");
+		m_right->dump();
+	}
 };
 
 
@@ -709,6 +802,11 @@ public:
         return con.parse_term(m_rule);
     }
 
+	virtual void dump()
+	{
+		fprintf(stderr, "{Reference to rule}");
+	}
+
 private:
     //reference
     rule &m_rule;
@@ -727,6 +825,11 @@ public:
     virtual bool parse_term(_context &con) const {
         return con.end();
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "$eof");
+	}
 };
 
 
@@ -747,6 +850,11 @@ public:
         con.set_error_pos();
         return false;
     }
+
+	virtual void dump()
+	{
+		fprintf(stderr, "$any");
+	}
 };
 
 
@@ -969,6 +1077,7 @@ bool _context::parse_term(rule &r) {
 
     return ok;
 }
+const bool debug_parsing = false;
 
 
 //parse non-term rule internal.
@@ -977,6 +1086,11 @@ bool _context::_parse_non_term(rule &r) {
     if (_private::get_parse_proc(r)) {
         pos b = m_pos;
         ok = _private::get_expr(r)->parse_non_term(*this);
+		if (debug_parsing)
+		{
+			_private::get_expr(r)->dump();
+			fprintf(stderr, "\n");
+		}
         if (ok) {
             m_matches.push_back(_match(r.this_ptr(), b, m_pos));
         }

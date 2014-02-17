@@ -98,6 +98,8 @@ public:
      */
     expr operator !() const;
 
+    void dump();
+
 private:
     //internal expression
     _expr *m_expr;
