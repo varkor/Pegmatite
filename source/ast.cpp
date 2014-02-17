@@ -1,18 +1,22 @@
 #include <cassert>
 #include "ast.hpp"
 
-
 namespace parserlib {
 
-
-//current AST container.
-static ast_container *_current = 0;
-
+namespace {
+/**
+ * The current AST container.  When constructing an object, this is set and
+ * then the constructors for the fields run, accessing it to detect their
+ * parents.
+ */
+// FIXME: Should be thread_local, but that doesn't seem to work on OS X for some reason (__thread does)
+__thread ast_container *current = 0;
+}
 
 /** sets the container under construction to be this.
  */
 ast_container::ast_container() {
-    _current = this;
+    current = this;
 }
 
 
@@ -20,7 +24,7 @@ ast_container::ast_container() {
     @param src source object.
  */
 ast_container::ast_container(const ast_container &src) {
-    _current = this;
+    current = this;
 }
 
     
@@ -42,9 +46,9 @@ void ast_container::construct(ast_stack &st) {
 
 //register the AST member to the current container.
 void ast_member::_init() {
-    assert(_current);
-    m_container = _current;
-    _current->m_members.push_back(this);
+    assert(current);
+    m_container = current;
+    current->m_members.push_back(this);
 }
 
 
