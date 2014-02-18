@@ -438,7 +438,7 @@ private:
     @return pointer to ast node created, or null if there was an error.
         The return object must be deleted by the caller.
  */
-ast_node *parse(input &i, rule &g, rule &ws, error_list &el);
+ast_node *parse(Input &i, rule &g, rule &ws, error_list &el);
 
 
 /** parses the given input.
@@ -450,7 +450,7 @@ ast_node *parse(input &i, rule &g, rule &ws, error_list &el);
     @param ast result pointer to created ast.
     @return true on success, false on error.
  */
-template <class T> bool parse(input &i, rule &g, rule &ws, error_list &el, T *&ast) {
+template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) {
     ast_node *node = parse(i, g, ws, el);
     ast = dynamic_cast<T *>(node);
     if (ast) return true;

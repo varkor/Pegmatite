@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2012, Achilleas Margaritis
+ * Copyright (c) 2014, David T. Chisnall
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +35,38 @@
 
 namespace parserlib {
 
+char32_t Input::slowCharacterLookup(Index n)
+{
+	if (n >= size())
+	{
+		return 0;
+	}
+	// Optimise backtracking by jumping back 64 characters so subsequent
+	// forward scans are fast.
+	// TODO: Profile and find out if 64 is a sensible made-up number.
+	if (n < buffer_start)
+	{
+		buffer_start = (n > 64) ? n - 64 : 0;
+	}
+	else
+	{
+		buffer_start = n;
+	}
+	Index length = static_buffer_size;
+	buffer = local_buffer;
+	if (!fillBuffer(buffer_start, length, buffer))
+	{
+		buffer_end = 0;
+		return 0;
+	}
+	buffer_end = n + length;
+	if ((n >= buffer_start) && (n < buffer_end))
+	{
+		return buffer[buffer_start - n];
+	}
+	return 0;
+}
+Input::~Input() {}
 
 //internal map from rules to parse procs
 typedef std::unordered_map<rule *, parse_proc> parse_proc_map_t;
@@ -48,11 +81,12 @@ static parse_proc_map_t *getParseProcMap()
 }
 
 //get the parse proc from the map
-static parse_proc _get_parse_proc(rule *r) {
+static parse_proc _get_parse_proc(rule *r)
+{
 	parse_proc_map_t *map = getParseProcMap();
-    parse_proc_map_t::iterator it = map->find(r);
-    if (it == map->end()) return 0;
-    return it->second;
+	parse_proc_map_t::iterator it = map->find(r);
+	if (it == map->end()) return 0;
+	return it->second;
 }
 
 
@@ -140,16 +174,16 @@ public:
     pos m_error_pos;
 
     //input begin
-    input::iterator m_begin;
+    Input::iterator m_begin;
 
     //input end
-    input::iterator m_end;
+    Input::iterator m_end;
 
     //matches
     _match_vector m_matches;
 
     //constructor
-    parserlib_context(input &i, rule &ws) :
+    parserlib_context(Input &i, rule &ws) :
         m_ws(ws),
         m_pos(i),
         m_error_pos(i),
@@ -227,17 +261,16 @@ private:
 //base class for expressions
 class parserlib_expr {
 public:
-    //destructor.
-    virtual ~parserlib_expr() {
-    }
+	//destructor.
+	virtual ~parserlib_expr() { }
 
-    //parse with whitespace
-    virtual bool parse_non_term(parserlib_context &con) const = 0;
+	//parse with whitespace
+	virtual bool parse_non_term(parserlib_context &con) const = 0;
 
-    //parse terminal
-    virtual bool parse_term(parserlib_context &con) const = 0;
+	//parse terminal
+	virtual bool parse_term(parserlib_context &con) const = 0;
 
-    virtual void dump() = 0;
+	virtual void dump() = 0;
 };
 
 void expr::dump()
@@ -1161,7 +1194,7 @@ static error _eof_error(parserlib_context &con) {
 /** constructor from input.
     @param i input.
  */
-pos::pos(input &i) :
+pos::pos(Input &i) :
     m_it(i.begin()),
     m_line(1),
     m_col(1)
@@ -1499,7 +1532,7 @@ expr any() {
     @param d user data, passed to the parse procedures.
     @return true on parsing success, false on failure.
  */
-bool parse(input &i, rule &g, rule &ws, error_list &el, void *d) {
+bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d) {
     //prepare context
     parserlib_context con(i, ws);
 

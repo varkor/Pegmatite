@@ -87,7 +87,7 @@ void ast_member::_init() {
     @return pointer to ast node created, or null if there was an error.
         The return object must be deleted by the caller.
  */
-ast_node *parse(input &i, rule &g, rule &ws, error_list &el) {
+ast_node *parse(Input &i, rule &g, rule &ws, error_list &el) {
     ast_stack st;
     if (!parse(i, g, ws, el, &st)) return 0;
     assert(st.size() == 1);

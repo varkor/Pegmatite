@@ -42,15 +42,178 @@ class parserlib_context;
 class rule;
 
 
-///type of the parser's input.
-typedef std::vector<int> input;
+/**
+ * Abstract superclass for indexing into a buffer with arbitrary storage.
+ * The class holds a private buffer of characters and requests that the
+ * subclass fill it in, or provide direct access to the underlying storage if
+ * it is in the correct format.
+ */
+class Input
+{
+	public:
+	/**
+	 * The type of indexes into the buffer.
+	 */
+	typedef size_t Index;
+	class iterator
+	{
+		friend Input;
+		/**
+		 * The buffer that this iterator refers to.
+		 */
+		Input     *buffer;
+		/**
+		 * A cache of the current value, so that dereferencing the iterator is
+		 * always cheap.
+		 */
+		char32_t   value;
+		/**
+		 * The index into the buffer.
+		 */
+		Index      idx;
+		inline iterator(Input *b, Index i) : buffer(b), idx(i)
+		{
+			value = (*buffer)[i];
+		}
+		public:
+		inline iterator() : buffer(0), value(0), idx(-1) {}
+		inline char32_t  operator*() const { return value; }
+		inline iterator &operator++()
+		{
+			value = (*buffer)[++idx];
+			return *this;
+		}
+		inline iterator &operator--()
+		{
+			value = (*buffer)[--idx];
+			return *this;
+		}
+		inline bool operator==(const iterator &other) const
+		{
+			return (buffer == other.buffer) && (idx == other.idx);
+		}
+		inline bool operator!=(const iterator &other) const
+		{
+			return !(*this == other);
+		}
+		inline bool operator>(const iterator &other) const
+		{
+			return (idx > other.idx);
+		}
+		inline bool operator<(const iterator &other) const
+		{
+			return (idx < other.idx);
+		}
+		inline Index operator-(const iterator &other) const
+		{
+			return idx-other.idx;
+		}
+	};
+	inline iterator begin()
+	{
+		return iterator(this, 0);
+	}
+	inline iterator end()
+	{
+		return iterator(this, size());
+	}
+	/**
+	 * Fetch the character at the specified index.  This is intended to be
+	 * inlined and returns the character from the cached buffer if possible,
+	 * falling back to the (non-inlined) slow path if not.
+	 */
+	inline char32_t operator[](Index n)
+	{
+		// If the local buffer can satisfy the request, fetch the value
+		char32_t v;
+		if ((n >= buffer_start) && (n < buffer_end))
+		{
+			return buffer[n - buffer_start];
+		}
+		return slowCharacterLookup(n);
+	}
+	/**
+	 * Default constructor, sets the buffer start to be after the buffer end,
+	 * so that the first request will trigger a fetch from the underlying
+	 * storage.
+	 */
+	Input() : buffer_start(1), buffer_end(0), buffer(0) {}
+	private:
+	/**
+	 * A pointer to the start of the buffer.  This must be a contiguous block
+	 * of memory, storing 32-bit characters.
+	 */
+	char32_t *buffer;
+	/**
+	 * The index of the start of the buffer.
+	 */
+	Index     buffer_start;
+	/**
+	 * The index of the end of the buffer.
+	 */
+	Index     buffer_end;
+	static const std::size_t static_buffer_size = 128;
+	/**
+	 * A buffer that can be used to store characters by subclasses that do not
+	 * have the same underlying representation.
+	 */
+	char32_t  local_buffer[static_buffer_size];
+	char32_t  slowCharacterLookup(Index n);
+	protected:
+	/**
+	 * Fill in the buffer with the next range.  This is called when the current
+	 * cached buffer does not contain the range.  The function returns true if
+	 * it can provide at least one character from the index specified by start.
+	 * The length of the buffer passed in via the last parameter is provided as
+	 * the second argument.
+	 *
+	 * Implementations of this function may either fill in the provided buffer,
+	 * reducing the value passed by the second parameter if there are not
+	 * enough characters available to satisfy it, or set the third parameter to
+	 * refer to their underlying storage.
+	 */
+	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b) = 0;
+	/**
+	 * Returns the size of the buffer.
+	 */
+	virtual Index size() = 0;
+	virtual ~Input();
+};
+
+/**
+ * A concrete input class that wraps a vector of 32-bit characters.
+ */
+class UnicodeVectorInput : public Input
+{
+	std::vector<char32_t> vector;
+	public:
+	UnicodeVectorInput(std::vector<char32_t> &v) : vector(v) {}
+	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b)
+	{
+		if (start > vector.size())
+		{
+			return false;
+		}
+		length = vector.size() - start;
+		b = vector.data() + start;
+		return true;
+	}
+	virtual Index size()
+	{
+		return vector.size();
+	}
+};
+
+class AsciiFile : public Input
+{
+};
 
 
 ///position into the input.
 class pos {
 public:
     ///interator into the input.
-    input::iterator m_it;
+    Input::iterator m_it;
 
     ///line.
     int m_line;
@@ -64,7 +227,7 @@ public:
     /** constructor from input.
         @param i input.
      */
-    pos(input &i);
+    pos(Input &i);
 };
 
 
@@ -397,7 +560,7 @@ expr any();
     @param d user data, passed to the parse procedures.
     @return true on parsing success, false on failure.
  */
-bool parse(input &i, rule &g, rule &ws, error_list &el, void *d);
+bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d);
 
 
 /** output the specific input range to the specific stream.
@@ -406,7 +569,7 @@ bool parse(input &i, rule &g, rule &ws, error_list &el, void *d);
     @return the stream.
  */
 template <class T> T &operator << (T &stream, const input_range &ir) {
-    for(input::const_iterator it = ir.m_begin.m_it;
+    for(Input::iterator it = ir.m_begin.m_it;
         it != ir.m_end.m_it;
         ++it)
     {
