@@ -36,51 +36,41 @@ namespace parserlib {
 
 
 //internal map from rules to parse procs
-typedef std::unordered_map<rule *, parse_proc> _parse_proc_map_t;
+typedef std::unordered_map<rule *, parse_proc> parse_proc_map_t;
 
 
 //the one and only parse proc map.
-static _parse_proc_map_t *_parse_proc_map = 0;
-
-
-//on exit, it deletes the parse proc map
-static void _delete_parse_proc_map() {
-    delete _parse_proc_map;
+// FIXME: There should be one of these per delegate!
+static parse_proc_map_t *getParseProcMap()
+{
+	static parse_proc_map_t parse_proc_map;
+	return &parse_proc_map;
 }
-
-
-//initializes the parse proc map.
-static void _init_parse_proc_map() {
-    if (_parse_proc_map) return;
-    _parse_proc_map = new _parse_proc_map_t;
-    atexit(_delete_parse_proc_map);
-}
-
 
 //get the parse proc from the map
 static parse_proc _get_parse_proc(rule *r) {
-    if (!_parse_proc_map) return 0;
-    _parse_proc_map_t::iterator it = _parse_proc_map->find(r);
-    if (it == _parse_proc_map->end()) return 0;
+	parse_proc_map_t *map = getParseProcMap();
+    parse_proc_map_t::iterator it = map->find(r);
+    if (it == map->end()) return 0;
     return it->second;
 }
 
 
 //internal private class that manages access to the public classes' internals.
-class _private {
+class parserlib_private {
 public:
     //get the internal expression object from the expression.
-    static _expr *get_expr(const expr &e) {
+    static parserlib_expr *get_expr(const expr &e) {
         return e.m_expr;
     }
 
     //create new expression from given expression
-    static expr construct_expr(_expr *e) {
+    static expr construct_expr(parserlib_expr *e) {
         return e;
     }
 
     //get the internal expression object from the rule.
-    static _expr *get_expr(rule &r) {
+    static parserlib_expr *get_expr(rule &r) {
         return r.m_expr;
     }
 
@@ -91,7 +81,7 @@ public:
 };
 
 
-class _context;
+class parserlib_context;
 
 
 //parser state
@@ -104,7 +94,7 @@ public:
     size_t m_matches;
 
     //constructor
-    _state(_context &con);
+    _state(parserlib_context &con);
 };
 
 
@@ -138,7 +128,7 @@ typedef std::vector<_match> _match_vector;
 
 
 //parsing context
-class _context {
+class parserlib_context {
 public:
     //rule that parses whitespace
     rule &m_ws;
@@ -159,7 +149,7 @@ public:
     _match_vector m_matches;
 
     //constructor
-    _context(input &i, rule &ws) :
+    parserlib_context(input &i, rule &ws) :
         m_ws(ws),
         m_pos(i),
         m_error_pos(i),
@@ -220,7 +210,7 @@ public:
             ++it)
         {
             const _match &m = *it;
-            parse_proc p = _private::get_parse_proc(*m.m_rule);
+            parse_proc p = parserlib_private::get_parse_proc(*m.m_rule);
             p(m.m_begin, m.m_end, d);
         }
     }
@@ -235,17 +225,17 @@ private:
 
 
 //base class for expressions
-class _expr {
+class parserlib_expr {
 public:
     //destructor.
-    virtual ~_expr() {
+    virtual ~parserlib_expr() {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const = 0;
+    virtual bool parse_non_term(parserlib_context &con) const = 0;
 
     //parse terminal
-    virtual bool parse_term(_context &con) const = 0;
+    virtual bool parse_term(parserlib_context &con) const = 0;
 
     virtual void dump() = 0;
 };
@@ -256,7 +246,7 @@ void expr::dump()
 }
 
 //single character expression.
-class _char : public _expr {
+class _char : public parserlib_expr {
 public:
     //constructor.
     _char(int c) :
@@ -265,12 +255,12 @@ public:
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return _parse(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         return _parse(con);
     }
     virtual void dump()
@@ -283,7 +273,7 @@ private:
     int m_char;
 
     //internal parse
-    bool _parse(_context &con) const {
+    bool _parse(parserlib_context &con) const {
         if (!con.end()) {
             int ch = con.symbol();
             if (ch == m_char) {
@@ -298,7 +288,7 @@ private:
 
 
 //string expression.
-class _string : public _expr {
+class _string : public parserlib_expr {
 public:
     //constructor from ansi string.
     _string(const char *s) :
@@ -313,12 +303,12 @@ public:
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return _parse(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         return _parse(con);
     }
 
@@ -327,7 +317,7 @@ private:
     std::vector<int> m_string;
 
     //parse the string
-    bool _parse(_context &con) const {
+    bool _parse(parserlib_context &con) const {
         for(std::vector<int>::const_iterator it = m_string.begin(),
             end = m_string.end();;)
         {
@@ -353,7 +343,7 @@ private:
 
 
 //set expression.
-class _set : public _expr {
+class _set : public parserlib_expr {
 public:
     //constructor from ansi string.
     _set(const char *s) {
@@ -380,12 +370,12 @@ public:
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return _parse(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         return _parse(con);
     }
 
@@ -415,7 +405,7 @@ private:
     }
 
     //internal parse
-    bool _parse(_context &con) const {
+    bool _parse(parserlib_context &con) const {
         if (!con.end()) {
             size_t ch = con.symbol();
             if (ch < m_set.size() && m_set[ch]) {
@@ -430,10 +420,10 @@ private:
 
 
 //base class for unary expressions
-class _unary : public _expr {
+class _unary : public parserlib_expr {
 public:
     //constructor.
-    _unary(_expr *e) :
+    _unary(parserlib_expr *e) :
         m_expr(e)
     {
     }
@@ -445,7 +435,7 @@ public:
 
 protected:
     //expression
-    _expr *m_expr;
+    parserlib_expr *m_expr;
 };
 
 
@@ -453,18 +443,18 @@ protected:
 class _term : public _unary {
 public:
     //constructor.
-    _term(_expr *e) :
+    _term(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return m_expr->parse_term(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         return m_expr->parse_term(con);
     }
 
@@ -480,13 +470,13 @@ public:
 class _loop0 : public _unary {
 public:
     //constructor.
-    _loop0(_expr *e) :
+    _loop0(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         //if parsing of the first fails, restore the context and stop
         con.parse_ws();
         _state st(con);
@@ -509,7 +499,7 @@ public:
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         //if parsing of the first fails, restore the context and stop
         _state st(con);
         if (!m_expr->parse_term(con)) {
@@ -541,13 +531,13 @@ public:
 class _loop1 : public _unary {
 public:
     //constructor.
-    _loop1(_expr *e) :
+    _loop1(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         //parse the first; if the first fails, stop
         con.parse_ws();
         if (!m_expr->parse_non_term(con)) return false;
@@ -566,7 +556,7 @@ public:
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         //parse the first; if the first fails, stop
         if (!m_expr->parse_term(con)) return false;
 
@@ -595,20 +585,20 @@ public:
 class _optional : public _unary {
 public:
     //constructor.
-    _optional(_expr *e) :
+    _optional(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         _state st(con);
         if (!m_expr->parse_non_term(con)) con.restore(st);
         return true;
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         _state st(con);
         if (!m_expr->parse_term(con)) con.restore(st);
         return true;
@@ -627,13 +617,13 @@ public:
 class _and : public _unary {
 public:
     //constructor.
-    _and(_expr *e) :
+    _and(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         _state st(con);
         bool ok = m_expr->parse_non_term(con);
         con.restore(st);
@@ -641,7 +631,7 @@ public:
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         _state st(con);
         bool ok = m_expr->parse_term(con);
         con.restore(st);
@@ -661,13 +651,13 @@ public:
 class _not : public _unary {
 public:
     //constructor.
-    _not(_expr *e) :
+    _not(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         _state st(con);
         bool ok = !m_expr->parse_non_term(con);
         con.restore(st);
@@ -675,7 +665,7 @@ public:
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         _state st(con);
         bool ok = !m_expr->parse_term(con);
         con.restore(st);
@@ -695,20 +685,20 @@ public:
 class _nl : public _unary {
 public:
     //constructor.
-    _nl(_expr *e) :
+    _nl(parserlib_expr *e) :
         _unary(e)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         if (!m_expr->parse_non_term(con)) return false;
         con.next_line();
         return true;
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         if (!m_expr->parse_term(con)) return false;
         con.next_line();
         return true;
@@ -724,10 +714,10 @@ public:
 
 
 //base class for binary expressions
-class _binary : public _expr {
+class _binary : public parserlib_expr {
 public:
     //constructor.
-    _binary(_expr *left, _expr *right) :
+    _binary(parserlib_expr *left, parserlib_expr *right) :
         m_left(left), m_right(right)
     {
     }
@@ -740,7 +730,7 @@ public:
 
 protected:
     //left and right expressions
-    _expr *m_left, *m_right;
+    parserlib_expr *m_left, *m_right;
 };
 
 
@@ -748,20 +738,20 @@ protected:
 class _seq : public _binary {
 public:
     //constructor.
-    _seq(_expr *left, _expr *right) :
+    _seq(parserlib_expr *left, parserlib_expr *right) :
         _binary(left, right)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         if (!m_left->parse_non_term(con)) return false;
         con.parse_ws();
         return m_right->parse_non_term(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         if (!m_left->parse_term(con)) return false;
         return m_right->parse_term(con);
     }
@@ -779,13 +769,13 @@ public:
 class _choice : public _binary {
 public:
     //constructor.
-    _choice(_expr *left, _expr *right) :
+    _choice(parserlib_expr *left, parserlib_expr *right) :
         _binary(left, right)
     {
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         _state st(con);
         if (m_left->parse_non_term(con)) return true;
         con.restore(st);
@@ -793,7 +783,7 @@ public:
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         _state st(con);
         if (m_left->parse_term(con)) return true;
         con.restore(st);
@@ -810,7 +800,7 @@ public:
 
 
 //reference to rule
-class _ref : public _expr {
+class _ref : public parserlib_expr {
 public:
     //constructor.
     _ref(rule &r) :
@@ -819,12 +809,12 @@ public:
     }
 
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return con.parse_non_term(m_rule);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         return con.parse_term(m_rule);
     }
 
@@ -840,15 +830,15 @@ private:
 
 
 //eof
-class _eof : public _expr {
+class _eof : public parserlib_expr {
 public:
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return parse_term(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         return con.end();
     }
 
@@ -860,15 +850,15 @@ public:
 
 
 //any
-class _any : public _expr {
+class any : public parserlib_expr {
 public:
     //parse with whitespace
-    virtual bool parse_non_term(_context &con) const {
+    virtual bool parse_non_term(parserlib_context &con) const {
         return parse_term(con);
     }
 
     //parse terminal
-    virtual bool parse_term(_context &con) const {
+    virtual bool parse_term(parserlib_context &con) const {
         if (!con.end()) {
             con.next_col();
             return true;
@@ -892,7 +882,7 @@ struct _lr_ok {
 
 
 //constructor
-_state::_state(_context &con) :
+_state::_state(parserlib_context &con) :
     m_pos(con.m_pos),
     m_matches(con.m_matches.size())
 {
@@ -900,7 +890,7 @@ _state::_state(_context &con) :
 
 
 //parse non-term rule.
-bool _context::parse_non_term(rule &r) {
+bool parserlib_context::parse_non_term(rule &r) {
     //save the state of the rule
     rule::_state old_state = r.m_state;
 
@@ -1003,7 +993,7 @@ bool _context::parse_non_term(rule &r) {
 
 
 //parse term rule.
-bool _context::parse_term(rule &r) {
+bool parserlib_context::parse_term(rule &r) {
     //save the state of the rule
     rule::_state old_state = r.m_state;
 
@@ -1107,14 +1097,14 @@ const bool debug_parsing = false;
 
 
 //parse non-term rule internal.
-bool _context::_parse_non_term(rule &r) {
+bool parserlib_context::_parse_non_term(rule &r) {
     bool ok;
-    if (_private::get_parse_proc(r)) {
+    if (parserlib_private::get_parse_proc(r)) {
         pos b = m_pos;
-        ok = _private::get_expr(r)->parse_non_term(*this);
+        ok = parserlib_private::get_expr(r)->parse_non_term(*this);
 		if (debug_parsing)
 		{
-			_private::get_expr(r)->dump();
+			parserlib_private::get_expr(r)->dump();
 			fprintf(stderr, "\n");
 		}
         if (ok) {
@@ -1122,24 +1112,24 @@ bool _context::_parse_non_term(rule &r) {
         }
     }
     else {
-        ok = _private::get_expr(r)->parse_non_term(*this);
+        ok = parserlib_private::get_expr(r)->parse_non_term(*this);
     }
     return ok;
 }
 
 
 //parse term rule internal.
-bool _context::_parse_term(rule &r) {
+bool parserlib_context::_parse_term(rule &r) {
     bool ok;
-    if (_private::get_parse_proc(r)) {
+    if (parserlib_private::get_parse_proc(r)) {
         pos b = m_pos;
-        ok = _private::get_expr(r)->parse_term(*this);
+        ok = parserlib_private::get_expr(r)->parse_term(*this);
         if (ok) {
             m_matches.push_back(_match(r.this_ptr(), b, m_pos));
         }
     }
     else {
-        ok = _private::get_expr(r)->parse_term(*this);
+        ok = parserlib_private::get_expr(r)->parse_term(*this);
     }
     return ok;
 }
@@ -1155,7 +1145,7 @@ static pos _next_pos(const pos &p) {
 
 
 //get syntax error
-static error _syntax_error(_context &con) {
+static error _syntax_error(parserlib_context &con) {
     std::wstring str = L"syntax error: ";
     str += (wchar_t)*con.m_error_pos.m_it;
     return error(con.m_error_pos, _next_pos(con.m_error_pos), ERROR_SYNTAX_ERROR);
@@ -1163,7 +1153,7 @@ static error _syntax_error(_context &con) {
 
 
 //get eof error
-static error _eof_error(_context &con) {
+static error _eof_error(parserlib_context &con) {
     return error(con.m_error_pos, con.m_error_pos, ERROR_INVALID_EOF);
 }
 
@@ -1219,7 +1209,7 @@ expr::expr(rule &r) :
     @return a zero-or-more loop expression.
  */
 expr expr::operator *() const {
-    return _private::construct_expr(new _loop0(m_expr));
+    return parserlib_private::construct_expr(new _loop0(m_expr));
 }
 
 
@@ -1227,7 +1217,7 @@ expr expr::operator *() const {
     @return a one-or-more loop expression.
  */
 expr expr::operator +() const {
-    return _private::construct_expr(new _loop1(m_expr));
+    return parserlib_private::construct_expr(new _loop1(m_expr));
 }
 
 
@@ -1235,7 +1225,7 @@ expr expr::operator +() const {
     @return an optional expression.
  */
 expr expr::operator -() const {
-    return _private::construct_expr(new _optional(m_expr));
+    return parserlib_private::construct_expr(new _optional(m_expr));
 }
 
 
@@ -1243,7 +1233,7 @@ expr expr::operator -() const {
     @return an AND-expression.
  */
 expr expr::operator &() const {
-    return _private::construct_expr((new _and(m_expr)));
+    return parserlib_private::construct_expr((new _and(m_expr)));
 }
 
 
@@ -1251,7 +1241,7 @@ expr expr::operator &() const {
     @return a NOT-expression.
  */
 expr expr::operator !() const {
-    return _private::construct_expr(new _not(m_expr));
+    return parserlib_private::construct_expr(new _not(m_expr));
 }
 
 
@@ -1321,7 +1311,7 @@ rule::rule(const wchar_t *s) :
     @param e expression.
  */
 rule::rule(const expr &e) :
-    m_expr(_private::get_expr(e))
+    m_expr(parserlib_private::get_expr(e))
 {
     m_parse_proc = _get_parse_proc(this);
 }
@@ -1348,7 +1338,7 @@ rule::~rule() {
     @return a zero-or-more loop rule.
  */
 expr rule::operator *() {
-    return _private::construct_expr(new _loop0(new _ref(*this)));
+    return parserlib_private::construct_expr(new _loop0(new _ref(*this)));
 }
 
 
@@ -1356,7 +1346,7 @@ expr rule::operator *() {
     @return a one-or-more loop rule.
  */
 expr rule::operator +() {
-    return _private::construct_expr(new _loop1(new _ref(*this)));
+    return parserlib_private::construct_expr(new _loop1(new _ref(*this)));
 }
 
 
@@ -1364,7 +1354,7 @@ expr rule::operator +() {
     @return an optional rule.
  */
 expr rule::operator -() {
-    return _private::construct_expr(new _optional(new _ref(*this)));
+    return parserlib_private::construct_expr(new _optional(new _ref(*this)));
 }
 
 
@@ -1372,7 +1362,7 @@ expr rule::operator -() {
     @return an AND-expression out of this rule.
  */
 expr rule::operator &() {
-    return _private::construct_expr(new _and(new _ref(*this)));
+    return parserlib_private::construct_expr(new _and(new _ref(*this)));
 }
 
 
@@ -1380,7 +1370,7 @@ expr rule::operator &() {
     @return a NOT-expression out of this rule.
  */
 expr rule::operator !() {
-    return _private::construct_expr(new _not(new _ref(*this)));
+    return parserlib_private::construct_expr(new _not(new _ref(*this)));
 }
 
 
@@ -1390,8 +1380,7 @@ expr rule::operator !() {
 void rule::set_parse_proc(parse_proc p) {
     assert(p);
     m_parse_proc = p;
-    _init_parse_proc_map();
-    (*_parse_proc_map)[this] = p;
+    (*getParseProcMap())[this] = p;
 }
 
 
@@ -1401,8 +1390,8 @@ void rule::set_parse_proc(parse_proc p) {
     @return an expression which parses a sequence.
  */
 expr operator >> (const expr &left, const expr &right) {
-    return _private::construct_expr(
-        new _seq(_private::get_expr(left), _private::get_expr(right)));
+    return parserlib_private::construct_expr(
+        new _seq(parserlib_private::get_expr(left), parserlib_private::get_expr(right)));
 }
 
 
@@ -1412,8 +1401,8 @@ expr operator >> (const expr &left, const expr &right) {
     @return an expression which parses a choice.
  */
 expr operator | (const expr &left, const expr &right) {
-    return _private::construct_expr(
-        new _choice(_private::get_expr(left), _private::get_expr(right)));
+    return parserlib_private::construct_expr(
+        new _choice(parserlib_private::get_expr(left), parserlib_private::get_expr(right)));
 }
 
 
@@ -1422,8 +1411,8 @@ expr operator | (const expr &left, const expr &right) {
     @return an expression which parses a terminal.
  */
 expr term(const expr &e) {
-    return _private::construct_expr(
-        new _term(_private::get_expr(e)));
+    return parserlib_private::construct_expr(
+        new _term(parserlib_private::get_expr(e)));
 }
 
 
@@ -1432,7 +1421,7 @@ expr term(const expr &e) {
     @return an expression which parses a single character out of a set.
  */
 expr set(const char *s) {
-    return _private::construct_expr(new _set(s));
+    return parserlib_private::construct_expr(new _set(s));
 }
 
 
@@ -1441,7 +1430,7 @@ expr set(const char *s) {
     @return an expression which parses a single character out of a set.
  */
 expr set(const wchar_t *s) {
-    return _private::construct_expr(new _set(s));
+    return parserlib_private::construct_expr(new _set(s));
 }
 
 
@@ -1451,7 +1440,7 @@ expr set(const wchar_t *s) {
     @return an expression which parses a single character out of range.
  */
 expr range(int min, int max) {
-    return _private::construct_expr(new _set(min, max));
+    return parserlib_private::construct_expr(new _set(min, max));
 }
 
 
@@ -1462,7 +1451,7 @@ expr range(int min, int max) {
     @return an expression that handles newlines.
  */
 expr nl(const expr &e) {
-    return _private::construct_expr(new _nl(_private::get_expr(e)));
+    return parserlib_private::construct_expr(new _nl(parserlib_private::get_expr(e)));
 }
 
 
@@ -1470,7 +1459,7 @@ expr nl(const expr &e) {
     @return an expression that handles the end of input.
  */
 expr eof() {
-    return _private::construct_expr(new _eof());
+    return parserlib_private::construct_expr(new _eof());
 }
 
 
@@ -1496,7 +1485,7 @@ expr and_(const expr &e) {
     @return the appropriate expression.
  */
 expr any() {
-    return _private::construct_expr(new _any());
+    return parserlib_private::construct_expr(new class any());
 }
 
 
@@ -1512,7 +1501,7 @@ expr any() {
  */
 bool parse(input &i, rule &g, rule &ws, error_list &el, void *d) {
     //prepare context
-    _context con(i, ws);
+    parserlib_context con(i, ws);
 
     //parse initial whitespace
     con.parse_term(con.m_ws);
