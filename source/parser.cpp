@@ -1337,16 +1337,6 @@ rule::rule(rule &r) :
     m_parse_proc = _get_parse_proc(this);
 }
 
-
-/** invalid constructor from rule (required by gcc).
-    @param r rule.
-    @exception std::logic_error always thrown.
- */
-rule::rule(const rule &r) {
-    throw std::logic_error("invalid operation");
-}
-
-
 /** deletes the internal object that represents the expression.
  */
 rule::~rule() {

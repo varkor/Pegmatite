@@ -235,11 +235,7 @@ public:
      */
     rule(rule &r);
 
-    /** invalid constructor from rule (required by gcc).
-        @param r rule.
-        @exception std::logic_error always thrown.
-     */
-    rule(const rule &r);
+    rule(const rule &r) = delete;
 
     /** deletes the internal object that represents the expression.
      */
