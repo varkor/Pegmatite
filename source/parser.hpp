@@ -28,13 +28,6 @@
 #define PARSER_HPP
 
 
-//gcc chokes without rule::rule(const rule &),
-//msvc complains when rule::rule(const rule &) is defined.
-#ifdef _MSC_VER
-#pragma warning (disable: 4521)
-#endif
-
-
 #include <vector>
 #include <string>
 #include <list>
