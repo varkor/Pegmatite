@@ -194,32 +194,32 @@ public:
 
     //check if the end is reached
     bool end() const {
-        return m_pos.m_it == m_end;
+        return m_pos.it == m_end;
     }
 
     //get the current symbol
     int symbol() const {
         assert(!end());
-        return *m_pos.m_it;
+        return *m_pos.it;
     }
 
     //set the longest possible error
     void set_error_pos() {
-        if (m_pos.m_it > m_error_pos.m_it) {
+        if (m_pos.it > m_error_pos.it) {
             m_error_pos = m_pos;
         }
     }
 
     //next column
     void next_col() {
-        ++m_pos.m_it;
-        ++m_pos.m_col;
+        ++m_pos.it;
+        ++m_pos.col;
     }
 
     //next line
     void next_line() {
-        ++m_pos.m_line;
-        m_pos.m_col = 1;
+        ++m_pos.line;
+        m_pos.col = 1;
     }
 
     //restore the state
@@ -931,7 +931,7 @@ bool parserlib_context::parse_non_term(rule &r) {
     bool ok;
 
     //compute the new position
-    size_t new_pos = m_pos.m_it - m_begin;
+    size_t new_pos = m_pos.it - m_begin;
 
     //check if we have left recursion
     bool lr = new_pos == r.m_state.m_pos;
@@ -960,7 +960,7 @@ bool parserlib_context::parse_non_term(rule &r) {
 
                         //update the rule position to the current position,
                         //because at this state the rule is resolving the left recursion
-                        r.m_state.m_pos = m_pos.m_it - m_begin;
+                        r.m_state.m_pos = m_pos.it - m_begin;
 
                         //if parsing fails, restore the last good state and stop
                         if (!_parse_non_term(r)) {
@@ -1034,7 +1034,7 @@ bool parserlib_context::parse_term(rule &r) {
     bool ok;
 
     //compute the new position
-    size_t new_pos = m_pos.m_it - m_begin;
+    size_t new_pos = m_pos.it - m_begin;
 
     //check if we have left recursion
     bool lr = new_pos == r.m_state.m_pos;
@@ -1063,7 +1063,7 @@ bool parserlib_context::parse_term(rule &r) {
 
                         //update the rule position to the current position,
                         //because at this state the rule is resolving the left recursion
-                        r.m_state.m_pos = m_pos.m_it - m_begin;
+                        r.m_state.m_pos = m_pos.it - m_begin;
 
                         //if parsing fails, restore the last good state and stop
                         if (!_parse_term(r)) {
@@ -1171,8 +1171,8 @@ bool parserlib_context::_parse_term(rule &r) {
 //get the next position
 static pos _next_pos(const pos &p) {
     pos r = p;
-    ++r.m_it;
-    ++r.m_col;
+    ++r.it;
+    ++r.col;
     return r;
 }
 
@@ -1180,7 +1180,7 @@ static pos _next_pos(const pos &p) {
 //get syntax error
 static error _syntax_error(parserlib_context &con) {
     std::wstring str = L"syntax error: ";
-    str += (wchar_t)*con.m_error_pos.m_it;
+    str += (wchar_t)*con.m_error_pos.it;
     return error(con.m_error_pos, _next_pos(con.m_error_pos), ERROR_SYNTAX_ERROR);
 }
 
@@ -1195,9 +1195,9 @@ static error _eof_error(parserlib_context &con) {
     @param i input.
  */
 pos::pos(Input &i) :
-    m_it(i.begin()),
-    m_line(1),
-    m_col(1)
+    it(i.begin()),
+    line(1),
+    col(1)
 {
 }
 
@@ -1306,7 +1306,7 @@ error::error(const pos &b, const pos &e, int t) :
     @return true if this comes before the previous error, false otherwise.
  */
 bool error::operator < (const error &e) const {
-    return m_begin.m_it < e.m_begin.m_it;
+    return m_begin.it < e.m_begin.it;
 }
 
 
@@ -1550,7 +1550,7 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d) {
 
     //if end is not reached, there was an error
     if (!con.end()) {
-        if (con.m_error_pos.m_it < con.m_end) {
+        if (con.m_error_pos.it < con.m_end) {
             el.push_back(_syntax_error(con));
         }
         else {

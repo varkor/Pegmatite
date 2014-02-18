@@ -55,6 +55,9 @@ class Input
 	 * The type of indexes into the buffer.
 	 */
 	typedef size_t Index;
+	/**
+	 * Iterator, refers back into the input stream.
+	 */
 	class iterator
 	{
 		friend Input;
@@ -202,16 +205,16 @@ class AsciiFile : public Input
 
 
 ///position into the input.
-class pos {
-public:
-    ///interator into the input.
-    Input::iterator m_it;
+struct pos
+{
+    ///iterator into the input.
+    Input::iterator it;
 
     ///line.
-    int m_line;
+    int line;
 
     ///column.
-    int m_col;
+    int col;
 
     ///null constructor.
     pos() {}
@@ -561,8 +564,8 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d);
     @return the stream.
  */
 template <class T> T &operator << (T &stream, const input_range &ir) {
-    for(Input::iterator it = ir.m_begin.m_it;
-        it != ir.m_end.m_it;
+    for(Input::iterator it = ir.m_begin.it;
+        it != ir.m_end.it;
         ++it)
     {
         stream << (typename T::char_type)*it;
