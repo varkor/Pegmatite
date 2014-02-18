@@ -63,29 +63,21 @@ class Input
 		 */
 		Input     *buffer;
 		/**
-		 * A cache of the current value, so that dereferencing the iterator is
-		 * always cheap.
-		 */
-		char32_t   value;
-		/**
 		 * The index into the buffer.
 		 */
 		Index      idx;
-		inline iterator(Input *b, Index i) : buffer(b), idx(i)
-		{
-			value = (*buffer)[i];
-		}
+		inline iterator(Input *b, Index i) : buffer(b), idx(i) {}
 		public:
-		inline iterator() : buffer(0), value(0), idx(-1) {}
-		inline char32_t  operator*() const { return value; }
+		inline iterator() : buffer(0), idx(-1) {}
+		inline char32_t  operator*() const { return (*buffer)[idx]; }
 		inline iterator &operator++()
 		{
-			value = (*buffer)[++idx];
+			idx++;
 			return *this;
 		}
 		inline iterator &operator--()
 		{
-			value = (*buffer)[--idx];
+			idx--;
 			return *this;
 		}
 		inline bool operator==(const iterator &other) const
