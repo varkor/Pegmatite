@@ -28,7 +28,7 @@
 #include <cstring>
 #include <cassert>
 #include <stdexcept>
-#include <map>
+#include <unordered_map>
 #include "parser.hpp"
 
 
@@ -36,7 +36,7 @@ namespace parserlib {
 
 
 //internal map from rules to parse procs
-typedef std::map<rule *, parse_proc> _parse_proc_map_t;
+typedef std::unordered_map<rule *, parse_proc> _parse_proc_map_t;
 
 
 //the one and only parse proc map.
