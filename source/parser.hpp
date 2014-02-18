@@ -171,7 +171,7 @@ class Input
 	/**
 	 * Returns the size of the buffer.
 	 */
-	virtual Index size() = 0;
+	virtual Index size() const = 0;
 	virtual ~Input();
 };
 
@@ -180,23 +180,25 @@ class Input
  */
 class UnicodeVectorInput : public Input
 {
-	std::vector<char32_t> vector;
+	/**
+	 * A reference to the vector being used as input.
+	 */
+	std::shared_ptr<std::vector<char32_t>> &vector;
 	public:
-	UnicodeVectorInput(std::vector<char32_t> &v) : vector(v) {}
-	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b)
-	{
-		if (start > vector.size())
-		{
-			return false;
-		}
-		length = vector.size() - start;
-		b = vector.data() + start;
-		return true;
-	}
-	virtual Index size()
-	{
-		return vector.size();
-	}
+	/**
+	 * Constructs the wrapper referencing the underlying vector.  The vector
+	 * should not be modified for the lifetime of this object, and this object
+	 * must outlive any AST nodes created by parsing it.
+	 */
+	UnicodeVectorInput(std::shared_ptr<std::vector<char32_t>> &v) : vector(v) {}
+	/**
+	 * Provides direct access to the underlying vector's storage.
+	 */
+	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b);
+	/**
+	 * Returns the size of the vector.
+	 */
+	virtual Index size() const;
 };
 
 class AsciiFile : public Input

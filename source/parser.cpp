@@ -67,6 +67,20 @@ char32_t Input::slowCharacterLookup(Index n)
 	return 0;
 }
 Input::~Input() {}
+bool  UnicodeVectorInput::fillBuffer(Index start, Index &length, char32_t *&b)
+{
+	if (start > vector->size())
+	{
+		return false;
+	}
+	length = vector->size() - start;
+	b = vector->data() + start;
+	return true;
+}
+Input::Index UnicodeVectorInput::size() const
+{
+	return vector->size();
+}
 
 //internal map from rules to parse procs
 typedef std::unordered_map<rule *, parse_proc> parse_proc_map_t;
