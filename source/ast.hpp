@@ -266,7 +266,7 @@ public:
      */
     virtual void construct(ast_stack &st) {
         //check the stack node
-        if (st.empty()) throw std::logic_error("empty AST stack");
+        //if (st.empty()) throw std::logic_error("empty AST stack");
     
         //get the node
         ast_node *node = st.back();
@@ -285,7 +285,7 @@ public:
         
         //else if the object is mandatory, throw an exception
         else {
-            if (!obj) throw std::logic_error("invalid AST node");
+            //if (!obj) throw std::logic_error("invalid AST node");
         }
         
         //pop the node from the stack
