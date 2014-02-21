@@ -195,6 +195,7 @@ public:
 
     //matches
     _match_vector m_matches;
+	bool unwinding;
 
     //constructor
     parserlib_context(Input &i, rule &ws) :
@@ -202,7 +203,8 @@ public:
         m_pos(i),
         m_error_pos(i),
         m_begin(i.begin()),
-        m_end(i.end())
+        m_end(i.end()),
+		unwinding(false)
     {
     }
 
@@ -264,6 +266,7 @@ public:
     }
 
 private:
+	rule *unwind_target;
 	bool parse_rule(rule &r, bool (parserlib_context::*parse_func)(rule &));
     //parse non-term rule.
     bool _parse_non_term(rule &r);
@@ -529,6 +532,10 @@ public:
         con.parse_ws();
         _state st(con);
         if (!m_expr->parse_non_term(con)) {
+			if (con.unwinding)
+			{
+				return false;
+			}
             con.restore(st);
             return true;
         }
@@ -538,6 +545,10 @@ public:
             con.parse_ws();
             _state st(con);
             if (!m_expr->parse_non_term(con)) {
+				if (con.unwinding)
+				{
+					return false;
+				}
                 con.restore(st);
                 break;
             }
@@ -551,6 +562,10 @@ public:
         //if parsing of the first fails, restore the context and stop
         _state st(con);
         if (!m_expr->parse_term(con)) {
+			if (con.unwinding)
+			{
+				return false;
+			}
             con.restore(st);
             return true;
         }
@@ -559,6 +574,10 @@ public:
         for(;;) {
             _state st(con);
             if (!m_expr->parse_term(con)) {
+				if (con.unwinding)
+				{
+					return false;
+				}
                 con.restore(st);
                 break;
             }
@@ -595,6 +614,10 @@ public:
             con.parse_ws();
             _state st(con);
             if (!m_expr->parse_non_term(con)) {
+				if (con.unwinding)
+				{
+					return false;
+				}
                 con.restore(st);
                 break;
             }
@@ -612,6 +635,10 @@ public:
         for(;;) {
             _state st(con);
             if (!m_expr->parse_term(con)) {
+				if (con.unwinding)
+				{
+					return false;
+				}
                 con.restore(st);
                 break;
             }
@@ -826,6 +853,10 @@ public:
     virtual bool parse_non_term(parserlib_context &con) const {
         _state st(con);
         if (m_left->parse_non_term(con)) return true;
+		if (con.unwinding)
+		{
+			return false;
+		}
         con.restore(st);
         return m_right->parse_non_term(con);
     }
@@ -834,6 +865,10 @@ public:
     virtual bool parse_term(parserlib_context &con) const {
         _state st(con);
         if (m_left->parse_term(con)) return true;
+		if (con.unwinding)
+		{
+			return false;
+		}
         con.restore(st);
         return m_right->parse_term(con);
     }
@@ -945,6 +980,7 @@ bool parserlib_context::parse_non_term(rule &r)
 
 bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func)(rule &))
 {
+	if (unwinding) return false;
     //save the state of the rule
     rule::_state old_state = r.m_state;
 
@@ -968,6 +1004,10 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
                 //first try to parse the rule by rejecting it, so alternative branches are examined
                 r.m_state.m_mode = rule::_REJECT;
                 ok = (this->*parse_func)(r);
+				if (unwinding)
+				{
+					return false;
+				}
 
                 //if the first try is successful, try accepting the rule,
                 //so other elements of the sequence are parsed
@@ -993,24 +1033,27 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
                     //since the left recursion was resolved successfully,
                     //return via a non-local exit
                     r.m_state = old_state;
-                    throw _lr_ok(r.this_ptr());
+					unwind_target = r.this_ptr();
+					unwinding = true;
+					return false;
                 }
             }
             else {
-                try {
-                    ok = (this->*parse_func)(r);
-                }
-                catch (const _lr_ok &ex) {
-                    //since left recursions may be mutual, we must test which rule's left recursion
-                    //was ended successfully
-                    if (ex.m_rule == r.this_ptr()) {
-                        ok = true;
-                    }
-                    else {
-                        r.m_state = old_state;
-                        throw;
-                    }
-                }
+				ok = (this->*parse_func)(r);
+				if (unwinding)
+				{
+					if (unwind_target == r.this_ptr())
+					{
+						ok = true;
+						unwinding = false;
+					}
+					else
+					{
+						r.m_state = old_state;
+						return false;
+					}
+				}
+				break;
             }
             break;
 
@@ -1022,6 +1065,10 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
             else {
                 r.m_state.m_mode = rule::_PARSE;
                 ok = (this->*parse_func)(r);
+				if (unwinding)
+				{
+					return false;
+				}
                 r.m_state.m_mode = rule::_REJECT;
             }
             break;
@@ -1034,6 +1081,10 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
             else {
                 r.m_state.m_mode = rule::_PARSE;
                 ok = (this->*parse_func)(r);
+				if (unwinding)
+				{
+					return false;
+				}
                 r.m_state.m_mode = rule::_ACCEPT;
             }
             break;
