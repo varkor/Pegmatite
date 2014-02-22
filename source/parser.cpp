@@ -108,17 +108,17 @@ static parse_proc _get_parse_proc(rule *r)
 class parserlib_private {
 public:
     //get the internal expression object from the expression.
-    static parserlib_expr *get_expr(const expr &e) {
+    static Expr *get_expr(const expr &e) {
         return e.m_expr;
     }
 
     //create new expression from given expression
-    static expr construct_expr(parserlib_expr *e) {
+    static expr construct_expr(Expr *e) {
         return e;
     }
 
     //get the internal expression object from the rule.
-    static parserlib_expr *get_expr(rule &r) {
+    static Expr *get_expr(rule &r) {
         return r.m_expr;
     }
 
@@ -277,10 +277,11 @@ private:
 
 
 //base class for expressions
-class parserlib_expr {
+class Expr {
 public:
+	constexpr Expr() {}
 	//destructor.
-	virtual ~parserlib_expr() { }
+	virtual ~Expr() { }
 
 	//parse with whitespace
 	virtual bool parse_non_term(parserlib_context &con) const = 0;
@@ -297,10 +298,10 @@ void expr::dump() const
 }
 
 //single character expression.
-class _char : public parserlib_expr {
+class CharacterExpr : public Expr {
 public:
     //constructor.
-    _char(int c) :
+    CharacterExpr(int c) :
         m_char(c)
     {
     }
@@ -339,16 +340,16 @@ private:
 
 
 //string expression.
-class _string : public parserlib_expr {
+class StringExpr : public Expr {
 public:
     //constructor from ansi string.
-    _string(const char *s) :
+    StringExpr(const char *s) :
         m_string(s, s + strlen(s))
     {
     }
 
     //constructor from wide string.
-    _string(const wchar_t *s) :
+    StringExpr(const wchar_t *s) :
         m_string(s, s + wcslen(s))
     {
     }
@@ -395,7 +396,7 @@ private:
 
 
 //set expression.
-class _set : public parserlib_expr {
+class _set : public Expr {
 public:
     //constructor from ansi string.
     _set(const char *s) {
@@ -472,31 +473,31 @@ private:
 
 
 //base class for unary expressions
-class _unary : public parserlib_expr {
+class UnaryExpr : public Expr {
 public:
     //constructor.
-    _unary(parserlib_expr *e) :
+    UnaryExpr(const Expr *e) :
         m_expr(e)
     {
     }
 
     //destructor.
-    virtual ~_unary() {
+    virtual ~UnaryExpr() {
         delete m_expr;
     }
 
 protected:
     //expression
-    parserlib_expr *m_expr;
+    const Expr *m_expr;
 };
 
 
 //terminal
-class _term : public _unary {
+class TerminalExpr : public UnaryExpr {
 public:
     //constructor.
-    _term(parserlib_expr *e) :
-        _unary(e)
+    TerminalExpr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -519,11 +520,11 @@ public:
 
 
 //loop 0
-class _loop0 : public _unary {
+class Loop0Expr : public UnaryExpr {
 public:
     //constructor.
-    _loop0(parserlib_expr *e) :
-        _unary(e)
+    Loop0Expr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -596,11 +597,11 @@ public:
 
 
 //loop 1
-class _loop1 : public _unary {
+class Loop1Expr : public UnaryExpr {
 public:
     //constructor.
-    _loop1(parserlib_expr *e) :
-        _unary(e)
+    Loop1Expr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -658,11 +659,11 @@ public:
 
 
 //optional
-class _optional : public _unary {
+class OptionalExpr : public UnaryExpr {
 public:
     //constructor.
-    _optional(parserlib_expr *e) :
-        _unary(e)
+    OptionalExpr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -690,11 +691,11 @@ public:
 
 
 //and
-class _and : public _unary {
+class AndExpr : public UnaryExpr {
 public:
     //constructor.
-    _and(parserlib_expr *e) :
-        _unary(e)
+    AndExpr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -724,11 +725,11 @@ public:
 
 
 //not
-class _not : public _unary {
+class NotExpr : public UnaryExpr {
 public:
     //constructor.
-    _not(parserlib_expr *e) :
-        _unary(e)
+    NotExpr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -758,11 +759,11 @@ public:
 
 
 //newline
-class _nl : public _unary {
+class NewlineExpr : public UnaryExpr {
 public:
     //constructor.
-    _nl(parserlib_expr *e) :
-        _unary(e)
+    NewlineExpr(Expr *e) :
+        UnaryExpr(e)
     {
     }
 
@@ -790,32 +791,32 @@ public:
 
 
 //base class for binary expressions
-class _binary : public parserlib_expr {
+class BinaryExpr : public Expr {
 public:
     //constructor.
-    _binary(parserlib_expr *left, parserlib_expr *right) :
+    BinaryExpr(Expr *left, Expr *right) :
         m_left(left), m_right(right)
     {
     }
 
     //destructor.
-    virtual ~_binary() {
+    virtual ~BinaryExpr() {
         delete m_left;
         delete m_right;
     }
 
 protected:
     //left and right expressions
-    parserlib_expr *m_left, *m_right;
+    Expr *m_left, *m_right;
 };
 
 
 //sequence
-class _seq : public _binary {
+class _seq : public BinaryExpr {
 public:
     //constructor.
-    _seq(parserlib_expr *left, parserlib_expr *right) :
-        _binary(left, right)
+    _seq(Expr *left, Expr *right) :
+        BinaryExpr(left, right)
     {
     }
 
@@ -842,11 +843,11 @@ public:
 
 
 //choice
-class _choice : public _binary {
+class ChoiceExpr : public BinaryExpr {
 public:
     //constructor.
-    _choice(parserlib_expr *left, parserlib_expr *right) :
-        _binary(left, right)
+    ChoiceExpr(Expr *left, Expr *right) :
+        BinaryExpr(left, right)
     {
     }
 
@@ -884,10 +885,10 @@ public:
 
 
 //reference to rule
-class _ref : public parserlib_expr {
+class RuleReferenceExpr : public Expr {
 public:
     //constructor.
-    _ref(rule &r) :
+    RuleReferenceExpr(rule &r) :
         m_rule(r)
     {
     }
@@ -914,7 +915,7 @@ private:
 
 
 //eof
-class _eof : public parserlib_expr {
+class EndOfFileExpr : public Expr {
 public:
     //parse with whitespace
     virtual bool parse_non_term(parserlib_context &con) const {
@@ -933,8 +934,8 @@ public:
 };
 
 
-//any
-class any : public parserlib_expr {
+//AnyExpr
+class AnyExpr : public Expr {
 public:
     //parse with whitespace
     virtual bool parse_non_term(parserlib_context &con) const {
@@ -953,7 +954,7 @@ public:
 
 	virtual void dump() const
 	{
-		fprintf(stderr, "$any");
+		fprintf(stderr, "$AnyExpr");
 	}
 };
 
@@ -1184,7 +1185,7 @@ pos::pos(Input &i) :
     @param c character.
  */
 expr::expr(int c) :
-    m_expr(new _char(c))
+    m_expr(new CharacterExpr(c))
 {
 }
 
@@ -1193,7 +1194,7 @@ expr::expr(int c) :
     @param s null-terminated string.
  */
 expr::expr(const char *s) :
-    m_expr(new _string(s))
+    m_expr(new StringExpr(s))
 {
 }
 
@@ -1202,7 +1203,7 @@ expr::expr(const char *s) :
     @param s null-terminated string.
  */
 expr::expr(const wchar_t *s) :
-    m_expr(new _string(s))
+    m_expr(new StringExpr(s))
 {
 }
 
@@ -1211,7 +1212,7 @@ expr::expr(const wchar_t *s) :
     @param r rule.
  */
 expr::expr(rule &r) :
-    m_expr(new _ref(r))
+    m_expr(new RuleReferenceExpr(r))
 {
 }
 
@@ -1220,7 +1221,7 @@ expr::expr(rule &r) :
     @return a zero-or-more loop expression.
  */
 expr expr::operator *() const {
-    return parserlib_private::construct_expr(new _loop0(m_expr));
+    return parserlib_private::construct_expr(new Loop0Expr(m_expr));
 }
 
 
@@ -1228,7 +1229,7 @@ expr expr::operator *() const {
     @return a one-or-more loop expression.
  */
 expr expr::operator +() const {
-    return parserlib_private::construct_expr(new _loop1(m_expr));
+    return parserlib_private::construct_expr(new Loop1Expr(m_expr));
 }
 
 
@@ -1236,7 +1237,7 @@ expr expr::operator +() const {
     @return an optional expression.
  */
 expr expr::operator -() const {
-    return parserlib_private::construct_expr(new _optional(m_expr));
+    return parserlib_private::construct_expr(new OptionalExpr(m_expr));
 }
 
 
@@ -1244,7 +1245,7 @@ expr expr::operator -() const {
     @return an AND-expression.
  */
 expr expr::operator &() const {
-    return parserlib_private::construct_expr((new _and(m_expr)));
+    return parserlib_private::construct_expr((new AndExpr(m_expr)));
 }
 
 
@@ -1252,7 +1253,7 @@ expr expr::operator &() const {
     @return a NOT-expression.
  */
 expr expr::operator !() const {
-    return parserlib_private::construct_expr(new _not(m_expr));
+    return parserlib_private::construct_expr(new NotExpr(m_expr));
 }
 
 
@@ -1292,7 +1293,7 @@ bool error::operator < (const error &e) const {
     @param c character.
  */
 rule::rule(int c) :
-    m_expr(new _char(c))
+    m_expr(new CharacterExpr(c))
 {
     m_parse_proc = _get_parse_proc(this);
 }
@@ -1302,7 +1303,7 @@ rule::rule(int c) :
     @param s null-terminated string.
  */
 rule::rule(const char *s) :
-    m_expr(new _string(s))
+    m_expr(new StringExpr(s))
 {
     m_parse_proc = _get_parse_proc(this);
 }
@@ -1312,7 +1313,7 @@ rule::rule(const char *s) :
     @param s null-terminated string.
  */
 rule::rule(const wchar_t *s) :
-    m_expr(new _string(s))
+    m_expr(new StringExpr(s))
 {
     m_parse_proc = _get_parse_proc(this);
 }
@@ -1332,7 +1333,7 @@ rule::rule(const expr &e) :
     @param r rule.
  */
 rule::rule(rule &r) :
-    m_expr(new _ref(r)),
+    m_expr(new RuleReferenceExpr(r)),
     m_parse_proc(0)
 {
     m_parse_proc = _get_parse_proc(this);
@@ -1349,7 +1350,7 @@ rule::~rule() {
     @return a zero-or-more loop rule.
  */
 expr rule::operator *() {
-    return parserlib_private::construct_expr(new _loop0(new _ref(*this)));
+    return parserlib_private::construct_expr(new Loop0Expr(new RuleReferenceExpr(*this)));
 }
 
 
@@ -1357,7 +1358,7 @@ expr rule::operator *() {
     @return a one-or-more loop rule.
  */
 expr rule::operator +() {
-    return parserlib_private::construct_expr(new _loop1(new _ref(*this)));
+    return parserlib_private::construct_expr(new Loop1Expr(new RuleReferenceExpr(*this)));
 }
 
 
@@ -1365,7 +1366,7 @@ expr rule::operator +() {
     @return an optional rule.
  */
 expr rule::operator -() {
-    return parserlib_private::construct_expr(new _optional(new _ref(*this)));
+    return parserlib_private::construct_expr(new OptionalExpr(new RuleReferenceExpr(*this)));
 }
 
 
@@ -1373,7 +1374,7 @@ expr rule::operator -() {
     @return an AND-expression out of this rule.
  */
 expr rule::operator &() {
-    return parserlib_private::construct_expr(new _and(new _ref(*this)));
+    return parserlib_private::construct_expr(new AndExpr(new RuleReferenceExpr(*this)));
 }
 
 
@@ -1381,7 +1382,7 @@ expr rule::operator &() {
     @return a NOT-expression out of this rule.
  */
 expr rule::operator !() {
-    return parserlib_private::construct_expr(new _not(new _ref(*this)));
+    return parserlib_private::construct_expr(new NotExpr(new RuleReferenceExpr(*this)));
 }
 
 
@@ -1413,7 +1414,7 @@ expr operator >> (const expr &left, const expr &right) {
  */
 expr operator | (const expr &left, const expr &right) {
     return parserlib_private::construct_expr(
-        new _choice(parserlib_private::get_expr(left), parserlib_private::get_expr(right)));
+        new ChoiceExpr(parserlib_private::get_expr(left), parserlib_private::get_expr(right)));
 }
 
 
@@ -1423,7 +1424,7 @@ expr operator | (const expr &left, const expr &right) {
  */
 expr term(const expr &e) {
     return parserlib_private::construct_expr(
-        new _term(parserlib_private::get_expr(e)));
+        new TerminalExpr(parserlib_private::get_expr(e)));
 }
 
 
@@ -1462,7 +1463,7 @@ expr range(int min, int max) {
     @return an expression that handles newlines.
  */
 expr nl(const expr &e) {
-    return parserlib_private::construct_expr(new _nl(parserlib_private::get_expr(e)));
+    return parserlib_private::construct_expr(new NewlineExpr(parserlib_private::get_expr(e)));
 }
 
 
@@ -1470,7 +1471,7 @@ expr nl(const expr &e) {
     @return an expression that handles the end of input.
  */
 expr eof() {
-    return parserlib_private::construct_expr(new _eof());
+    return parserlib_private::construct_expr(new EndOfFileExpr());
 }
 
 
@@ -1492,11 +1493,11 @@ expr and_(const expr &e) {
 }
 
 
-/** creates an expression that parses any character.
+/** creates an expression that parses AnyExpr character.
     @return the appropriate expression.
  */
-expr any() {
-    return parserlib_private::construct_expr(new class any());
+expr AnyExpr() {
+    return parserlib_private::construct_expr(new class AnyExpr());
 }
 
 

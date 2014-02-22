@@ -37,7 +37,7 @@ namespace parserlib {
 
 
 class parserlib_private;
-class parserlib_expr;
+class Expr;
 class parserlib_context;
 class rule;
 
@@ -281,10 +281,10 @@ public:
 
 private:
     //internal expression
-    parserlib_expr *m_expr;
+    Expr *m_expr;
 
     //internal constructor from internal expression
-    expr(parserlib_expr *e) : m_expr(e) {}
+    expr(Expr *e) : m_expr(e) {}
 
     //assignment not allowed
     expr &operator = (expr &);
@@ -451,7 +451,7 @@ private:
     };
 
     //internal expression
-    parserlib_expr *m_expr;
+    Expr *m_expr;
 
     //associated parse procedure.
     parse_proc m_parse_proc;
