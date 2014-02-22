@@ -292,6 +292,17 @@ private:
     friend class parserlib_private;
 };
 
+inline expr operator "" _E(const char x) { return expr(x); }
+inline expr operator "" _E(const char *x, unsigned long len) {
+	switch (len)
+	{
+		case 1:
+			return (expr(x[0]));
+		default:
+			return expr(x);
+	}
+}
+
 
 /** type of procedure to invoke when a rule is successfully parsed.
     @param b begin position of input.
