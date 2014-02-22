@@ -277,7 +277,7 @@ public:
      */
     expr operator !() const;
 
-    void dump();
+    void dump() const;
 
 private:
     //internal expression

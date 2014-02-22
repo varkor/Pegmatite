@@ -288,10 +288,10 @@ public:
 	//parse terminal
 	virtual bool parse_term(parserlib_context &con) const = 0;
 
-	virtual void dump() = 0;
+	virtual void dump() const = 0;
 };
 
-void expr::dump()
+void expr::dump() const
 {
 	m_expr->dump();
 }
@@ -314,7 +314,7 @@ public:
     virtual bool parse_term(parserlib_context &con) const {
         return _parse(con);
     }
-    virtual void dump()
+    virtual void dump() const
 	{
 		fprintf(stderr, "'%c'", (char)m_char);
 	}
@@ -381,7 +381,8 @@ private:
         con.set_error_pos();
         return false;
     }
-    virtual void dump()
+
+	virtual void dump() const
 	{
 		fprintf(stderr, "\"");
 		for (int c : m_string)
@@ -430,7 +431,7 @@ public:
         return _parse(con);
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "[");
 		char c;
@@ -509,7 +510,7 @@ public:
         return m_expr->parse_term(con);
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		m_expr->dump();
 	}
@@ -585,7 +586,7 @@ public:
 
         return true;
     }
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "*( ");
 		m_expr->dump();
@@ -647,7 +648,7 @@ public:
         return true;
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "+( ");
 		m_expr->dump();
@@ -679,7 +680,7 @@ public:
         return true;
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "-( ");
 		m_expr->dump();
@@ -713,7 +714,7 @@ public:
         return ok;
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "&( ");
 		m_expr->dump();
@@ -747,7 +748,7 @@ public:
         return ok;
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "!( ");
 		m_expr->dump();
@@ -779,7 +780,7 @@ public:
         return true;
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "nl( ");
 		m_expr->dump();
@@ -831,7 +832,7 @@ public:
         return m_right->parse_term(con);
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		m_left->dump();
 		fprintf(stderr, " >> ");
@@ -873,7 +874,7 @@ public:
         return m_right->parse_term(con);
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		m_left->dump();
 		fprintf(stderr, " | ");
@@ -901,7 +902,7 @@ public:
         return con.parse_term(m_rule);
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "{Reference to rule}");
 	}
@@ -925,7 +926,7 @@ public:
         return con.end();
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "$eof");
 	}
@@ -950,7 +951,7 @@ public:
         return false;
     }
 
-	virtual void dump()
+	virtual void dump() const
 	{
 		fprintf(stderr, "$any");
 	}
