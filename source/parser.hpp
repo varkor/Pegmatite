@@ -460,7 +460,7 @@ private:
     _state m_state;
 
     //assignment not allowed
-    rule &operator = (rule &);
+    rule &operator = (rule &) = delete;
 
     friend class parserlib_private;
     friend class parserlib_context;
