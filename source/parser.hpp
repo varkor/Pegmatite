@@ -441,34 +441,12 @@ public:
     rule *this_ptr() { return this; }
 
 private:
-    //mode
-    enum _MODE {
-        _PARSE,
-        _REJECT,
-        _ACCEPT
-    };
-
-    //state
-    struct _state {
-        //position in source code, relative to start
-        size_t m_pos;
-
-        //mode
-        _MODE m_mode;
-
-        //constructor
-        _state(size_t pos = -1, _MODE mode = _PARSE) :
-            m_pos(pos), m_mode(mode) {}
-    };
 
     //internal expression
     Expr *m_expr;
 
     //associated parse procedure.
     parse_proc m_parse_proc;
-
-    //state
-    _state m_state;
 
     //assignment not allowed
     rule &operator = (rule &) = delete;
