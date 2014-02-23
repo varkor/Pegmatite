@@ -358,13 +358,6 @@ public:
 	 */
 	void set_parse_proc(parse_proc p);
 
-	/** get the this ptr (since operator & is overloaded).
-		@return pointer to this.
-	 */
-	rule *this_ptr() { return this; }
-
-	ExprPtr operator&();
-
 private:
 
 	//internal expression

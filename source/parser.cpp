@@ -942,7 +942,7 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
 {
 	if (unwinding) return false;
 	//save the state of the rule
-	_state &rule_state = rule_states[r.this_ptr()];
+	_state &rule_state = rule_states[std::addressof(r)];
 	_state old_state = rule_state;
 
 	//success/failure result
@@ -999,7 +999,7 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
 					//since the left recursion was resolved successfully,
 					//return via a non-local exit
 					rule_state = old_state;
-					unwind_target = r.this_ptr();
+					unwind_target = std::addressof(r);
 					unwinding = true;
 					return false;
 				}
@@ -1009,7 +1009,7 @@ bool parserlib_context::parse_rule(rule &r, bool (parserlib_context::*parse_func
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
-					if (unwind_target == r.this_ptr())
+					if (unwind_target == std::addressof(r))
 					{
 						ok = true;
 						unwinding = false;
@@ -1081,7 +1081,7 @@ const bool debug_parsing = false;
 bool parserlib_context::_parse_non_term(rule &r)
 {
 	bool ok;
-	if (get_parse_proc(r.this_ptr()))
+	if (get_parse_proc(std::addressof(r)))
 	{
 		pos b = m_pos;
 		ok = r.expr->parse_non_term(*this);
@@ -1092,7 +1092,7 @@ bool parserlib_context::_parse_non_term(rule &r)
 		}
 		if (ok)
 		{
-			m_matches.push_back(_match(r.this_ptr(), b, m_pos));
+			m_matches.push_back(_match(std::addressof(r), b, m_pos));
 		}
 	}
 	else
@@ -1107,13 +1107,13 @@ bool parserlib_context::_parse_non_term(rule &r)
 bool parserlib_context::_parse_term(rule &r)
 {
 	bool ok;
-	if (get_parse_proc(r.this_ptr()))
+	if (get_parse_proc(std::addressof(r)))
 	{
 		pos b = m_pos;
 		ok = r.expr->parse_term(*this);
 		if (ok)
 		{
-			m_matches.push_back(_match(r.this_ptr(), b, m_pos));
+			m_matches.push_back(_match(std::addressof(r), b, m_pos));
 		}
 	}
 	else
@@ -1261,11 +1261,6 @@ rule::rule(const ExprPtr e) :
 	@param r rule.
  */
 rule::rule(rule &r) : expr(new RuleReferenceExpr(r)) { }
-ExprPtr rule::operator&()
-{
-	return ExprPtr(new RuleReferenceExpr(*this));
-}
-
 ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
 ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
 ExprPtr::ExprPtr(rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
