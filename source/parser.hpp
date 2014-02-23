@@ -64,11 +64,11 @@ class Input
 		/**
 		 * The buffer that this iterator refers to.
 		 */
-		Input     *buffer;
+		Input	 *buffer;
 		/**
 		 * The index into the buffer.
 		 */
-		Index      idx;
+		Index	  idx;
 		inline iterator(Input *b, Index i) : buffer(b), idx(i) {}
 		public:
 		inline iterator() : buffer(0), idx(-1) {}
@@ -142,11 +142,11 @@ class Input
 	/**
 	 * The index of the start of the buffer.
 	 */
-	Index     buffer_start;
+	Index	 buffer_start;
 	/**
 	 * The index of the end of the buffer.
 	 */
-	Index     buffer_end;
+	Index	 buffer_end;
 	static const std::size_t static_buffer_size = 128;
 	/**
 	 * A buffer that can be used to store characters by subclasses that do not
@@ -209,87 +209,90 @@ class AsciiFile : public Input
 ///position into the input.
 struct pos
 {
-    ///iterator into the input.
-    Input::iterator it;
+	///iterator into the input.
+	Input::iterator it;
 
-    ///line.
-    int line;
+	///line.
+	int line;
 
-    ///column.
-    int col;
+	///column.
+	int col;
 
-    ///null constructor.
-    pos() {}
+	///null constructor.
+	pos() {}
 
-    /** constructor from input.
-        @param i input.
-     */
-    pos(Input &i);
+	/** constructor from input.
+		@param i input.
+	 */
+	pos(Input &i);
 };
 
 
 
 /** type of procedure to invoke when a rule is successfully parsed.
-    @param b begin position of input.
-    @param e end position of input.
-    @param d pointer to user data.
+	@param b begin position of input.
+	@param e end position of input.
+	@param d pointer to user data.
  */
 typedef void (*parse_proc)(const pos &b, const pos &e, void *d);
 
 
 ///input range.
-class input_range {
+class input_range
+{
 public:
-    ///begin position.
-    pos m_begin;
+	///begin position.
+	pos m_begin;
 
-    ///end position.
-    pos m_end;
+	///end position.
+	pos m_end;
 
-    ///empty constructor.
-    input_range() {}
+	///empty constructor.
+	input_range() {}
 
-    /** constructor.
-        @param b begin position.
-        @param e end position.
-     */
-    input_range(const pos &b, const pos &e);
+	/** constructor.
+		@param b begin position.
+		@param e end position.
+	 */
+	input_range(const pos &b, const pos &e);
 	Input::iterator begin() const { return m_begin.it; };
 	Input::iterator end() const { return m_end.it; };
 };
 
 
 ///enum with error types.
-enum ERROR_TYPE {
-    ///syntax error
-    ERROR_SYNTAX_ERROR = 1,
+enum ERROR_TYPE
+{
+	///syntax error
+	ERROR_SYNTAX_ERROR = 1,
 
-    ///invalid end of file
-    ERROR_INVALID_EOF,
+	///invalid end of file
+	ERROR_INVALID_EOF,
 
-    ///first user error
-    ERROR_USER = 100
+	///first user error
+	ERROR_USER = 100
 };
 
 
 ///error.
-class error : public input_range {
+class error : public input_range
+{
 public:
-    ///type
-    int m_type;
+	///type
+	int m_type;
 
-    /** constructor.
-        @param b begin position.
-        @param e end position.
-        @param t type.
-     */
-    error(const pos &b, const pos &e, int t);
+	/** constructor.
+		@param b begin position.
+		@param e end position.
+		@param t type.
+	 */
+	error(const pos &b, const pos &e, int t);
 
-    /** compare on begin position.
-        @param e the other error to compare this with.
-        @return true if this comes before the previous error, false otherwise.
-     */
-    bool operator < (const error &e) const;
+	/** compare on begin position.
+		@param e the other error to compare this with.
+		@return true if this comes before the previous error, false otherwise.
+	 */
+	bool operator < (const error &e) const;
 };
 
 
@@ -321,64 +324,66 @@ struct ExprPtr : public std::shared_ptr<Expr>
 
 /** represents a rule.
  */
-class rule {
+class rule
+{
 public:
-    /** character terminal constructor.
-        @param c character.
-     */
-    rule(int c);
+	/** character terminal constructor.
+		@param c character.
+	 */
+	rule(int c);
 
-    /** null-terminated string terminal constructor.
-        @param s null-terminated string.
-     */
-    rule(const char *s);
+	/** null-terminated string terminal constructor.
+		@param s null-terminated string.
+	 */
+	rule(const char *s);
 
-    /** null-terminated wide string terminal constructor.
-        @param s null-terminated string.
-     */
-    rule(const wchar_t *s);
+	/** null-terminated wide string terminal constructor.
+		@param s null-terminated string.
+	 */
+	rule(const wchar_t *s);
 
-    /** constructor from expression.
-        @param e expression.
-     */
-    rule(const ExprPtr e);
+	/** constructor from expression.
+		@param e expression.
+	 */
+	rule(const ExprPtr e);
 
-    /** constructor from rule.
-        @param r rule.
-     */
-    rule(rule &r);
+	/** constructor from rule.
+		@param r rule.
+	 */
+	rule(rule &r);
 
-    rule(const rule &r) = delete;
-    rule(const rule &&r);
+	rule(const rule &r) = delete;
+	rule(const rule &&r);
 
-    /** sets the parse procedure.
-        @param p procedure.
-     */
-    void set_parse_proc(parse_proc p);
+	/** sets the parse procedure.
+		@param p procedure.
+	 */
+	void set_parse_proc(parse_proc p);
 
-    /** get the this ptr (since operator & is overloaded).
-        @return pointer to this.
-     */
-    rule *this_ptr() { return this; }
+	/** get the this ptr (since operator & is overloaded).
+		@return pointer to this.
+	 */
+	rule *this_ptr() { return this; }
 
 	ExprPtr operator&();
 
 private:
 
-    //internal expression
-    const ExprPtr m_expr;
+	//internal expression
+	const ExprPtr m_expr;
 
-    //assignment not allowed
-    rule &operator = (rule &) = delete;
+	//assignment not allowed
+	rule &operator = (rule &) = delete;
 
-    friend class parserlib_private;
-    friend class parserlib_context;
+	friend class parserlib_private;
+	friend class parserlib_context;
 };
 
 /**
  * Abstract base class for expressions.
  */
-class Expr {
+class Expr
+{
 public:
 	/**
 	 * Virtual destructor for safe overloading.  Note that generally expression
@@ -455,7 +460,8 @@ inline ExprPtr operator !(rule &r)
 /**
  * Character expression, matches a single character.
  */
-class CharacterExpr : public Expr {
+class CharacterExpr : public Expr
+{
 	/**
 	 * The character that will be recognised by this expression.
 	 */
@@ -488,7 +494,7 @@ private:
 	/**
 	 * The characters that this expression will match.
 	 */
-    std::vector<int> characters;
+	std::vector<int> characters;
 };
 inline CharacterExprPtr operator "" _E(const char x)
 {
@@ -511,9 +517,9 @@ inline ExprPtr operator-(const CharacterExprPtr &left, int right)
 
 
 /** creates a sequence of expressions.
-    @param left left operand.
-    @param right right operand.
-    @return an expression which parses a sequence.
+	@param left left operand.
+	@param right right operand.
+	@return an expression which parses a sequence.
  */
 ExprPtr operator >> (const ExprPtr &left, const ExprPtr &right);
 inline ExprPtr operator >> (rule &left, const ExprPtr &right)
@@ -523,9 +529,9 @@ inline ExprPtr operator >> (rule &left, const ExprPtr &right)
 
 
 /** creates a choice of expressions.
-    @param left left operand.
-    @param right right operand.
-    @return an expression which parses a choice.
+	@param left left operand.
+	@param right right operand.
+	@return an expression which parses a choice.
  */
 ExprPtr operator | (const ExprPtr &left, const ExprPtr &right);
 inline ExprPtr operator | (rule &left, const ExprPtr &right)
@@ -535,81 +541,82 @@ inline ExprPtr operator | (rule &left, const ExprPtr &right)
 
 
 /** converts a parser expression into a terminal.
-    @param e expression.
-    @return an expression which parses a terminal.
+	@param e expression.
+	@return an expression which parses a terminal.
  */
 ExprPtr term(const ExprPtr &e);
 
 
 /** creates a set expression from a null-terminated string.
-    @param s null-terminated string with characters of the set.
-    @return an expression which parses a single character out of a set.
+	@param s null-terminated string with characters of the set.
+	@return an expression which parses a single character out of a set.
  */
 ExprPtr set(const char *s);
 
 
 /** creates a set expression from a null-terminated wide string.
-    @param s null-terminated string with characters of the set.
-    @return an expression which parses a single character out of a set.
+	@param s null-terminated string with characters of the set.
+	@return an expression which parses a single character out of a set.
  */
 ExprPtr set(const wchar_t *s);
 
 
 /** creates a range expression.
-    @param min min character.
-    @param max max character.
-    @return an expression which parses a single character out of range.
+	@param min min character.
+	@param max max character.
+	@return an expression which parses a single character out of range.
  */
 ExprPtr range(int min, int max);
 
 
 /** creates an expression which increments the line counter
-    and resets the column counter when the given expression
-    is parsed successfully; used for newline characters.
-    @param e expression to wrap into a newline parser.
-    @return an expression that handles newlines.
+	and resets the column counter when the given expression
+	is parsed successfully; used for newline characters.
+	@param e expression to wrap into a newline parser.
+	@return an expression that handles newlines.
  */
 ExprPtr nl(const ExprPtr &e);
 
 
 /** creates an expression which tests for the end of input.
-    @return an expression that handles the end of input.
+	@return an expression that handles the end of input.
  */
 ExprPtr eof();
 
 
 /** creates an expression that parses any character.
-    @return the appropriate expression.
+	@return the appropriate expression.
  */
 ExprPtr any();
 
 
 /** parses the given input.
-    The parse procedures of each rule parsed are executed
-    before this function returns, if parsing succeeds.
-    @param i input.
-    @param g root rule of grammar.
-    @param ws whitespace rule.
-    @param el list of errors.
-    @param d user data, passed to the parse procedures.
-    @return true on parsing success, false on failure.
+	The parse procedures of each rule parsed are executed
+	before this function returns, if parsing succeeds.
+	@param i input.
+	@param g root rule of grammar.
+	@param ws whitespace rule.
+	@param el list of errors.
+	@param d user data, passed to the parse procedures.
+	@return true on parsing success, false on failure.
  */
 bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d);
 
 
 /** output the specific input range to the specific stream.
-    @param stream stream.
-    @param ir input range.
-    @return the stream.
+	@param stream stream.
+	@param ir input range.
+	@return the stream.
  */
-template <class T> T &operator << (T &stream, const input_range &ir) {
-    for(Input::iterator it = ir.m_begin.it;
-        it != ir.m_end.it;
-        ++it)
-    {
-        stream << (typename T::char_type)*it;
-    }
-    return stream;
+template <class T> T &operator << (T &stream, const input_range &ir)
+{
+	for(Input::iterator it = ir.m_begin.it;
+		it != ir.m_end.it;
+		++it)
+	{
+		stream << (typename T::char_type)*it;
+	}
+	return stream;
 }
 
 
