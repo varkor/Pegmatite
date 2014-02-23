@@ -52,3 +52,7 @@ Not in order:
 - Fully move rule action lookup into the context class, remove single binding
   of rule / action.
 - Add a build system!
+- Cleanup the rule / expression distinction such that:
+  - Rules can be constructed from expressions (including via assignment)
+  - Casting rules to expressions gives a new rule-ref expression
+  - Expressions are only acyclic, but can form cycles via rule references.

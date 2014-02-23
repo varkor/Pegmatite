@@ -228,81 +228,6 @@ struct pos
 };
 
 
-/** a grammar expression.
- */
-class expr {
-public:
-    /** character terminal constructor.
-        @param c character.
-     */
-    expr(int c);
-
-    /** null-terminated string terminal constructor.
-        @param s null-terminated string.
-     */
-    expr(const char *s);
-
-    /** null-terminated wide string terminal constructor.
-        @param s null-terminated string.
-     */
-    expr(const wchar_t *s);
-
-    /** rule reference constructor.
-        @param r rule.
-     */
-    expr(rule &r);
-
-    /** creates a zero-or-more loop out of this expression.
-        @return a zero-or-more loop expression.
-     */
-    expr operator *() const;
-
-    /** creates a one-or-more loop out of this expression.
-        @return a one-or-more loop expression.
-     */
-    expr operator +() const;
-
-    /** creates an optional out of this expression.
-        @return an optional expression.
-     */
-    expr operator -() const;
-
-    /** creates an AND-expression.
-        @return an AND-expression.
-     */
-    expr operator &() const;
-
-    /** creates a NOT-expression.
-        @return a NOT-expression.
-     */
-    expr operator !() const;
-
-    void dump() const;
-
-private:
-    //internal expression
-    Expr *m_expr;
-
-    //internal constructor from internal expression
-    expr(Expr *e) : m_expr(e) {}
-
-    //assignment not allowed
-    expr &operator = (expr &);
-
-    friend class parserlib_private;
-};
-
-inline expr operator "" _E(const char x) { return expr(x); }
-inline expr operator "" _E(const char *x, unsigned long len) {
-	switch (len)
-	{
-		case 1:
-			return (expr(x[0]));
-		default:
-			return expr(x);
-	}
-}
-
 
 /** type of procedure to invoke when a rule is successfully parsed.
     @param b begin position of input.
@@ -369,6 +294,26 @@ public:
 ///type of error list.
 typedef std::list<error> error_list;
 
+class CharacterExpr;
+class StringExpr;
+typedef std::shared_ptr<CharacterExpr> CharacterExprPtr;
+typedef std::shared_ptr<StringExpr> StringExprPtr;
+
+/**
+ * A shared pointer to an expression.  All expression tree nodes use shared
+ * pointers.  
+ */
+//typedef std::shared_ptr<Expr> ExprPtr;
+struct ExprPtr : public std::shared_ptr<Expr>
+{
+	ExprPtr(Expr *e) : std::shared_ptr<Expr>(e) {}
+	ExprPtr(rule *e);
+	ExprPtr(const CharacterExprPtr &e) :
+		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
+	ExprPtr(const StringExprPtr &e) :
+		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
+};
+
 
 /** represents a rule.
  */
@@ -392,7 +337,7 @@ public:
     /** constructor from expression.
         @param e expression.
      */
-    rule(const expr &e);
+    rule(const ExprPtr e);
 
     /** constructor from rule.
         @param r rule.
@@ -400,35 +345,7 @@ public:
     rule(rule &r);
 
     rule(const rule &r) = delete;
-
-    /** deletes the internal object that represents the expression.
-     */
-    ~rule();
-
-    /** creates a zero-or-more loop out of this rule.
-        @return a zero-or-more loop rule.
-     */
-    expr operator *();
-
-    /** creates a one-or-more loop out of this rule.
-        @return a one-or-more loop rule.
-     */
-    expr operator +();
-
-    /** creates an optional out of this rule.
-        @return an optional rule.
-     */
-    expr operator -();
-
-    /** creates an AND-expression out of this rule.
-        @return an AND-expression out of this rule.
-     */
-    expr operator &();
-
-    /** creates a NOT-expression out of this rule.
-        @return a NOT-expression out of this rule.
-     */
-    expr operator !();
+    rule(const rule &&r);
 
     /** sets the parse procedure.
         @param p procedure.
@@ -440,10 +357,12 @@ public:
      */
     rule *this_ptr() { return this; }
 
+	ExprPtr operator&();
+
 private:
 
     //internal expression
-    Expr *m_expr;
+    ExprPtr m_expr;
 
     //associated parse procedure.
     parse_proc m_parse_proc;
@@ -455,13 +374,118 @@ private:
     friend class parserlib_context;
 };
 
+/**
+ * Abstract base class for expressions.
+ */
+class Expr {
+public:
+	/**
+	 * Virtual destructor for safe overloading.  Note that generally expression
+	 * objects are not meant to be deallocated, as they can be used by multiple
+	 * parsers. 
+	 */
+	virtual ~Expr() { }
+
+	/**
+	 * Parse this expression as a non-terminal.  Non-terminals are permitted to
+	 * contain whitespace around compound expressions, as defined by the
+	 * whitespace rule in the context.
+	 */
+	virtual bool parse_non_term(parserlib_context &con) const = 0;
+
+	/**
+	 * Parse this expression as a terminal.  Terminals are exact matches for
+	 * the specified expression, without any whitespace.
+	 */
+	virtual bool parse_term(parserlib_context &con) const = 0;
+
+	/**
+	 * Dump the current rule.  Used for debugging.
+	 */
+	virtual void dump() const = 0;
+
+};
+/** creates a zero-or-more loop out of this expression.
+	@return a zero-or-more loop expression.
+ */
+ExprPtr operator *(const ExprPtr &e);
+
+/** creates a one-or-more loop out of this expression.
+	@return a one-or-more loop expression.
+ */
+ExprPtr operator +(const ExprPtr &e);
+
+/** creates an optional out of this expression.
+	@return an optional expression.
+ */
+ExprPtr operator -(const ExprPtr &e);
+
+/** creates an AND-expression.
+	@return an AND-expression.
+ */
+ExprPtr operator &(const ExprPtr &e);
+
+/** creates a NOT-expression.
+	@return a NOT-expression.
+ */
+ExprPtr operator !(const ExprPtr &e);
+
+
+/**
+ * Character expression, matches a single character.
+ */
+class CharacterExpr : public Expr {
+	/**
+	 * The character that will be recognised by this expression.
+	 */
+	int character;
+public:
+	CharacterExpr(int c) : character(c) {}
+	virtual bool parse_non_term(parserlib_context &con) const;
+	virtual bool parse_term(parserlib_context &con) const;
+	virtual void dump() const;
+	/**
+	 * Returns a range expression that recognises characters in the specified
+	 * range.
+	 */
+	ExprPtr operator-(const CharacterExpr &other);
+};
+
+/**
+ * String expression.  Matches a sequence of characters.
+ */
+class StringExpr : public Expr
+{
+public:
+	StringExpr(const char *s) : characters(s, s + strlen(s)) {}
+	StringExpr(const char *s, std::size_t length) : characters(s, s + length) {}
+	virtual bool parse_non_term(parserlib_context &con) const;
+	virtual bool parse_term(parserlib_context &con) const;
+	virtual void dump() const;
+private:
+	/**
+	 * The characters that this expression will match.
+	 */
+    std::vector<int> characters;
+};
+inline CharacterExprPtr operator "" _E(const char x)
+{
+	return CharacterExprPtr(new CharacterExpr(x));
+}
+inline StringExprPtr operator "" _E(const char *x, std::size_t len)
+{
+	return StringExprPtr(new StringExpr(x, len));
+}
+
+
+
 
 /** creates a sequence of expressions.
     @param left left operand.
     @param right right operand.
     @return an expression which parses a sequence.
  */
-expr operator >> (const expr &left, const expr &right);
+ExprPtr operator >> (const ExprPtr &left, const ExprPtr &right);
 
 
 /** creates a choice of expressions.
@@ -469,28 +493,28 @@ expr operator >> (const expr &left, const expr &right);
     @param right right operand.
     @return an expression which parses a choice.
  */
-expr operator | (const expr &left, const expr &right);
+ExprPtr operator | (const ExprPtr &left, const ExprPtr &right);
 
 
 /** converts a parser expression into a terminal.
     @param e expression.
     @return an expression which parses a terminal.
  */
-expr term(const expr &e);
+ExprPtr term(const ExprPtr &e);
 
 
 /** creates a set expression from a null-terminated string.
     @param s null-terminated string with characters of the set.
     @return an expression which parses a single character out of a set.
  */
-expr set(const char *s);
+ExprPtr set(const char *s);
 
 
 /** creates a set expression from a null-terminated wide string.
     @param s null-terminated string with characters of the set.
     @return an expression which parses a single character out of a set.
  */
-expr set(const wchar_t *s);
+ExprPtr set(const wchar_t *s);
 
 
 /** creates a range expression.
@@ -498,7 +522,7 @@ expr set(const wchar_t *s);
     @param max max character.
     @return an expression which parses a single character out of range.
  */
-expr range(int min, int max);
+ExprPtr range(int min, int max);
 
 
 /** creates an expression which increments the line counter
@@ -507,33 +531,19 @@ expr range(int min, int max);
     @param e expression to wrap into a newline parser.
     @return an expression that handles newlines.
  */
-expr nl(const expr &e);
+ExprPtr nl(const ExprPtr &e);
 
 
 /** creates an expression which tests for the end of input.
     @return an expression that handles the end of input.
  */
-expr eof();
-
-
-/** creates a not expression.
-    @param e expression.
-    @return the appropriate expression.
- */
-expr not_(const expr &e);
-
-
-/** creates an and expression.
-    @param e expression.
-    @return the appropriate expression.
- */
-expr and_(const expr &e);
+ExprPtr eof();
 
 
 /** creates an expression that parses any character.
     @return the appropriate expression.
  */
-expr any();
+ExprPtr any();
 
 
 /** parses the given input.
