@@ -46,11 +46,7 @@ Not in order:
 - Add error delegate
 - Rename classes so types start with uppercase
 - Fix namespacing (e.g. all private classes should be in anonymous namespace)
-- Remove pImpl stuff where it doesn't actually provide anything
-- Move the rule state that's used for left-recursion detection into the context
-  class.
-- Fully move rule action lookup into the context class, remove single binding
-  of rule / action.
+- Remove single binding of rule / action.
 - Add a build system!
 - Cleanup the rule / expression distinction such that:
   - Rules can be constructed from expressions (including via assignment)
