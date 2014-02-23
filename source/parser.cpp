@@ -95,7 +95,7 @@ static parse_proc_map_t *getParseProcMap()
 }
 
 //get the parse proc from the map
-static parse_proc _get_parse_proc(rule *r)
+static parse_proc get_parse_proc(rule *r)
 {
 	parse_proc_map_t *map = getParseProcMap();
 	parse_proc_map_t::iterator it = map->find(r);
@@ -103,23 +103,6 @@ static parse_proc _get_parse_proc(rule *r)
 	return it->second;
 }
 
-
-//internal private class that manages access to the public classes' internals.
-class parserlib_private
-{
-public:
-	//get the internal expression object from the rule.
-	static ExprPtr get_expr(rule &r)
-	{
-		return r.m_expr;
-	}
-
-	//get the internal parse proc from the rule.
-	static parse_proc get_parse_proc(rule &r)
-	{
-		return _get_parse_proc(r.this_ptr());
-	}
-};
 
 
 class parserlib_context;
@@ -265,7 +248,7 @@ public:
 			++it)
 		{
 			const _match &m = *it;
-			parse_proc p = parserlib_private::get_parse_proc(*m.m_rule);
+			parse_proc p = get_parse_proc(m.m_rule);
 			p(m.m_begin, m.m_end, d);
 		}
 	}
@@ -460,9 +443,9 @@ private:
 class UnaryExpr : public Expr
 {
 public:
-	UnaryExpr(const ExprPtr e) : m_expr(e) { }
+	UnaryExpr(const ExprPtr e) : expr(e) { }
 protected:
-	const ExprPtr m_expr;
+	const ExprPtr expr;
 };
 
 
@@ -479,18 +462,18 @@ public:
 	//parse with whitespace
 	virtual bool parse_non_term(parserlib_context &con) const
 	{
-		return m_expr->parse_term(con);
+		return expr->parse_term(con);
 	}
 
 	//parse terminal
 	virtual bool parse_term(parserlib_context &con) const
 	{
-		return m_expr->parse_term(con);
+		return expr->parse_term(con);
 	}
 
 	virtual void dump() const
 	{
-		m_expr->dump();
+		expr->dump();
 	}
 
 };
@@ -512,7 +495,7 @@ public:
 		//if parsing of the first fails, restore the context and stop
 		con.parse_ws();
 		_state st(con);
-		if (!m_expr->parse_non_term(con))
+		if (!expr->parse_non_term(con))
 		{
 			if (con.unwinding)
 			{
@@ -527,7 +510,7 @@ public:
 		{
 			con.parse_ws();
 			_state st(con);
-			if (!m_expr->parse_non_term(con))
+			if (!expr->parse_non_term(con))
 			{
 				if (con.unwinding)
 				{
@@ -546,7 +529,7 @@ public:
 	{
 		//if parsing of the first fails, restore the context and stop
 		_state st(con);
-		if (!m_expr->parse_term(con))
+		if (!expr->parse_term(con))
 		{
 			if (con.unwinding)
 			{
@@ -560,7 +543,7 @@ public:
 		for(;;)
 		{
 			_state st(con);
-			if (!m_expr->parse_term(con))
+			if (!expr->parse_term(con))
 			{
 				if (con.unwinding)
 				{
@@ -576,7 +559,7 @@ public:
 	virtual void dump() const
 	{
 		fprintf(stderr, "*( ");
-		m_expr->dump();
+		expr->dump();
 		fprintf(stderr, " )");
 	}
 };
@@ -593,14 +576,14 @@ public:
 	{
 		//parse the first; if the first fails, stop
 		con.parse_ws();
-		if (!m_expr->parse_non_term(con)) return false;
+		if (!expr->parse_non_term(con)) return false;
 
 		//parse the rest until no more parsing is possible
 		for(;;)
 		{
 			con.parse_ws();
 			_state st(con);
-			if (!m_expr->parse_non_term(con))
+			if (!expr->parse_non_term(con))
 			{
 				if (con.unwinding)
 				{
@@ -618,13 +601,13 @@ public:
 	virtual bool parse_term(parserlib_context &con) const
 	{
 		//parse the first; if the first fails, stop
-		if (!m_expr->parse_term(con)) return false;
+		if (!expr->parse_term(con)) return false;
 
 		//parse the rest until no more parsing is possible
 		for(;;)
 		{
 			_state st(con);
-			if (!m_expr->parse_term(con))
+			if (!expr->parse_term(con))
 			{
 				if (con.unwinding)
 				{
@@ -641,7 +624,7 @@ public:
 	virtual void dump() const
 	{
 		fprintf(stderr, "+( ");
-		m_expr->dump();
+		expr->dump();
 		fprintf(stderr, " )");
 	}
 };
@@ -657,7 +640,7 @@ public:
 	virtual bool parse_non_term(parserlib_context &con) const
 	{
 		_state st(con);
-		if (!m_expr->parse_non_term(con)) con.restore(st);
+		if (!expr->parse_non_term(con)) con.restore(st);
 		return true;
 	}
 
@@ -665,14 +648,14 @@ public:
 	virtual bool parse_term(parserlib_context &con) const
 	{
 		_state st(con);
-		if (!m_expr->parse_term(con)) con.restore(st);
+		if (!expr->parse_term(con)) con.restore(st);
 		return true;
 	}
 
 	virtual void dump() const
 	{
 		fprintf(stderr, "-( ");
-		m_expr->dump();
+		expr->dump();
 		fprintf(stderr, " )");
 	}
 };
@@ -691,7 +674,7 @@ public:
 	virtual bool parse_non_term(parserlib_context &con) const
 	{
 		_state st(con);
-		bool ok = m_expr->parse_non_term(con);
+		bool ok = expr->parse_non_term(con);
 		con.restore(st);
 		return ok;
 	}
@@ -700,7 +683,7 @@ public:
 	virtual bool parse_term(parserlib_context &con) const
 	{
 		_state st(con);
-		bool ok = m_expr->parse_term(con);
+		bool ok = expr->parse_term(con);
 		con.restore(st);
 		return ok;
 	}
@@ -708,7 +691,7 @@ public:
 	virtual void dump() const
 	{
 		fprintf(stderr, "&( ");
-		m_expr->dump();
+		expr->dump();
 		fprintf(stderr, " )");
 	}
 };
@@ -724,7 +707,7 @@ public:
 	virtual bool parse_non_term(parserlib_context &con) const
 	{
 		_state st(con);
-		bool ok = !m_expr->parse_non_term(con);
+		bool ok = !expr->parse_non_term(con);
 		con.restore(st);
 		return ok;
 	}
@@ -733,7 +716,7 @@ public:
 	virtual bool parse_term(parserlib_context &con) const
 	{
 		_state st(con);
-		bool ok = !m_expr->parse_term(con);
+		bool ok = !expr->parse_term(con);
 		con.restore(st);
 		return ok;
 	}
@@ -741,7 +724,7 @@ public:
 	virtual void dump() const
 	{
 		fprintf(stderr, "!( ");
-		m_expr->dump();
+		expr->dump();
 		fprintf(stderr, " )");
 	}
 };
@@ -756,7 +739,7 @@ public:
 	//parse with whitespace
 	virtual bool parse_non_term(parserlib_context &con) const
 	{
-		if (!m_expr->parse_non_term(con)) return false;
+		if (!expr->parse_non_term(con)) return false;
 		con.next_line();
 		return true;
 	}
@@ -764,7 +747,7 @@ public:
 	//parse terminal
 	virtual bool parse_term(parserlib_context &con) const
 	{
-		if (!m_expr->parse_term(con)) return false;
+		if (!expr->parse_term(con)) return false;
 		con.next_line();
 		return true;
 	}
@@ -772,7 +755,7 @@ public:
 	virtual void dump() const
 	{
 		fprintf(stderr, "nl( ");
-		m_expr->dump();
+		expr->dump();
 		fprintf(stderr, " )");
 	}
 };
@@ -1098,13 +1081,13 @@ const bool debug_parsing = false;
 bool parserlib_context::_parse_non_term(rule &r)
 {
 	bool ok;
-	if (parserlib_private::get_parse_proc(r))
+	if (get_parse_proc(r.this_ptr()))
 	{
 		pos b = m_pos;
-		ok = parserlib_private::get_expr(r)->parse_non_term(*this);
+		ok = r.expr->parse_non_term(*this);
 		if (debug_parsing)
 		{
-			parserlib_private::get_expr(r)->dump();
+			r.expr->dump();
 			fprintf(stderr, "\n");
 		}
 		if (ok)
@@ -1114,7 +1097,7 @@ bool parserlib_context::_parse_non_term(rule &r)
 	}
 	else
 	{
-		ok = parserlib_private::get_expr(r)->parse_non_term(*this);
+		ok = r.expr->parse_non_term(*this);
 	}
 	return ok;
 }
@@ -1124,10 +1107,10 @@ bool parserlib_context::_parse_non_term(rule &r)
 bool parserlib_context::_parse_term(rule &r)
 {
 	bool ok;
-	if (parserlib_private::get_parse_proc(r))
+	if (get_parse_proc(r.this_ptr()))
 	{
 		pos b = m_pos;
-		ok = parserlib_private::get_expr(r)->parse_term(*this);
+		ok = r.expr->parse_term(*this);
 		if (ok)
 		{
 			m_matches.push_back(_match(r.this_ptr(), b, m_pos));
@@ -1135,7 +1118,7 @@ bool parserlib_context::_parse_term(rule &r)
 	}
 	else
 	{
-		ok = parserlib_private::get_expr(r)->parse_term(*this);
+		ok = r.expr->parse_term(*this);
 	}
 	return ok;
 }
@@ -1252,7 +1235,7 @@ bool error::operator < (const error &e) const
 	@param c character.
  */
 rule::rule(int c) :
-	m_expr(ExprPtr(new CharacterExpr(c)))
+	expr(ExprPtr(new CharacterExpr(c)))
 {
 }
 
@@ -1261,7 +1244,7 @@ rule::rule(int c) :
 	@param s null-terminated string.
  */
 rule::rule(const char *s) :
-	m_expr(new StringExpr(s))
+	expr(new StringExpr(s))
 {
 }
 
@@ -1269,7 +1252,7 @@ rule::rule(const char *s) :
 	@param e expression.
  */
 rule::rule(const ExprPtr e) :
-	m_expr(e)
+	expr(e)
 {
 }
 
@@ -1277,7 +1260,7 @@ rule::rule(const ExprPtr e) :
 /** constructor from rule.
 	@param r rule.
  */
-rule::rule(rule &r) : m_expr(new RuleReferenceExpr(r)) { }
+rule::rule(rule &r) : expr(new RuleReferenceExpr(r)) { }
 ExprPtr rule::operator&()
 {
 	return ExprPtr(new RuleReferenceExpr(*this));

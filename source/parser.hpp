@@ -36,7 +36,6 @@
 namespace parserlib {
 
 
-class parserlib_private;
 class Expr;
 class parserlib_context;
 class rule;
@@ -369,12 +368,11 @@ public:
 private:
 
 	//internal expression
-	const ExprPtr m_expr;
+	const ExprPtr expr;
 
 	//assignment not allowed
 	rule &operator = (rule &) = delete;
 
-	friend class parserlib_private;
 	friend class parserlib_context;
 };
 
