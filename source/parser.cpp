@@ -312,11 +312,15 @@ void CharacterExpr::dump() const
 {
 	fprintf(stderr, "'%c'", (char)character);
 }
+
 ExprPtr CharacterExpr::operator-(const CharacterExpr &other)
 {
 	return range(character, other.character);
 }
-
+ExprPtr CharacterExpr::operator-(int other)
+{
+	return range(character, other);
+}
 
 
 static inline bool parseString(parserlib_context &con,
@@ -1191,6 +1195,10 @@ ExprPtr rule::operator&()
 {
 	return ExprPtr(new RuleReferenceExpr(*this));
 }
+
+ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
+ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
+ExprPtr::ExprPtr(rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
 
 /** sets the parse procedure.
     @param p procedure.

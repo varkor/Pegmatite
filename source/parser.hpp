@@ -254,6 +254,8 @@ public:
         @param e end position.
      */
     input_range(const pos &b, const pos &e);
+	Input::iterator begin() const { return m_begin.it; };
+	Input::iterator end() const { return m_end.it; };
 };
 
 
@@ -307,11 +309,13 @@ typedef std::shared_ptr<StringExpr> StringExprPtr;
 struct ExprPtr : public std::shared_ptr<Expr>
 {
 	ExprPtr(Expr *e) : std::shared_ptr<Expr>(e) {}
-	ExprPtr(rule *e);
+	ExprPtr(rule &e);
 	ExprPtr(const CharacterExprPtr &e) :
 		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
 	ExprPtr(const StringExprPtr &e) :
 		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
+	ExprPtr(const char *);
+	ExprPtr(const char);
 };
 
 
@@ -409,26 +413,46 @@ public:
 	@return a zero-or-more loop expression.
  */
 ExprPtr operator *(const ExprPtr &e);
+inline ExprPtr operator *(rule &r)
+{
+	return *ExprPtr(r);
+}
 
 /** creates a one-or-more loop out of this expression.
 	@return a one-or-more loop expression.
  */
 ExprPtr operator +(const ExprPtr &e);
+inline ExprPtr operator +(rule &r)
+{
+	return +ExprPtr(r);
+}
 
 /** creates an optional out of this expression.
 	@return an optional expression.
  */
 ExprPtr operator -(const ExprPtr &e);
+inline ExprPtr operator -(rule &r)
+{
+	return -ExprPtr(r);
+}
 
 /** creates an AND-expression.
 	@return an AND-expression.
  */
 ExprPtr operator &(const ExprPtr &e);
+inline ExprPtr operator &(rule &r)
+{
+	return &ExprPtr(r);
+}
 
 /** creates a NOT-expression.
 	@return a NOT-expression.
  */
 ExprPtr operator !(const ExprPtr &e);
+inline ExprPtr operator !(rule &r)
+{
+	return !ExprPtr(r);
+}
 
 
 /**
@@ -449,6 +473,7 @@ public:
 	 * range.
 	 */
 	ExprPtr operator-(const CharacterExpr &other);
+	ExprPtr operator-(int other);
 };
 
 /**
@@ -476,6 +501,14 @@ inline StringExprPtr operator "" _E(const char *x, std::size_t len)
 {
 	return StringExprPtr(new StringExpr(x, len));
 }
+inline ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right)
+{
+	return (*left) - (*right);
+}
+inline ExprPtr operator-(const CharacterExprPtr &left, int right)
+{
+	return (*left) - right;
+}
 
 
 
@@ -486,6 +519,10 @@ inline StringExprPtr operator "" _E(const char *x, std::size_t len)
     @return an expression which parses a sequence.
  */
 ExprPtr operator >> (const ExprPtr &left, const ExprPtr &right);
+inline ExprPtr operator >> (rule &left, const ExprPtr &right)
+{
+	return ExprPtr(left) >> right;
+}
 
 
 /** creates a choice of expressions.
@@ -494,6 +531,10 @@ ExprPtr operator >> (const ExprPtr &left, const ExprPtr &right);
     @return an expression which parses a choice.
  */
 ExprPtr operator | (const ExprPtr &left, const ExprPtr &right);
+inline ExprPtr operator | (rule &left, const ExprPtr &right)
+{
+	return ExprPtr(left) | right;
+}
 
 
 /** converts a parser expression into a terminal.
