@@ -366,10 +366,7 @@ public:
 private:
 
     //internal expression
-    ExprPtr m_expr;
-
-    //associated parse procedure.
-    parse_proc m_parse_proc;
+    const ExprPtr m_expr;
 
     //assignment not allowed
     rule &operator = (rule &) = delete;

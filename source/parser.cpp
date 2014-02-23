@@ -114,7 +114,7 @@ public:
 
     //get the internal parse proc from the rule.
     static parse_proc get_parse_proc(rule &r) {
-        return r.m_parse_proc;
+        return _get_parse_proc(r.this_ptr());
     }
 };
 
@@ -1159,7 +1159,6 @@ bool error::operator < (const error &e) const
 rule::rule(int c) :
     m_expr(ExprPtr(new CharacterExpr(c)))
 {
-    m_parse_proc = _get_parse_proc(this);
 }
 
 
@@ -1169,7 +1168,6 @@ rule::rule(int c) :
 rule::rule(const char *s) :
     m_expr(new StringExpr(s))
 {
-    m_parse_proc = _get_parse_proc(this);
 }
 
 /** constructor from expression.
@@ -1178,19 +1176,13 @@ rule::rule(const char *s) :
 rule::rule(const ExprPtr e) :
     m_expr(e)
 {
-    m_parse_proc = _get_parse_proc(this);
 }
 
 
 /** constructor from rule.
     @param r rule.
  */
-rule::rule(rule &r) :
-    m_expr(new RuleReferenceExpr(r)),
-    m_parse_proc(0)
-{
-    m_parse_proc = _get_parse_proc(this);
-}
+rule::rule(rule &r) : m_expr(new RuleReferenceExpr(r)) { }
 ExprPtr rule::operator&()
 {
 	return ExprPtr(new RuleReferenceExpr(*this));
@@ -1205,7 +1197,6 @@ ExprPtr::ExprPtr(rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
  */
 void rule::set_parse_proc(parse_proc p) {
     assert(p);
-    m_parse_proc = p;
     (*getParseProcMap())[this] = p;
 }
 
