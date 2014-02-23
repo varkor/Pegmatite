@@ -308,7 +308,6 @@ typedef std::shared_ptr<StringExpr> StringExprPtr;
  * A shared pointer to an expression.  All expression tree nodes use shared
  * pointers.  
  */
-//typedef std::shared_ptr<Expr> ExprPtr;
 struct ExprPtr : public std::shared_ptr<Expr>
 {
 	ExprPtr(Expr *e) : std::shared_ptr<Expr>(e) {}
