@@ -46,11 +46,6 @@ Not in order:
 - Add error delegate
 - Rename classes so types start with uppercase
 - Fix namespacing (e.g. all private classes should be in anonymous namespace)
-- Remove single binding of rule / action.
 - Add a build system!
-- Cleanup the rule / expression distinction such that:
-  - Rules can be constructed from expressions (including via assignment)
-  - Casting rules to expressions gives a new rule-ref expression
-  - Expressions are only acyclic, but can form cycles via rule references.
 - Use std::unique_ptr in the AST (trees are, by definition, acyclic and each
   node has a unique parent).

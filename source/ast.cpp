@@ -75,6 +75,27 @@ void ast_member::_init() {
     current->m_members.push_back(this);
 }
 
+__thread ASTParserDelegate *currentParserDelegate;
+
+ASTParserDelegate::ASTParserDelegate()
+{
+	currentParserDelegate = this;
+}
+
+void ASTParserDelegate::set_parse_proc(rule &r, parse_proc p)
+{
+	handlers[std::addressof(r)] = p;
+}
+void ASTParserDelegate::bind_parse_proc(rule &r, parse_proc p)
+{
+	currentParserDelegate->set_parse_proc(r, p);
+}
+parse_proc ASTParserDelegate::get_parse_proc(rule &r) const
+{
+	auto it = handlers.find(std::addressof(r));
+	if (it == handlers.end()) return 0;
+	return it->second;
+}
 
 /** parses the given input.
     @param i input.
@@ -85,9 +106,9 @@ void ast_member::_init() {
     @return pointer to ast node created, or null if there was an error.
         The return object must be deleted by the caller.
  */
-ast_node *parse(Input &i, rule &g, rule &ws, error_list &el) {
+ast_node *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d) {
     ast_stack st;
-    if (!parse(i, g, ws, el, &st)) return 0;
+    if (!parse(i, g, ws, el, d, &st)) return 0;
     assert(st.size() == 1);
     return st[0];
 }

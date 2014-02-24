@@ -31,6 +31,7 @@
 #include <cassert>
 #include <list>
 #include <stdexcept>
+#include <unordered_map>
 #include "parser.hpp"
 
 
@@ -411,6 +412,39 @@ private:
     }
 };
 
+/** parses the given input.
+    @param i input.
+    @param g root rule of grammar.
+    @param ws whitespace rule.
+    @param el list of errors.
+    @param d user data, passed to the parse procedures.
+    @return pointer to ast node created, or null if there was an error.
+        The return object must be deleted by the caller.
+ */
+ast_node *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d);
+
+
+class ASTParserDelegate : ParserDelegate
+{
+	std::unordered_map<rule*, parse_proc> handlers;
+	void set_parse_proc(rule &r, parse_proc p);
+	public:
+	ASTParserDelegate();
+	virtual parse_proc get_parse_proc(rule &) const;
+	static void bind_parse_proc(rule &r, parse_proc p);
+	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) const
+	{
+		ast_node *node = parserlib::parse(i, g, ws, el, *this);
+#if defined(__GXX_RTTI)
+		ast = dynamic_cast<T *>(node);
+#else
+		ast = static_cast<T *>(node);
+#endif
+		if (ast) return true;
+		delete node;
+		return false;
+	}
+};
 
 /** AST function which creates an object of type T
     and pushes it to the node stack.
@@ -422,7 +456,7 @@ public:
 	 */
 	ast(rule &r)
 	{
-		r.set_parse_proc([](const pos &b, const pos &e, void *d)
+		ASTParserDelegate::bind_parse_proc(r, [](const pos &b, const pos &e, void *d)
 			{
 				ast_stack *st = reinterpret_cast<ast_stack *>(d);
 				T *obj = new T();
@@ -431,40 +465,6 @@ public:
 			});
 	}
 };
-
-
-/** parses the given input.
-    @param i input.
-    @param g root rule of grammar.
-    @param ws whitespace rule.
-    @param el list of errors.
-    @param d user data, passed to the parse procedures.
-    @return pointer to ast node created, or null if there was an error.
-        The return object must be deleted by the caller.
- */
-ast_node *parse(Input &i, rule &g, rule &ws, error_list &el);
-
-
-/** parses the given input.
-    @param i input.
-    @param g root rule of grammar.
-    @param ws whitespace rule.
-    @param el list of errors.
-    @param d user data, passed to the parse procedures.
-    @param ast result pointer to created ast.
-    @return true on success, false on error.
- */
-template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) {
-    ast_node *node = parse(i, g, ws, el);
-#if defined(__GXX_RTTI)
-    ast = dynamic_cast<T *>(node);
-#else
-    ast = static_cast<T *>(node);
-#endif
-    if (ast) return true;
-    delete node;
-    return false;
-}
 
 
 } //namespace parserlib

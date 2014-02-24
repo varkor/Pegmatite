@@ -94,17 +94,6 @@ static parse_proc_map_t *getParseProcMap()
 	return &parse_proc_map;
 }
 
-//get the parse proc from the map
-static parse_proc get_parse_proc(rule *r)
-{
-	parse_proc_map_t *map = getParseProcMap();
-	parse_proc_map_t::iterator it = map->find(r);
-	if (it == map->end()) return 0;
-	return it->second;
-}
-
-
-
 class parserlib_context;
 
 
@@ -175,15 +164,19 @@ public:
 
 	//matches
 	_match_vector m_matches;
+
+	const ParserDelegate &delegate;
+
 	bool unwinding;
 
 	//constructor
-	parserlib_context(Input &i, rule &ws) :
+	parserlib_context(Input &i, rule &ws, const ParserDelegate &d) :
 		m_ws(ws),
 		m_pos(i),
 		m_error_pos(i),
 		m_begin(i.begin()),
 		m_end(i.end()),
+		delegate(d),
 		unwinding(false)
 	{
 	}
@@ -240,6 +233,11 @@ public:
 	//parse whitespace terminal
 	bool parse_ws() { return parse_term(m_ws); }
 
+	parse_proc get_parse_proc(rule &r) const
+	{
+		return delegate.get_parse_proc(r);
+	}
+
 	//execute all the parse procs
 	void do_parse_procs(void *d) const
 	{
@@ -248,7 +246,7 @@ public:
 			++it)
 		{
 			const _match &m = *it;
-			parse_proc p = get_parse_proc(m.m_rule);
+			parse_proc p = get_parse_proc(*(m.m_rule));
 			p(m.m_begin, m.m_end, d);
 		}
 	}
@@ -1081,7 +1079,7 @@ const bool debug_parsing = false;
 bool parserlib_context::_parse_non_term(rule &r)
 {
 	bool ok;
-	if (get_parse_proc(std::addressof(r)))
+	if (get_parse_proc(r))
 	{
 		pos b = m_pos;
 		ok = r.expr->parse_non_term(*this);
@@ -1107,7 +1105,7 @@ bool parserlib_context::_parse_non_term(rule &r)
 bool parserlib_context::_parse_term(rule &r)
 {
 	bool ok;
-	if (get_parse_proc(std::addressof(r)))
+	if (get_parse_proc(r))
 	{
 		pos b = m_pos;
 		ok = r.expr->parse_term(*this);
@@ -1368,10 +1366,11 @@ ExprPtr any()
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d)
+bool parse(Input &i, rule &g, rule &ws, error_list &el,
+           const ParserDelegate &delegate, void *d)
 {
 	//prepare context
-	parserlib_context con(i, ws);
+	parserlib_context con(i, ws, delegate);
 
 	//parse initial whitespace
 	con.parse_term(con.m_ws);
@@ -1405,5 +1404,6 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d)
 	return true;
 }
 
+ParserDelegate::~ParserDelegate() {}
 
 } //namespace parserlib

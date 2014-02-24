@@ -580,6 +580,11 @@ ExprPtr eof();
  */
 ExprPtr any();
 
+struct ParserDelegate
+{
+	virtual parse_proc get_parse_proc(rule &) const = 0;
+	virtual ~ParserDelegate();
+};
 
 /** parses the given input.
 	The parse procedures of each rule parsed are executed
@@ -591,7 +596,8 @@ ExprPtr any();
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, rule &g, rule &ws, error_list &el, void *d);
+bool parse(Input &i, rule &g, rule &ws, error_list &el,
+           const ParserDelegate &delegate, void *d);
 
 
 /** output the specific input range to the specific stream.
@@ -609,6 +615,7 @@ template <class T> T &operator << (T &stream, const input_range &ir)
 	}
 	return stream;
 }
+
 
 
 } //namespace parserlib
