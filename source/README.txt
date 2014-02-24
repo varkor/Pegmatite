@@ -7,6 +7,7 @@ has the following goals:
 - Idiomatic C++11
 - Simple use
 - Reuseable, reentrant grammars with multiple action delegates
+- No dependency on RTTI / exceptions (usable in embedded contexts)
 
 It has the following explicit non-goals:
 
