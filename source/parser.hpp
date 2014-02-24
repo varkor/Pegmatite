@@ -31,6 +31,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <functional>
 
 
 namespace parserlib {
@@ -233,7 +234,7 @@ struct pos
 	@param e end position of input.
 	@param d pointer to user data.
  */
-typedef void (*parse_proc)(const pos &b, const pos &e, void *d);
+typedef std::function<void(const pos&, const pos&, void*)> parse_proc;
 
 
 ///input range.
