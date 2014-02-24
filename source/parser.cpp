@@ -38,7 +38,7 @@ using namespace parserlib;
 namespace {
 //parser state
 // FIXME: This class has an uninformative name.
-class _state
+class ParsingState
 {
 public:
 	//position
@@ -48,7 +48,7 @@ public:
 	size_t m_matches;
 
 	//constructor
-	_state(Context &con);
+	ParsingState(Context &con);
 };
 
 
@@ -159,7 +159,7 @@ public:
 	}
 
 	//restore the state
-	void restore(const _state &st)
+	void restore(const ParsingState &st)
 	{
 		m_pos = st.m_pos;
 		m_matches.resize(st.m_matches);
@@ -202,7 +202,7 @@ private:
 	};
 
 	//state
-	struct _state
+	struct RuleState
 	{
 		//position in source code, relative to start
 		size_t m_pos;
@@ -211,10 +211,10 @@ private:
 		_MODE m_mode;
 
 		//constructor
-		_state(size_t pos = -1, _MODE mode = _PARSE) :
+		RuleState(size_t pos = -1, _MODE mode = _PARSE) :
 			m_pos(pos), m_mode(mode) {}
 	};
-	std::unordered_map<rule*, _state> rule_states;
+	std::unordered_map<rule*, RuleState> rule_states;
 	rule *unwind_target;
 	bool parse_rule(rule &r, bool (Context::*parse_func)(rule &));
 	//parse non-term rule.
@@ -365,7 +365,7 @@ public:
 	{
 		//if parsing of the first fails, restore the context and stop
 		con.parse_ws();
-		_state st(con);
+		ParsingState st(con);
 		if (!expr->parse_non_term(con))
 		{
 			if (con.unwinding)
@@ -380,7 +380,7 @@ public:
 		for(;;)
 		{
 			con.parse_ws();
-			_state st(con);
+			ParsingState st(con);
 			if (!expr->parse_non_term(con))
 			{
 				if (con.unwinding)
@@ -399,7 +399,7 @@ public:
 	virtual bool parse_term(Context &con) const
 	{
 		//if parsing of the first fails, restore the context and stop
-		_state st(con);
+		ParsingState st(con);
 		if (!expr->parse_term(con))
 		{
 			if (con.unwinding)
@@ -413,7 +413,7 @@ public:
 		//parse the rest until no more parsing is possible
 		for(;;)
 		{
-			_state st(con);
+			ParsingState st(con);
 			if (!expr->parse_term(con))
 			{
 				if (con.unwinding)
@@ -453,7 +453,7 @@ public:
 		for(;;)
 		{
 			con.parse_ws();
-			_state st(con);
+			ParsingState st(con);
 			if (!expr->parse_non_term(con))
 			{
 				if (con.unwinding)
@@ -477,7 +477,7 @@ public:
 		//parse the rest until no more parsing is possible
 		for(;;)
 		{
-			_state st(con);
+			ParsingState st(con);
 			if (!expr->parse_term(con))
 			{
 				if (con.unwinding)
@@ -510,7 +510,7 @@ public:
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		if (!expr->parse_non_term(con)) con.restore(st);
 		return true;
 	}
@@ -518,7 +518,7 @@ public:
 	//parse terminal
 	virtual bool parse_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		if (!expr->parse_term(con)) con.restore(st);
 		return true;
 	}
@@ -544,7 +544,7 @@ public:
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		bool ok = expr->parse_non_term(con);
 		con.restore(st);
 		return ok;
@@ -553,7 +553,7 @@ public:
 	//parse terminal
 	virtual bool parse_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		bool ok = expr->parse_term(con);
 		con.restore(st);
 		return ok;
@@ -577,7 +577,7 @@ public:
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		bool ok = !expr->parse_non_term(con);
 		con.restore(st);
 		return ok;
@@ -586,7 +586,7 @@ public:
 	//parse terminal
 	virtual bool parse_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		bool ok = !expr->parse_term(con);
 		con.restore(st);
 		return ok;
@@ -682,7 +682,7 @@ public:
 
 	virtual bool parse_non_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		if (m_left->parse_non_term(con)) return true;
 		if (con.unwinding)
 		{
@@ -694,7 +694,7 @@ public:
 
 	virtual bool parse_term(Context &con) const
 	{
-		_state st(con);
+		ParsingState st(con);
 		if (m_left->parse_term(con)) return true;
 		if (con.unwinding)
 		{
@@ -795,7 +795,7 @@ public:
 };
 
 //constructor
-_state::_state(Context &con) :
+ParsingState::ParsingState(Context &con) :
 	m_pos(con.m_pos),
 	m_matches(con.m_matches.size())
 {
@@ -817,8 +817,8 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 {
 	if (unwinding) return false;
 	//save the state of the rule
-	_state &rule_state = rule_states[std::addressof(r)];
-	_state old_state = rule_state;
+	RuleState &rule_state = rule_states[std::addressof(r)];
+	RuleState old_state = rule_state;
 
 	//success/failure result
 	bool ok;
@@ -857,7 +857,7 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 					for(;;)
 					{
 						//store the correct state, in order to backtrack if the call fails
-						::_state st(*this);
+						ParsingState st(*this);
 
 						//update the rule position to the current position,
 						//because at this state the rule is resolving the left recursion
