@@ -417,23 +417,21 @@ private:
  */
 template <class T> class ast {
 public:
-    /** constructor.
-        @param r rule to attach the AST function to.
-     */
-    ast(rule &r) {
-        r.set_parse_proc(&_parse_proc);
-    }
-
-private:
-    //parse proc
-    static void _parse_proc(const pos &b, const pos &e, void *d) {
-        ast_stack *st = reinterpret_cast<ast_stack *>(d);
-        T *obj = new T;
-        obj->m_begin = b;
-        obj->m_end = e;
-        obj->construct(*st);
-        st->push_back(obj);
-    }
+	/** constructor.
+		@param r rule to attach the AST function to.
+	 */
+	ast(rule &r)
+	{
+		r.set_parse_proc([](const pos &b, const pos &e, void *d)
+			{
+				ast_stack *st = reinterpret_cast<ast_stack *>(d);
+				T *obj = new T;
+				obj->m_begin = b;
+				obj->m_end = e;
+				obj->construct(*st);
+				st->push_back(obj);
+			});
+	}
 };
 
 
