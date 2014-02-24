@@ -27,7 +27,6 @@
 #include <cassert>
 #include "ast.hpp"
 
-namespace parserlib {
 
 namespace {
 /**
@@ -35,9 +34,18 @@ namespace {
  * then the constructors for the fields run, accessing it to detect their
  * parents.
  */
-// FIXME: Should be thread_local, but that doesn't seem to work on OS X for some reason (__thread does)
-__thread ast_container *current = 0;
+// FIXME: Should be thread_local, but that doesn't seem to work on OS X for
+// some reason (__thread does)
+__thread parserlib::ast_container *current = 0;
+/**
+ * The current parser delegate.  When constructing an object, this is set and
+ * then the constructors for the fields run, accessing it to detect their
+ * parents.
+ */
+__thread parserlib::ASTParserDelegate *currentParserDelegate;
 }
+
+namespace parserlib {
 
 /** sets the container under construction to be this.
  */
@@ -75,7 +83,6 @@ void ast_member::_init() {
     current->m_members.push_back(this);
 }
 
-__thread ASTParserDelegate *currentParserDelegate;
 
 ASTParserDelegate::ASTParserDelegate()
 {
