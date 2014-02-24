@@ -266,11 +266,7 @@ public:
         ast_node *node = st.back();
         
         //get the object
-#if defined(__GXX_RTTI)
         T *obj = dynamic_cast<T *>(node);
-#else
-        T *obj = static_cast<T *>(node);
-#endif
         
         //if the object is optional, simply return
         if (OPT) {
@@ -359,11 +355,7 @@ public:
             ast_node *node = st.back();
             
             //get the object
-#if defined(__GXX_RTTI)
             T *obj = dynamic_cast<T *>(node);
-#else
-            T *obj = static_cast<T *>(node);
-#endif
             
             //if the object was not not of the appropriate type,
             //end the list parsing
@@ -428,11 +420,7 @@ class ASTParserDelegate : ParserDelegate
 	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) const
 	{
 		ast_node *node = parserlib::parse(i, g, ws, el, *this);
-#if defined(__GXX_RTTI)
 		ast = dynamic_cast<T *>(node);
-#else
-		ast = static_cast<T *>(node);
-#endif
 		if (ast) return true;
 		delete node;
 		return false;
