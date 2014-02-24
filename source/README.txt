@@ -52,3 +52,5 @@ Not in order:
   - Rules can be constructed from expressions (including via assignment)
   - Casting rules to expressions gives a new rule-ref expression
   - Expressions are only acyclic, but can form cycles via rule references.
+- Use std::unique_ptr in the AST (trees are, by definition, acyclic and each
+  node has a unique parent).
