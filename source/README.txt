@@ -7,7 +7,6 @@ has the following goals:
 - Idiomatic C++11
 - Simple use
 - Reuseable, reentrant grammars with multiple action delegates
-- No dependency on RTTI / exceptions (useable in embedded contexts)
 
 It has the following explicit non-goals:
 
@@ -40,13 +39,11 @@ To do
 Not in order:
 
 - Finish reindenting code
-- Finish removing bastardised systems Hungarian notation prefixes
 - Write parameterised delegate for generating semantic HTML markup
 - Write better documentation for how the AST construction works
 - Add error delegate
 - Rename classes so types start with uppercase
 - Fix namespacing (e.g. all private classes should be in anonymous namespace)
 - Add a build system!
-- Add lightweight RTTI replacement for AST nodes.
 - Use std::unique_ptr in the AST (trees are, by definition, acyclic and each
   node has a unique parent).
