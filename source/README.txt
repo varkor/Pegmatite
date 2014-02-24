@@ -47,5 +47,6 @@ Not in order:
 - Rename classes so types start with uppercase
 - Fix namespacing (e.g. all private classes should be in anonymous namespace)
 - Add a build system!
+- Add lightweight RTTI replacement for AST nodes.
 - Use std::unique_ptr in the AST (trees are, by definition, acyclic and each
   node has a unique parent).
