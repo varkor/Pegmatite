@@ -42,10 +42,10 @@ class ParsingState
 {
 public:
 	//position
-	pos m_pos;
+	pos position;
 
 	//size of match vector
-	size_t m_matches;
+	size_t matches;
 
 	//constructor
 	ParsingState(Context &con);
@@ -54,29 +54,30 @@ public:
 
 
 //match
-class _match
+class ParseMatch
 {
 public:
 	//rule matched
-	rule *m_rule;
+	rule *matched_rule;
 
 	//begin position
-	pos m_begin;
+	pos start;
 
 	//end position
-	pos m_end;
+	pos finish;
 
 	//null constructor
-	_match() {}
+	ParseMatch() {}
 
 	//constructor from parameters
-	_match(rule *r, const pos &b, const pos &e) :
-		m_rule(r),
-		m_begin(b),
-		m_end(e)
+	ParseMatch(rule *r, const pos &b, const pos &e) :
+		matched_rule(r),
+		start(b),
+		finish(e)
 	{
 	}
 };
+
 }
 namespace parserlib
 {
@@ -86,25 +87,25 @@ class Context
 {
 public:
 	//match vector
-	typedef std::vector<_match> _match_vector;
+	typedef std::vector<ParseMatch> ParseMatch_vector;
 
 	//rule that parses whitespace
-	rule &m_ws;
+	rule &whitespace_rule;
 
 	//current position
-	pos m_pos;
+	pos position;
 
 	//error position
-	pos m_error_pos;
+	pos error_pos;
 
 	//input begin
-	Input::iterator m_begin;
+	Input::iterator start;
 
 	//input end
-	Input::iterator m_end;
+	Input::iterator finish;
 
 	//matches
-	_match_vector m_matches;
+	ParseMatch_vector matches;
 
 	const ParserDelegate &delegate;
 
@@ -112,11 +113,11 @@ public:
 
 	//constructor
 	Context(Input &i, rule &ws, const ParserDelegate &d) :
-		m_ws(ws),
-		m_pos(i),
-		m_error_pos(i),
-		m_begin(i.begin()),
-		m_end(i.end()),
+		whitespace_rule(ws),
+		position(i),
+		error_pos(i),
+		start(i.begin()),
+		finish(i.end()),
 		delegate(d),
 		unwinding(false)
 	{
@@ -125,44 +126,44 @@ public:
 	//check if the end is reached
 	bool end() const
 	{
-		return m_pos.it == m_end;
+		return position.it == finish;
 	}
 
 	//get the current symbol
 	int symbol() const
 	{
 		assert(!end());
-		return *m_pos.it;
+		return *position.it;
 	}
 
 	//set the longest possible error
 	void set_error_pos()
 	{
-		if (m_pos.it > m_error_pos.it)
+		if (position.it > error_pos.it)
 		{
-			m_error_pos = m_pos;
+			error_pos = position;
 		}
 	}
 
 	//next column
 	void next_col()
 	{
-		++m_pos.it;
-		++m_pos.col;
+		++position.it;
+		++position.col;
 	}
 
 	//next line
 	void next_line()
 	{
-		++m_pos.line;
-		m_pos.col = 1;
+		++position.line;
+		position.col = 1;
 	}
 
 	//restore the state
 	void restore(const ParsingState &st)
 	{
-		m_pos = st.m_pos;
-		m_matches.resize(st.m_matches);
+		position = st.position;
+		matches.resize(st.matches);
 	}
 
 	//parse non-term rule.
@@ -172,7 +173,7 @@ public:
 	bool parse_term(rule &r);
 
 	//parse whitespace terminal
-	bool parse_ws() { return parse_term(m_ws); }
+	bool parse_ws() { return parse_term(whitespace_rule); }
 
 	parse_proc get_parse_proc(rule &r) const
 	{
@@ -182,37 +183,37 @@ public:
 	//execute all the parse procs
 	void do_parse_procs(void *d) const
 	{
-		for(_match_vector::const_iterator it = m_matches.begin();
-			it != m_matches.end();
+		for(ParseMatch_vector::const_iterator it = matches.begin();
+			it != matches.end();
 			++it)
 		{
-			const _match &m = *it;
-			parse_proc p = get_parse_proc(*(m.m_rule));
-			p(m.m_begin, m.m_end, d);
+			const ParseMatch &m = *it;
+			parse_proc p = get_parse_proc(*(m.matched_rule));
+			p(m.start, m.finish, d);
 		}
 	}
 
 private:
 	//mode
-	enum _MODE
+	enum MatchMode
 	{
-		_PARSE,
-		_REJECT,
-		_ACCEPT
+		PARSE,
+		REJECT,
+		ACCEPT
 	};
 
 	//state
 	struct RuleState
 	{
 		//position in source code, relative to start
-		size_t m_pos;
+		size_t position;
 
 		//mode
-		_MODE m_mode;
+		MatchMode mode;
 
 		//constructor
-		RuleState(size_t pos = -1, _MODE mode = _PARSE) :
-			m_pos(pos), m_mode(mode) {}
+		RuleState(size_t pos = -1, MatchMode mode = PARSE) :
+			position(pos), mode(mode) {}
 	};
 	std::unordered_map<rule*, RuleState> rule_states;
 	rule *unwind_target;
@@ -637,9 +638,9 @@ class BinaryExpr : public Expr
 {
 public:
 	BinaryExpr(const ExprPtr &left, const ExprPtr &right) :
-		m_left(left), m_right(right) { }
+		left(left), right(right) { }
 protected:
-	const ExprPtr m_left, m_right;
+	const ExprPtr left, right;
 };
 
 
@@ -652,23 +653,23 @@ public:
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
 	{
-		if (!m_left->parse_non_term(con)) return false;
+		if (!left->parse_non_term(con)) return false;
 		con.parse_ws();
-		return m_right->parse_non_term(con);
+		return right->parse_non_term(con);
 	}
 
 	//parse terminal
 	virtual bool parse_term(Context &con) const
 	{
-		if (!m_left->parse_term(con)) return false;
-		return m_right->parse_term(con);
+		if (!left->parse_term(con)) return false;
+		return right->parse_term(con);
 	}
 
 	virtual void dump() const
 	{
-		m_left->dump();
+		left->dump();
 		fprintf(stderr, " >> ");
-		m_right->dump();
+		right->dump();
 	}
 };
 
@@ -683,32 +684,32 @@ public:
 	virtual bool parse_non_term(Context &con) const
 	{
 		ParsingState st(con);
-		if (m_left->parse_non_term(con)) return true;
+		if (left->parse_non_term(con)) return true;
 		if (con.unwinding)
 		{
 			return false;
 		}
 		con.restore(st);
-		return m_right->parse_non_term(con);
+		return right->parse_non_term(con);
 	}
 
 	virtual bool parse_term(Context &con) const
 	{
 		ParsingState st(con);
-		if (m_left->parse_term(con)) return true;
+		if (left->parse_term(con)) return true;
 		if (con.unwinding)
 		{
 			return false;
 		}
 		con.restore(st);
-		return m_right->parse_term(con);
+		return right->parse_term(con);
 	}
 
 	virtual void dump() const
 	{
-		m_left->dump();
+		left->dump();
 		fprintf(stderr, " | ");
-		m_right->dump();
+		right->dump();
 	}
 };
 
@@ -718,18 +719,18 @@ class RuleReferenceExpr : public Expr
 {
 public:
 	//constructor.
-	RuleReferenceExpr(rule &r) : m_rule(r) { }
+	RuleReferenceExpr(rule &r) : referenced_rule(r) { }
 
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
 	{
-		return con.parse_non_term(m_rule);
+		return con.parse_non_term(referenced_rule);
 	}
 
 	//parse terminal
 	virtual bool parse_term(Context &con) const
 	{
-		return con.parse_term(m_rule);
+		return con.parse_term(referenced_rule);
 	}
 
 	virtual void dump() const
@@ -739,7 +740,7 @@ public:
 
 private:
 	//reference
-	rule &m_rule;
+	rule &referenced_rule;
 };
 
 
@@ -796,8 +797,8 @@ public:
 
 //constructor
 ParsingState::ParsingState(Context &con) :
-	m_pos(con.m_pos),
-	m_matches(con.m_matches.size())
+	position(con.position),
+	matches(con.matches.size())
 {
 }
 
@@ -824,23 +825,23 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 	bool ok;
 
 	//compute the new position
-	size_t new_pos = m_pos.it - m_begin;
+	size_t new_pos = position.it - start;
 
 	//check if we have left recursion
-	bool lr = new_pos == rule_state.m_pos;
+	bool lr = new_pos == rule_state.position;
 
 	//update the rule's state
-	rule_state.m_pos = new_pos;
+	rule_state.position = new_pos;
 
 	//handle the mode of the rule
-	switch (rule_state.m_mode)
+	switch (rule_state.mode)
 	{
 		//normal parse
-		case _PARSE:
+		case PARSE:
 			if (lr)
 			{
 				//first try to parse the rule by rejecting it, so alternative branches are examined
-				rule_state.m_mode = _REJECT;
+				rule_state.mode = REJECT;
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
@@ -851,7 +852,7 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 				//so other elements of the sequence are parsed
 				if (ok)
 				{
-					rule_state.m_mode = _ACCEPT;
+					rule_state.mode = ACCEPT;
 
 					//loop until no more parsing can be done
 					for(;;)
@@ -861,7 +862,7 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 
 						//update the rule position to the current position,
 						//because at this state the rule is resolving the left recursion
-						rule_state.m_pos = m_pos.it - m_begin;
+						rule_state.position = position.it - start;
 
 						//if parsing fails, restore the last good state and stop
 						if (!(this->*parse_func)(r))
@@ -900,38 +901,38 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 			break;
 
 		//reject the left recursive rule
-		case _REJECT:
+		case REJECT:
 			if (lr)
 			{
 				ok = false;
 			}
 			else
 			{
-				rule_state.m_mode = _PARSE;
+				rule_state.mode = PARSE;
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
 					return false;
 				}
-				rule_state.m_mode = _REJECT;
+				rule_state.mode = REJECT;
 			}
 			break;
 
 		//accept the left recursive rule
-		case _ACCEPT:
+		case ACCEPT:
 			if (lr)
 			{
 				ok = true;
 			}
 			else
 			{
-				rule_state.m_mode = _PARSE;
+				rule_state.mode = PARSE;
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
 					return false;
 				}
-				rule_state.m_mode = _ACCEPT;
+				rule_state.mode = ACCEPT;
 			}
 			break;
 	}
@@ -958,7 +959,7 @@ bool Context::_parse_non_term(rule &r)
 	bool ok;
 	if (get_parse_proc(r))
 	{
-		pos b = m_pos;
+		pos b = position;
 		ok = r.expr->parse_non_term(*this);
 		if (debug_parsing)
 		{
@@ -967,7 +968,7 @@ bool Context::_parse_non_term(rule &r)
 		}
 		if (ok)
 		{
-			m_matches.push_back(_match(std::addressof(r), b, m_pos));
+			matches.push_back(ParseMatch(std::addressof(r), b, position));
 		}
 	}
 	else
@@ -984,11 +985,11 @@ bool Context::_parse_term(rule &r)
 	bool ok;
 	if (get_parse_proc(r))
 	{
-		pos b = m_pos;
+		pos b = position;
 		ok = r.expr->parse_term(*this);
 		if (ok)
 		{
-			m_matches.push_back(_match(std::addressof(r), b, m_pos));
+			matches.push_back(ParseMatch(std::addressof(r), b, position));
 		}
 	}
 	else
@@ -1013,15 +1014,15 @@ static pos _next_pos(const pos &p)
 static error _syntax_error(Context &con)
 {
 	std::string str = "syntax error: ";
-	str += *con.m_error_pos.it;
-	return error(con.m_error_pos, _next_pos(con.m_error_pos), ERROR_SYNTAX_ERROR);
+	str += *con.error_pos.it;
+	return error(con.error_pos, _next_pos(con.error_pos), ERROR_SYNTAX_ERROR);
 }
 
 
 //get eof error
 static error _eof_error(Context &con)
 {
-	return error(con.m_error_pos, con.m_error_pos, ERROR_INVALID_EOF);
+	return error(con.error_pos, con.error_pos, ERROR_INVALID_EOF);
 }
 
 char32_t Input::slowCharacterLookup(Index n)
@@ -1131,7 +1132,7 @@ ExprPtr operator !(const ExprPtr &e)
 	@param b begin position.
 	@param e end position.
  */
-input_range::input_range(const pos &b, const pos &e) : m_begin(b), m_end(e) { }
+input_range::input_range(const pos &b, const pos &e) : start(b), finish(e) { }
 
 
 /** constructor.
@@ -1140,7 +1141,7 @@ input_range::input_range(const pos &b, const pos &e) : m_begin(b), m_end(e) { }
 	@param t error type.
  */
 error::error(const pos &b, const pos &e, int t) :
-	input_range(b, e), m_type(t) { }
+	input_range(b, e), error_type(t) { }
 
 
 /** compare on begin position.
@@ -1149,7 +1150,7 @@ error::error(const pos &b, const pos &e, int t) :
  */
 bool error::operator < (const error &e) const
 {
-	return m_begin.it < e.m_begin.it;
+	return start.it < e.start.it;
 }
 
 
@@ -1289,7 +1290,7 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el,
 	Context con(i, ws, delegate);
 
 	//parse initial whitespace
-	con.parse_term(con.m_ws);
+	con.parse_term(con.whitespace_rule);
 
 	//parse grammar
 	if (!con.parse_non_term(g))
@@ -1299,12 +1300,12 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el,
 	}
 
 	//parse whitespace at the end
-	con.parse_term(con.m_ws);
+	con.parse_term(con.whitespace_rule);
 
 	//if end is not reached, there was an error
 	if (!con.end())
 	{
-		if (con.m_error_pos.it < con.m_end)
+		if (con.error_pos.it < con.finish)
 		{
 			el.push_back(_syntax_error(con));
 		}

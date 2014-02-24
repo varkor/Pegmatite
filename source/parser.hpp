@@ -242,10 +242,10 @@ class input_range
 {
 public:
 	///begin position.
-	pos m_begin;
+	pos start;
 
 	///end position.
-	pos m_end;
+	pos finish;
 
 	///empty constructor.
 	input_range() {}
@@ -255,8 +255,8 @@ public:
 		@param e end position.
 	 */
 	input_range(const pos &b, const pos &e);
-	Input::iterator begin() const { return m_begin.it; };
-	Input::iterator end() const { return m_end.it; };
+	Input::iterator begin() const { return start.it; };
+	Input::iterator end() const { return finish.it; };
 };
 
 
@@ -279,7 +279,7 @@ class error : public input_range
 {
 public:
 	///type
-	int m_type;
+	int error_type;
 
 	/** constructor.
 		@param b begin position.

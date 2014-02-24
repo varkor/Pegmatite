@@ -68,7 +68,7 @@ ast_container::ast_container(const ast_container &src) {
     @param st stack.
  */
 void ast_container::construct(const input_range &r, ast_stack &st) {
-	for(auto it = m_members.rbegin(); it != m_members.rend(); ++it)
+	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
 		ast_member *member = *it;
 		member->construct(r, st);
@@ -79,8 +79,8 @@ void ast_container::construct(const input_range &r, ast_stack &st) {
 //register the AST member to the current container.
 void ast_member::_init() {
     assert(current);
-    m_container = current;
-    current->m_members.push_back(this);
+    container_node = current;
+    current->members.push_back(this);
 }
 
 

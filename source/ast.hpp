@@ -54,12 +54,12 @@ typedef std::vector<ast_node *> ast_stack;
 class ast_node {
 public:
     ///constructor.
-    ast_node() : m_parent(0) {}
+    ast_node() : parent_node(0) {}
     
     /** copy constructor.
         @param n source object.
      */
-    ast_node(const ast_node &n) : m_parent(0) {}
+    ast_node(const ast_node &n) : parent_node(0) {}
 
     ///destructor.
     virtual ~ast_node() {}
@@ -73,7 +73,7 @@ public:
     /** get the parent node.
         @return the parent node, if there is one.
      */
-    ast_node *parent() const { return m_parent; }
+    ast_node *parent() const { return parent_node; }
     
     /** interface for filling the contents of the node
         from a node stack.
@@ -83,7 +83,7 @@ public:
     
 private:
     //parent
-    ast_node *m_parent;    
+    ast_node *parent_node;    
     
     template <class T, bool OPT> friend class ast_ptr;
     template <class T> friend class ast_list;
@@ -122,13 +122,6 @@ public:
         return *this;
     }
 
-    /** returns the vector of AST members.
-        @return the vector of AST members.
-     */
-    const ast_member_vector &members() const {
-        return m_members;
-    }
-
     /** Asks all members to construct themselves from the stack.
         The members are asked to construct themselves in reverse order.
         from a node stack.
@@ -137,7 +130,7 @@ public:
     virtual void construct(const input_range &r, ast_stack &st);
 
 private:
-    ast_member_vector m_members;
+    ast_member_vector members;
 
     friend class ast_member;
 };
@@ -167,7 +160,7 @@ public:
     /** returns the container this belongs to.
         @return the container this belongs to.
      */
-    ast_container *container() const { return m_container; }
+    ast_container *container() const { return container_node; }
 
     /** interface for filling the the member from a node stack.
         @param st stack.
@@ -176,7 +169,7 @@ public:
 
 private:
     //the container this belongs to.
-    ast_container *m_container;
+    ast_container *container_node;
 
     //register the AST member to the current container.
     void _init();
@@ -194,7 +187,7 @@ public:
     /** the default constructor.
         @param obj object.
      */
-    ast_ptr(T *obj = 0) : m_ptr(obj) {
+    ast_ptr(T *obj = 0) : ptr(obj) {
         _set_parent();
     }
 
@@ -203,7 +196,7 @@ public:
         @param src source object.
      */
     ast_ptr(const ast_ptr<T, OPT> &src) :
-        m_ptr(src.m_ptr ? new T(*src.m_ptr) : 0)
+        ptr(src.ptr ? new T(*src.ptr) : 0)
     {
         _set_parent();
     }
@@ -211,7 +204,7 @@ public:
     /** deletes the underlying object.
      */
     ~ast_ptr() {
-        delete m_ptr;
+        delete ptr;
     }
 
     /** copies the given object.
@@ -220,8 +213,8 @@ public:
         @return reference to this.
      */
     ast_ptr<T, OPT> &operator = (const T *obj) {
-        delete m_ptr;
-        m_ptr = obj ? new T(*obj) : 0;
+        delete ptr;
+        ptr = obj ? new T(*obj) : 0;
         _set_parent();
         return *this;
     }
@@ -232,8 +225,8 @@ public:
         @return reference to this.
      */
     ast_ptr<T, OPT> &operator = (const ast_ptr<T, OPT> &src) {
-        delete m_ptr;
-        m_ptr = src.m_ptr ? new T(*src.m_ptr) : 0;
+        delete ptr;
+        ptr = src.ptr ? new T(*src.ptr) : 0;
         _set_parent();
         return *this;
     }
@@ -242,22 +235,22 @@ public:
         @return the underlying ptr value.
      */
     T *get() const {
-        return m_ptr;
+        return ptr;
     }
 
     /** auto conversion to the underlying object ptr.
         @return the underlying ptr value.
      */
     operator T *() const {
-        return m_ptr;
+        return ptr;
     }
 
     /** member access.
         @return the underlying ptr value.
      */
     T *operator ->() const {
-        assert(m_ptr);
-        return m_ptr;
+        assert(ptr);
+        return ptr;
     }
 
     /** Pops a node from the stack.
@@ -293,18 +286,18 @@ public:
         st.pop_back();
         
         //set the new object
-        delete m_ptr;
-        m_ptr = obj;
+        delete ptr;
+        ptr = obj;
         _set_parent();
     }
 
 private:
     //ptr
-    T *m_ptr;
+    T *ptr;
     
     //set parent of object
     void _set_parent() {
-        if (m_ptr) m_ptr->m_parent = container();
+        if (ptr) ptr->parent_node = container();
     }
 };
 
@@ -351,7 +344,7 @@ public:
         @return the container of objects.
      */
     const container &objects() const {
-        return m_objects;
+        return child_objects;
     }
 
     /** Pops objects of type T from the stack until no more objects can be popped.
@@ -380,34 +373,34 @@ public:
             st.pop_back();
             
             //insert the object in the list, in reverse order
-            m_objects.push_front(obj);
+            child_objects.push_front(obj);
             
             //set the object's parent
-            obj->m_parent = ast_member::container();
+            obj->parent_node = ast_member::container();
         }
     }
 
 private:
     //objects
-    container m_objects;
+    container child_objects;
 
     //deletes the objects of this list.
     void _clear() {
-        while (!m_objects.empty()) {
-            delete m_objects.back();
-            m_objects.pop_back();
+        while (!child_objects.empty()) {
+            delete child_objects.back();
+            child_objects.pop_back();
         }
     }
 
     //duplicate the given list.
     void _dup(const ast_list<T> &src) {
-        for(typename container::const_iterator it = src.m_objects.begin();
-            it != src.m_objects.end();
+        for(typename container::const_iterator it = src.child_objects.begin();
+            it != src.child_objects.end();
             ++it)
         {
             T *obj = new T(*it);
-            m_objects.push_back(obj);
-            obj->m_parent = ast_member::container();
+            child_objects.push_back(obj);
+            obj->parent_node = ast_member::container();
         }
     }
 };
