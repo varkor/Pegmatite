@@ -50,7 +50,7 @@ typedef std::vector<ast_node *> ast_stack;
 
 /** Base class for AST nodes.
  */
-class ast_node : public input_range {
+class ast_node {
 public:
     ///constructor.
     ast_node() : m_parent(0) {}
@@ -78,7 +78,7 @@ public:
         from a node stack.
         @param st stack.
      */
-    virtual void construct(ast_stack &st) {}
+    virtual void construct(const input_range &r, ast_stack &st) {}
     
 private:
     //parent
@@ -133,7 +133,7 @@ public:
         from a node stack.
         @param st stack.
      */
-    virtual void construct(ast_stack &st);
+    virtual void construct(const input_range &r, ast_stack &st);
 
 private:
     ast_member_vector m_members;
@@ -171,7 +171,7 @@ public:
     /** interface for filling the the member from a node stack.
         @param st stack.
      */
-    virtual void construct(ast_stack &st) = 0;
+    virtual void construct(const input_range &r, ast_stack &st) = 0;
 
 private:
     //the container this belongs to.
@@ -264,7 +264,7 @@ public:
         @exception std::logic_error thrown if the node is not of the appropriate type;
             thrown only if OPT == false or if the stack is empty.
      */
-    virtual void construct(ast_stack &st) {
+    virtual void construct(const input_range &r, ast_stack &st) {
         //check the stack node
         //if (st.empty()) throw std::logic_error("empty AST stack");
     
@@ -356,7 +356,7 @@ public:
     /** Pops objects of type T from the stack until no more objects can be popped.
         @param st stack.
      */
-    virtual void construct(ast_stack &st) {
+    virtual void construct(const input_range &r, ast_stack &st) {
         for(;;) {
             //if the stack is empty
             if (st.empty()) break;
@@ -425,10 +425,8 @@ public:
 		r.set_parse_proc([](const pos &b, const pos &e, void *d)
 			{
 				ast_stack *st = reinterpret_cast<ast_stack *>(d);
-				T *obj = new T;
-				obj->m_begin = b;
-				obj->m_end = e;
-				obj->construct(*st);
+				T *obj = new T();
+				obj->construct(input_range(b, e), *st);
 				st->push_back(obj);
 			});
 	}

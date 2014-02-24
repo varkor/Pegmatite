@@ -59,14 +59,12 @@ ast_container::ast_container(const ast_container &src) {
     from a node stack.
     @param st stack.
  */
-void ast_container::construct(ast_stack &st) {
-    for(ast_member_vector::reverse_iterator it = m_members.rbegin();
-        it != m_members.rend();
-        ++it)
-    {
-        ast_member *member = *it;
-        member->construct(st);
-    }
+void ast_container::construct(const input_range &r, ast_stack &st) {
+	for(auto it = m_members.rbegin(); it != m_members.rend(); ++it)
+	{
+		ast_member *member = *it;
+		member->construct(r, st);
+	}
 }
 
 
