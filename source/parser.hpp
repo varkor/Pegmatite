@@ -38,7 +38,7 @@ namespace parserlib {
 
 
 class Expr;
-class parserlib_context;
+class Context;
 class rule;
 
 
@@ -367,7 +367,7 @@ private:
 	//assignment not allowed
 	rule &operator = (rule &) = delete;
 
-	friend class parserlib_context;
+	friend class Context;
 };
 
 /**
@@ -388,13 +388,13 @@ public:
 	 * contain whitespace around compound expressions, as defined by the
 	 * whitespace rule in the context.
 	 */
-	virtual bool parse_non_term(parserlib_context &con) const = 0;
+	virtual bool parse_non_term(Context &con) const = 0;
 
 	/**
 	 * Parse this expression as a terminal.  Terminals are exact matches for
 	 * the specified expression, without any whitespace.
 	 */
-	virtual bool parse_term(parserlib_context &con) const = 0;
+	virtual bool parse_term(Context &con) const = 0;
 
 	/**
 	 * Dump the current rule.  Used for debugging.
@@ -459,8 +459,8 @@ class CharacterExpr : public Expr
 	int character;
 public:
 	CharacterExpr(int c) : character(c) {}
-	virtual bool parse_non_term(parserlib_context &con) const;
-	virtual bool parse_term(parserlib_context &con) const;
+	virtual bool parse_non_term(Context &con) const;
+	virtual bool parse_term(Context &con) const;
 	virtual void dump() const;
 	/**
 	 * Returns a range expression that recognises characters in the specified
@@ -478,8 +478,8 @@ class StringExpr : public Expr
 public:
 	StringExpr(const char *s) : characters(s, s + strlen(s)) {}
 	StringExpr(const char *s, std::size_t length) : characters(s, s + length) {}
-	virtual bool parse_non_term(parserlib_context &con) const;
-	virtual bool parse_term(parserlib_context &con) const;
+	virtual bool parse_non_term(Context &con) const;
+	virtual bool parse_term(Context &con) const;
 	virtual void dump() const;
 private:
 	/**
