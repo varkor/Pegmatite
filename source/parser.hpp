@@ -607,11 +607,9 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el,
  */
 template <class T> T &operator << (T &stream, const input_range &ir)
 {
-	for(Input::iterator it = ir.m_begin.it;
-		it != ir.m_end.it;
-		++it)
+	for(auto c : ir)
 	{
-		stream << (typename T::char_type)*it;
+		stream << (typename T::char_type)c;
 	}
 	return stream;
 }
