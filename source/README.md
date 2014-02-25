@@ -75,3 +75,4 @@ Not in order:
   node has a unique parent).
 - Check whether the `USE_RTTI` setting for the headers and library had to match
   it would be nice if it didn't...
+- Implement input sources wrapping std::string and ascii text files.
