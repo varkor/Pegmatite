@@ -38,15 +38,15 @@
 namespace parserlib {
 
 
-class ast_node;
-template <class T, bool OPT> class ast_ptr;
-template <class T> class ast_list;
+class ASTNode;
+template <class T, bool OPT> class ASTPtr;
+template <class T> class ASTList;
 template <class T> class ast;
 
 
 /** type of AST node stack.
  */
-typedef std::vector<ast_node *> ast_stack;
+typedef std::vector<ASTNode *> ASTStack;
 
 #ifdef USE_RTTI
 #define PARSELIB_RTTI(thisclass, superclass)
@@ -57,7 +57,7 @@ typedef std::vector<ast_node *> ast_stack;
  * provide support for safe downcasting.
  */
 #define PARSELIB_RTTI(thisclass, superclass)             \
-	friend ast_node;                                     \
+	friend ASTNode;                                     \
 protected:                                               \
 	virtual char *kind()                                 \
 	{                                                    \
@@ -79,42 +79,42 @@ public:                                                  \
 
 /** Base class for AST nodes.
  */
-class ast_node {
+class ASTNode {
 public:
     ///constructor.
-    ast_node() : parent_node(0) {}
+    ASTNode() : parent_node(0) {}
     
     /** copy constructor.
         @param n source object.
      */
-    ast_node(const ast_node &n) : parent_node(0) {}
+    ASTNode(const ASTNode &n) : parent_node(0) {}
 
     ///destructor.
-    virtual ~ast_node() {}
+    virtual ~ASTNode() {}
     
     /** assignment operator.
         @param n source object.
         @return reference to this.
      */
-    ast_node &operator = (const ast_node &n) { return *this; }
+    ASTNode &operator = (const ASTNode &n) { return *this; }
     
     /** get the parent node.
         @return the parent node, if there is one.
      */
-    ast_node *parent() const { return parent_node; }
+    ASTNode *parent() const { return parent_node; }
     
     /** interface for filling the contents of the node
         from a node stack.
         @param st stack.
      */
-    virtual void construct(const input_range &r, ast_stack &st) {}
+    virtual void construct(const input_range &r, ASTStack &st) {}
     
 private:
     //parent
-    ast_node *parent_node;    
+    ASTNode *parent_node;    
     
-    template <class T, bool OPT> friend class ast_ptr;
-    template <class T> friend class ast_list;
+    template <class T, bool OPT> friend class ASTPtr;
+    template <class T> friend class ASTList;
     template <class T> friend class ast;
 
 #ifndef USE_RTTI
@@ -122,8 +122,8 @@ protected:
 	virtual char *kind() { return classKind(); }
 	static char *classKind()
 	{
-		static char ast_nodeid;
-		return &ast_nodeid;
+		static char ASTNodeid;
+		return &ASTNodeid;
 	}
 public:
 	virtual bool isa(char *x)
@@ -148,34 +148,34 @@ public:
 };
 
 
-class ast_member;
+class ASTMember;
 
 
 /** type of ast member vector.
  */
-typedef std::vector<ast_member *> ast_member_vector;
+typedef std::vector<ASTMember *> ASTMember_vector;
 
 
 /** base class for AST nodes with children.
  */
-class ast_container : public ast_node {
+class ASTContainer : public ASTNode {
 public:
     /** sets the container under construction to be this.
      */
-    ast_container();
+    ASTContainer();
 
     /** sets the container under construction to be this.
         Members are not copied.
         @param src source object.
      */
-    ast_container(const ast_container &src);
+    ASTContainer(const ASTContainer &src);
 
     /** the assignment operator.
         The members are not copied.
         @param src source object.
         @return reference to this.
      */
-    ast_container &operator = (const ast_container &src) {
+    ASTContainer &operator = (const ASTContainer &src) {
         return *this;
     }
 
@@ -184,50 +184,50 @@ public:
         from a node stack.
         @param st stack.
      */
-    virtual void construct(const input_range &r, ast_stack &st);
+    virtual void construct(const input_range &r, ASTStack &st);
 
 private:
-    ast_member_vector members;
+    ASTMember_vector members;
 
-    friend class ast_member;
-	PARSELIB_RTTI(ast_container, ast_node)
+    friend class ASTMember;
+	PARSELIB_RTTI(ASTContainer, ASTNode)
 };
 
 
-/** Base class for children of ast_container.
+/** Base class for children of ASTContainer.
  */
-class ast_member {
+class ASTMember {
 public:
     /** automatically registers itself to the container under construction.
      */
-    ast_member() { _init(); }
+    ASTMember() { _init(); }
 
     /** automatically registers itself to the container under construction.
         @param src source object.
      */
-    ast_member(const ast_member &src) { _init(); }
+    ASTMember(const ASTMember &src) { _init(); }
 
     /** the assignment operator.
         @param src source object.
         @return reference to this.
      */
-    ast_member &operator = (const ast_member &src) {
+    ASTMember &operator = (const ASTMember &src) {
         return *this;
     }
     
     /** returns the container this belongs to.
         @return the container this belongs to.
      */
-    ast_container *container() const { return container_node; }
+    ASTContainer *container() const { return container_node; }
 
     /** interface for filling the the member from a node stack.
         @param st stack.
      */
-    virtual void construct(const input_range &r, ast_stack &st) = 0;
+    virtual void construct(const input_range &r, ASTStack &st) = 0;
 
 private:
     //the container this belongs to.
-    ast_container *container_node;
+    ASTContainer *container_node;
 
     //register the AST member to the current container.
     void _init();
@@ -240,12 +240,12 @@ private:
     @param T type of object to control.
     @param OPT if true, the object becomes optional.
  */
-template <class T, bool OPT = false> class ast_ptr : public ast_member {
+template <class T, bool OPT = false> class ASTPtr : public ASTMember {
 public:
     /** the default constructor.
         @param obj object.
      */
-    ast_ptr(T *obj = 0) : ptr(obj) {
+    ASTPtr(T *obj = 0) : ptr(obj) {
         _set_parent();
     }
 
@@ -253,7 +253,7 @@ public:
         It duplicates the underlying object.
         @param src source object.
      */
-    ast_ptr(const ast_ptr<T, OPT> &src) :
+    ASTPtr(const ASTPtr<T, OPT> &src) :
         ptr(src.ptr ? new T(*src.ptr) : 0)
     {
         _set_parent();
@@ -261,7 +261,7 @@ public:
 
     /** deletes the underlying object.
      */
-    ~ast_ptr() {
+    ~ASTPtr() {
         delete ptr;
     }
 
@@ -270,7 +270,7 @@ public:
         @param obj new object.
         @return reference to this.
      */
-    ast_ptr<T, OPT> &operator = (const T *obj) {
+    ASTPtr<T, OPT> &operator = (const T *obj) {
         delete ptr;
         ptr = obj ? new T(*obj) : 0;
         _set_parent();
@@ -282,7 +282,7 @@ public:
         @param src source object.
         @return reference to this.
      */
-    ast_ptr<T, OPT> &operator = (const ast_ptr<T, OPT> &src) {
+    ASTPtr<T, OPT> &operator = (const ASTPtr<T, OPT> &src) {
         delete ptr;
         ptr = src.ptr ? new T(*src.ptr) : 0;
         _set_parent();
@@ -316,12 +316,12 @@ public:
         @exception std::logic_error thrown if the node is not of the appropriate type;
             thrown only if OPT == false or if the stack is empty.
      */
-    virtual void construct(const input_range &r, ast_stack &st) {
+    virtual void construct(const input_range &r, ASTStack &st) {
         //check the stack node
         //if (st.empty()) throw std::logic_error("empty AST stack");
     
         //get the node
-        ast_node *node = st.back();
+        ASTNode *node = st.back();
         
         //get the object
         T *obj = node->get_as<T>();
@@ -361,24 +361,24 @@ private:
     It assumes ownership of objects.
     @param T type of object to control.
  */
-template <class T> class ast_list : public ast_member {
+template <class T> class ASTList : public ASTMember {
 public:
     ///list type.
     typedef std::list<T *> container;
 
     ///the default constructor.
-    ast_list() {}
+    ASTList() {}
 
     /** duplicates the objects of the given list.
         @param src source object.
      */
-    ast_list(const ast_list<T> &src) {
+    ASTList(const ASTList<T> &src) {
         _dup(src);
     }
 
     /** deletes the objects.
      */
-    ~ast_list() {
+    ~ASTList() {
         _clear();
     }
 
@@ -386,7 +386,7 @@ public:
         @param src source object.
         @return reference to this.
      */
-    ast_list<T> &operator = (const ast_list<T> &src) {
+    ASTList<T> &operator = (const ASTList<T> &src) {
         if (&src != this) {
             _clear();
             _dup(src);
@@ -404,13 +404,13 @@ public:
     /** Pops objects of type T from the stack until no more objects can be popped.
         @param st stack.
      */
-    virtual void construct(const input_range &r, ast_stack &st) {
+    virtual void construct(const input_range &r, ASTStack &st) {
         for(;;) {
             //if the stack is empty
             if (st.empty()) break;
             
             //get the node
-            ast_node *node = st.back();
+            ASTNode *node = st.back();
             
             //get the object
 			T *obj = node->get_as<T>();
@@ -426,7 +426,7 @@ public:
             child_objects.push_front(obj);
             
             //set the object's parent
-            obj->parent_node = ast_member::container();
+            obj->parent_node = ASTMember::container();
         }
     }
 
@@ -443,14 +443,14 @@ private:
     }
 
     //duplicate the given list.
-    void _dup(const ast_list<T> &src) {
+    void _dup(const ASTList<T> &src) {
         for(typename container::const_iterator it = src.child_objects.begin();
             it != src.child_objects.end();
             ++it)
         {
             T *obj = new T(*it);
             child_objects.push_back(obj);
-            obj->parent_node = ast_member::container();
+            obj->parent_node = ASTMember::container();
         }
     }
 };
@@ -464,7 +464,7 @@ private:
     @return pointer to ast node created, or null if there was an error.
         The return object must be deleted by the caller.
  */
-ast_node *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d);
+ASTNode *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d);
 
 
 class ASTParserDelegate : ParserDelegate
@@ -477,7 +477,7 @@ class ASTParserDelegate : ParserDelegate
 	static void bind_parse_proc(rule &r, parse_proc p);
 	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) const
 	{
-		ast_node *node = parserlib::parse(i, g, ws, el, *this);
+		ASTNode *node = parserlib::parse(i, g, ws, el, *this);
 		ast = node->get_as<T>();
 		if (ast) return true;
 		delete node;
@@ -497,7 +497,7 @@ public:
 	{
 		ASTParserDelegate::bind_parse_proc(r, [](const pos &b, const pos &e, void *d)
 			{
-				ast_stack *st = reinterpret_cast<ast_stack *>(d);
+				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
 				obj->construct(input_range(b, e), *st);
 				st->push_back(obj);

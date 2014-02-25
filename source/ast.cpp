@@ -36,7 +36,7 @@ namespace {
  */
 // FIXME: Should be thread_local, but that doesn't seem to work on OS X for
 // some reason (__thread does)
-__thread parserlib::ast_container *current = 0;
+__thread parserlib::ASTContainer *current = 0;
 /**
  * The current parser delegate.  When constructing an object, this is set and
  * then the constructors for the fields run, accessing it to detect their
@@ -49,7 +49,7 @@ namespace parserlib {
 
 /** sets the container under construction to be this.
  */
-ast_container::ast_container() {
+ASTContainer::ASTContainer() {
     current = this;
 }
 
@@ -57,7 +57,7 @@ ast_container::ast_container() {
 /** sets the container under construction to be this.
     @param src source object.
  */
-ast_container::ast_container(const ast_container &src) {
+ASTContainer::ASTContainer(const ASTContainer &src) {
     current = this;
 }
 
@@ -67,17 +67,17 @@ ast_container::ast_container(const ast_container &src) {
     from a node stack.
     @param st stack.
  */
-void ast_container::construct(const input_range &r, ast_stack &st) {
+void ASTContainer::construct(const input_range &r, ASTStack &st) {
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
-		ast_member *member = *it;
+		ASTMember *member = *it;
 		member->construct(r, st);
 	}
 }
 
 
 //register the AST member to the current container.
-void ast_member::_init() {
+void ASTMember::_init() {
     assert(current);
     container_node = current;
     current->members.push_back(this);
@@ -113,8 +113,8 @@ parse_proc ASTParserDelegate::get_parse_proc(rule &r) const
     @return pointer to ast node created, or null if there was an error.
         The return object must be deleted by the caller.
  */
-ast_node *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d) {
-    ast_stack st;
+ASTNode *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d) {
+    ASTStack st;
     if (!parse(i, g, ws, el, d, &st)) return 0;
     assert(st.size() == 1);
     return st[0];
