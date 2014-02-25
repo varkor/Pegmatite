@@ -118,12 +118,13 @@ parse_proc ASTParserDelegate::get_parse_proc(rule &r) const
 	@return pointer to ast node created, or null if there was an error.
 		The return object must be deleted by the caller.
  */
-ASTNode *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d)
+std::unique_ptr<ASTNode> parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d)
 {
 	ASTStack st;
 	if (!parse(i, g, ws, el, d, &st)) return 0;
 	assert(st.size() == 1);
-	return st[0];
+	fprintf(stderr, "Pointer %p\n", st[0].get());
+	return std::move(st[0]);
 }
 
 } //namespace parserlib

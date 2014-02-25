@@ -32,6 +32,7 @@
 #include <cassert>
 #include <list>
 #include <unordered_map>
+#include <memory>
 #include "parser.hpp"
 
 
@@ -46,7 +47,7 @@ template <class T> class ast;
 
 /** type of AST node stack.
  */
-typedef std::vector<ASTNode *> ASTStack;
+typedef std::vector<std::unique_ptr<ASTNode>> ASTStack;
 
 #ifdef USE_RTTI
 #define PARSELIB_RTTI(thisclass, superclass)
@@ -256,23 +257,6 @@ public:
 		_set_parent();
 	}
 
-	/** the copy constructor.
-		It duplicates the underlying object.
-		@param src source object.
-	 */
-	ASTPtr(const ASTPtr<T, OPT> &src) :
-		ptr(src.ptr ? new T(*src.ptr) : 0)
-	{
-		_set_parent();
-	}
-
-	/** deletes the underlying object.
-	 */
-	~ASTPtr()
-	{
-		delete ptr;
-	}
-
 	/** copies the given object.
 		The old object is deleted.
 		@param obj new object.
@@ -286,25 +270,12 @@ public:
 		return *this;
 	}
 
-	/** copies the underlying object.
-		The old object is deleted.
-		@param src source object.
-		@return reference to this.
-	 */
-	ASTPtr<T, OPT> &operator = (const ASTPtr<T, OPT> &src)
-	{
-		delete ptr;
-		ptr = src.ptr ? new T(*src.ptr) : 0;
-		_set_parent();
-		return *this;
-	}
-
 	/** gets the underlying ptr value.
 		@return the underlying ptr value.
 	 */
 	T *get() const
 	{
-		return ptr;
+		return ptr.get();
 	}
 
 	/** auto conversion to the underlying object ptr.
@@ -335,7 +306,7 @@ public:
 		//if (st.empty()) throw std::logic_error("empty AST stack");
 	
 		//get the node
-		ASTNode *node = st.back();
+		ASTNode *node = st.back().get();
 		
 		//get the object
 		T *obj = node->get_as<T>();
@@ -352,18 +323,18 @@ public:
 			//if (!obj) throw std::logic_error("invalid AST node");
 		}
 		
-		//pop the node from the stack
-		st.pop_back();
 		
 		//set the new object
-		delete ptr;
-		ptr = obj;
+		ptr.reset(obj);
+		//pop the node from the stack
+		st.back().release();
+		st.pop_back();
 		_set_parent();
 	}
 
 private:
 	//ptr
-	T *ptr;
+	std::unique_ptr<T> ptr;
 	
 	//set parent of object
 	void _set_parent()
@@ -382,7 +353,7 @@ template <class T> class ASTList : public ASTMember
 {
 public:
 	///list type.
-	typedef std::list<T *> container;
+	typedef std::list<std::unique_ptr<T>> container;
 
 	///the default constructor.
 	ASTList() {}
@@ -393,27 +364,6 @@ public:
 	ASTList(const ASTList<T> &src)
 	{
 		_dup(src);
-	}
-
-	/** deletes the objects.
-	 */
-	~ASTList()
-	{
-		_clear();
-	}
-
-	/** deletes the objects of this list and duplicates the given one.
-		@param src source object.
-		@return reference to this.
-	 */
-	ASTList<T> &operator = (const ASTList<T> &src)
-	{
-		if (&src != this)
-		{
-			_clear();
-			_dup(src);
-		}
-		return *this;
 	}
 
 	/** returns the container of objects.
@@ -435,7 +385,7 @@ public:
 			if (st.empty()) break;
 			
 			//get the node
-			ASTNode *node = st.back();
+			ASTNode *node = st.back().get();
 			
 			//get the object
 			T *obj = node->get_as<T>();
@@ -445,10 +395,11 @@ public:
 			if (!obj) return;
 			
 			//remove the node from the stack
+			st.back().release();
 			st.pop_back();
 			
 			//insert the object in the list, in reverse order
-			child_objects.push_front(obj);
+			child_objects.push_front(std::unique_ptr<T>(obj));
 			
 			//set the object's parent
 			obj->parent_node = ASTMember::container();
@@ -459,24 +410,12 @@ private:
 	//objects
 	container child_objects;
 
-	//deletes the objects of this list.
-	void _clear()
-	{
-		while (!child_objects.empty())
-		{
-			delete child_objects.back();
-			child_objects.pop_back();
-		}
-	}
-
 	//duplicate the given list.
 	void _dup(const ASTList<T> &src)
 	{
-		for(typename container::const_iterator it = src.child_objects.begin();
-			it != src.child_objects.end();
-			++it)
+		for (auto child : src.child_objects)
 		{
-			T *obj = new T(*it);
+			T *obj = new T(child.get());
 			child_objects.push_back(obj);
 			obj->parent_node = ASTMember::container();
 		}
@@ -492,7 +431,7 @@ private:
 	@return pointer to ast node created, or null if there was an error.
 		The return object must be deleted by the caller.
  */
-ASTNode *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d);
+std::unique_ptr<ASTNode> parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d);
 
 
 class ASTParserDelegate : ParserDelegate
@@ -503,12 +442,16 @@ class ASTParserDelegate : ParserDelegate
 	ASTParserDelegate();
 	virtual parse_proc get_parse_proc(rule &) const;
 	static void bind_parse_proc(rule &r, parse_proc p);
-	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) const
+	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, std::unique_ptr<T> &ast) const
 	{
-		ASTNode *node = parserlib::parse(i, g, ws, el, *this);
-		ast = node->get_as<T>();
-		if (ast) return true;
-		delete node;
+		std::unique_ptr<ASTNode> node = parserlib::parse(i, g, ws, el, *this);
+		T *n = node->get_as<T>();
+		if (n)
+		{
+			node.release();
+			ast.reset(n);
+			return true;
+		}
 		return false;
 	}
 };
@@ -529,7 +472,7 @@ public:
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
 				obj->construct(input_range(b, e), *st);
-				st->push_back(obj);
+				st->push_back(std::unique_ptr<ASTNode>(obj));
 			});
 	}
 };
