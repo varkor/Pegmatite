@@ -34,6 +34,31 @@ parsing state should be entirely contained within a context object and so the
 same grammar can be used from multiple threads and can be used for compilation,
 syntax highlighting, and so on.
 
+RTTI Usage
+----------
+
+ParserLib requires RTTI for one specific purpose: down-casting from `ast_node`
+to a subclass (and checking that the result really is of that class).  If you
+are using RTTI in the rest of your application, then you can instruct ParserLib
+to use RTTI for these casts by defining the `USE_RTTI` macro before including
+the ParserLib headers and when building ParserLib.
+
+If you do not wish to depend on RTTI, then ParserLib provides a macro that you
+can use in your own AST classes that will provide the required virtual
+functions to implement ad-hoc RTTI for this specific use.  You use them like
+this:
+
+	class MyASTClass : parserlib::ast_node
+	{
+		/* Your methods go here. */
+		PARSELIB_RTTI(MyASTClass, parserlib::ast_node)
+	};
+
+This macro will be compiled away if you do define `USE_RTTI`, so you can
+provide grammars built with ParserLib that don't force consumers to use or
+not-use RTTI.  It is also completely safe to build without `USE_RTTI`, but
+still compile with RTTI.
+
 To do
 -----
 
@@ -46,5 +71,7 @@ Not in order:
 - Rename classes so types start with uppercase
 - Fix namespacing (e.g. all private classes should be in anonymous namespace)
 - Add a build system!
-- Use std::unique_ptr in the AST (trees are, by definition, acyclic and each
+- Use `std::unique_ptr` in the AST (trees are, by definition, acyclic and each
   node has a unique parent).
+- Check whether the `USE_RTTI` setting for the headers and library had to match
+  it would be nice if it didn't...
