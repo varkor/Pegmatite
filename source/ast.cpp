@@ -120,7 +120,4 @@ ast_node *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegat
     return st[0];
 }
 
-PARSELIB_RTTI_ANCHOR(ast_node);
-PARSELIB_RTTI_ANCHOR(ast_container);
-
 } //namespace parserlib

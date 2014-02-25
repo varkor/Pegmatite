@@ -50,22 +50,30 @@ typedef std::vector<ast_node *> ast_stack;
 
 #ifdef USE_RTTI
 #define PARSELIB_RTTI(thisclass, superclass)
-#define PARSELIB_RTTI_ANCHOR(thisclass)
 #else
+/**
+ * Define the methods required for parserlib's lightweight RTTI replacement to
+ * work.  This should be used at the end of the class definition and will
+ * provide support for safe downcasting.
+ */
 #define PARSELIB_RTTI(thisclass, superclass)             \
 	friend ast_node;                                     \
 protected:                                               \
-	static char thisclass ## id;                         \
-	virtual char *kind() { return &thisclass ## id; }    \
-	static char *classKind() { return &thisclass ## id; }\
+	virtual char *kind()                                 \
+	{                                                    \
+		return thisclass::classKind();                   \
+	}                                                    \
+	static char *classKind()                             \
+	{                                                    \
+		static char thisclass ## id;                     \
+		return &thisclass ## id;                         \
+	}                                                    \
 public:                                                  \
 	virtual bool isa(char *x)                            \
 	{                                                    \
-		return (x == &thisclass ## id) ||                \
+		return (x == kind()) ||                          \
 		        (superclass::kind() == x);               \
 	}
-#define PARSELIB_RTTI_ANCHOR(thisclass)                  \
-	char thisclass::thisclass ## id;
 #endif
 
 
@@ -111,13 +119,16 @@ private:
 
 #ifndef USE_RTTI
 protected:
-	static char ast_nodeid;
-	virtual char *kind() { return &ast_nodeid; }
-	static char *classKind() { return &ast_nodeid; }
+	virtual char *kind() { return classKind(); }
+	static char *classKind()
+	{
+		static char ast_nodeid;
+		return &ast_nodeid;
+	}
 public:
 	virtual bool isa(char *x)
 	{
-		return x == &ast_nodeid;
+		return x == classKind();
 	}
 	template <class T> bool isa()
 	{
@@ -126,6 +137,12 @@ public:
 	template <class T> T* get_as()
 	{
 		return isa<T>() ? static_cast<T*>(this) : 0;
+	}
+#else
+public:
+	template <class T> T* get_as()
+	{
+		return dynamic_cast<T*>(this);
 	}
 #endif
 };
@@ -307,11 +324,7 @@ public:
         ast_node *node = st.back();
         
         //get the object
-#if USE_RTTI
-        T *obj = dynamic_cast<T*>(node);
-#else
         T *obj = node->get_as<T>();
-#endif
         
         //if the object is optional, simply return
         if (OPT) {
@@ -400,11 +413,7 @@ public:
             ast_node *node = st.back();
             
             //get the object
-#if USE_RTTI
-			T *obj = dynamic_cast<T*>(node);
-#else
 			T *obj = node->get_as<T>();
-#endif
             
             //if the object was not not of the appropriate type,
             //end the list parsing
@@ -469,11 +478,7 @@ class ASTParserDelegate : ParserDelegate
 	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, T *&ast) const
 	{
 		ast_node *node = parserlib::parse(i, g, ws, el, *this);
-#if USE_RTTI
-		ast = dynamic_cast<T*>(node);
-#else
 		ast = node->get_as<T>();
-#endif
 		if (ast) return true;
 		delete node;
 		return false;
