@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2012, Achilleas Margaritis
+ * Copyright (c) 2014, David T. Chisnall
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
