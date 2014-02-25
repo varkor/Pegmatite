@@ -72,7 +72,7 @@ public:                                                  \
 	virtual bool isa(char *x)                            \
 	{                                                    \
 		return (x == kind()) ||                          \
-				(superclass::kind() == x);               \
+				(superclass::isa(x));                    \
 	}
 #endif
 
