@@ -56,23 +56,23 @@ typedef std::vector<ASTNode *> ASTStack;
  * work.  This should be used at the end of the class definition and will
  * provide support for safe downcasting.
  */
-#define PARSELIB_RTTI(thisclass, superclass)			 \
-	friend ASTNode;									 \
-protected:											   \
-	virtual char *kind()								 \
-	{													\
-		return thisclass::classKind();				   \
-	}													\
-	static char *classKind()							 \
-	{													\
-		static char thisclass ## id;					 \
-		return &thisclass ## id;						 \
-	}													\
-public:												  \
-	virtual bool isa(char *x)							\
-	{													\
-		return (x == kind()) ||						  \
-				(superclass::kind() == x);			   \
+#define PARSELIB_RTTI(thisclass, superclass)             \
+	friend ASTNode;                                      \
+protected:                                               \
+	virtual char *kind()                                 \
+	{                                                    \
+		return thisclass::classKind();                   \
+	}                                                    \
+	static char *classKind()                             \
+	{                                                    \
+		static char thisclass ## id;                     \
+		return &thisclass ## id;                         \
+	}                                                    \
+public:                                                  \
+	virtual bool isa(char *x)                            \
+	{                                                    \
+		return (x == kind()) ||                          \
+				(superclass::kind() == x);               \
 	}
 #endif
 
