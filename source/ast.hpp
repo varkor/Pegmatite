@@ -31,7 +31,6 @@
 
 #include <cassert>
 #include <list>
-#include <stdexcept>
 #include <unordered_map>
 #include "parser.hpp"
 
