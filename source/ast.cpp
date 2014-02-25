@@ -49,25 +49,28 @@ namespace parserlib {
 
 /** sets the container under construction to be this.
  */
-ASTContainer::ASTContainer() {
-    current = this;
+ASTContainer::ASTContainer()
+{
+	current = this;
 }
 
 
 /** sets the container under construction to be this.
-    @param src source object.
+	@param src source object.
  */
-ASTContainer::ASTContainer(const ASTContainer &src) {
-    current = this;
+ASTContainer::ASTContainer(const ASTContainer &src)
+{
+	current = this;
 }
 
-    
+	
 /** Asks all members to construct themselves from the stack.
-    The members are asked to construct themselves in reverse order.
-    from a node stack.
-    @param st stack.
+	The members are asked to construct themselves in reverse order.
+	from a node stack.
+	@param st stack.
  */
-void ASTContainer::construct(const input_range &r, ASTStack &st) {
+void ASTContainer::construct(const input_range &r, ASTStack &st)
+{
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
 		ASTMember *member = *it;
@@ -77,10 +80,11 @@ void ASTContainer::construct(const input_range &r, ASTStack &st) {
 
 
 //register the AST member to the current container.
-void ASTMember::_init() {
-    assert(current);
-    container_node = current;
-    current->members.push_back(this);
+void ASTMember::_init()
+{
+	assert(current);
+	container_node = current;
+	current->members.push_back(this);
 }
 
 
@@ -105,19 +109,20 @@ parse_proc ASTParserDelegate::get_parse_proc(rule &r) const
 }
 
 /** parses the given input.
-    @param i input.
-    @param g root rule of grammar.
-    @param ws whitespace rule.
-    @param el list of errors.
-    @param d user data, passed to the parse procedures.
-    @return pointer to ast node created, or null if there was an error.
-        The return object must be deleted by the caller.
+	@param i input.
+	@param g root rule of grammar.
+	@param ws whitespace rule.
+	@param el list of errors.
+	@param d user data, passed to the parse procedures.
+	@return pointer to ast node created, or null if there was an error.
+		The return object must be deleted by the caller.
  */
-ASTNode *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d) {
-    ASTStack st;
-    if (!parse(i, g, ws, el, d, &st)) return 0;
-    assert(st.size() == 1);
-    return st[0];
+ASTNode *parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d)
+{
+	ASTStack st;
+	if (!parse(i, g, ws, el, d, &st)) return 0;
+	assert(st.size() == 1);
+	return st[0];
 }
 
 } //namespace parserlib
