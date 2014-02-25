@@ -69,8 +69,6 @@ Not in order:
 - Write better documentation for how the AST construction works
 - Add error delegate
 - Rename classes so types start with uppercase
-- Fix namespacing (e.g. all private classes should be in anonymous namespace)
-- Add a build system!
 - Use `std::unique_ptr` in the AST (trees are, by definition, acyclic and each
   node has a unique parent).
 - Check whether the `USE_RTTI` setting for the headers and library had to match
