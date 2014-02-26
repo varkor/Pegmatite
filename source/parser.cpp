@@ -78,9 +78,83 @@ public:
 	}
 };
 
+/**
+ * String expression.  Matches a sequence of characters.
+ */
+class StringExpr : public Expr
+{
+public:
+	/**
+	 * Returns a new string expression recognising the specified string.
+	 */
+	StringExpr(const char *s) : characters(s, s + strlen(s)) {}
+	/**
+	 * Returns a new string expression recognising the specified string.
+	 */
+	StringExpr(const char *s, std::size_t length) : characters(s, s + length) {}
+	virtual bool parse_non_term(Context &con) const;
+	virtual bool parse_term(Context &con) const;
+	virtual void dump() const;
+private:
+	/**
+	 * The characters that this expression will match.
+	 */
+	std::vector<int> characters;
+};
+
+
 }
 namespace pegmatite
 {
+
+/**
+ * Character expression, matches a single character.
+ */
+class CharacterExpr : public Expr
+{
+	/**
+	 * The character that will be recognised by this expression.
+	 */
+	int character;
+public:
+	/**
+	 * Constructs a character expression from the specified integer.
+	 */
+	CharacterExpr(int c) : character(c) {}
+	virtual bool parse_non_term(Context &con) const;
+	virtual bool parse_term(Context &con) const;
+	virtual void dump() const;
+	/**
+	 * Returns a range expression that recognises characters in the specified
+	 * range.
+	 */
+	ExprPtr operator-(const CharacterExpr &other);
+	/**
+	 * Returns a range expression that recognises characters in the specified
+	 * range.
+	 */
+	ExprPtr operator-(int other);
+};
+
+CharacterExprPtr operator "" _E(const char x)
+{
+	return CharacterExprPtr(new CharacterExpr(x));
+}
+ExprPtr operator "" _E(const char *x, std::size_t len)
+{
+	return ExprPtr(new StringExpr(x, len));
+}
+ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right)
+{
+	return (*left) - (*right);
+}
+ExprPtr operator-(const CharacterExprPtr &left, int right)
+{
+	return (*left) - right;
+}
+
+ExprPtr::ExprPtr(const CharacterExprPtr &e) :
+	std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
 
 //parsing context
 class Context
@@ -802,6 +876,39 @@ ParsingState::ParsingState(Context &con) :
 {
 }
 
+static inline bool parseString(Context &con,
+                               const std::vector<int> &characters)
+{
+	for (int c : characters)
+	{
+		if (con.end() || con.symbol() != c)
+		{
+			con.set_error_pos();
+			return false;
+		}
+		con.next_col();
+	}
+	return true;
+}
+bool StringExpr::parse_non_term(Context &con) const
+{
+	return parseString(con, characters);
+}
+bool StringExpr::parse_term(Context &con) const
+{
+	return parseString(con, characters);
+}
+void StringExpr::dump() const
+{
+	fprintf(stderr, "\"");
+	for (int c : characters)
+	{
+		fprintf(stderr, "%c", (char)c);
+	}
+	fprintf(stderr, "\"");
+}
+
+
 
 }
 
@@ -1176,27 +1283,6 @@ bool Error::operator < (const Error &e) const
 	return start.it < e.start.it;
 }
 
-
-/** character terminal constructor.
-	@param c character.
- */
-Rule::Rule(int c) :
-	expr(ExprPtr(new CharacterExpr(c)))
-{
-}
-
-
-/** null-terminated string terminal constructor.
-	@param s null-terminated string.
- */
-Rule::Rule(const char *s) :
-	expr(new StringExpr(s))
-{
-}
-
-/** constructor from expression.
-	@param e expression.
- */
 Rule::Rule(const ExprPtr e) :
 	expr(e)
 {
@@ -1206,7 +1292,6 @@ Rule::Rule(const ExprPtr e) :
 /** constructor from rule.
 	@param r rule.
  */
-Rule::Rule(Rule &r) : expr(new RuleReferenceExpr(r)) { }
 ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
 ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
 ExprPtr::ExprPtr(Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
@@ -1381,39 +1466,6 @@ ExprPtr CharacterExpr::operator-(const CharacterExpr &other)
 ExprPtr CharacterExpr::operator-(int other)
 {
 	return range(character, other);
-}
-
-
-static inline bool parseString(Context &con,
-							   const std::vector<int> &characters)
-{
-	for (int c : characters)
-	{
-		if (con.end() || con.symbol() != c)
-		{
-			con.set_error_pos();
-			return false;
-		}
-		con.next_col();
-	}
-	return true;
-}
-bool StringExpr::parse_non_term(Context &con) const
-{
-	return parseString(con, characters);
-}
-bool StringExpr::parse_term(Context &con) const
-{
-	return parseString(con, characters);
-}
-void StringExpr::dump() const
-{
-	fprintf(stderr, "\"");
-	for (int c : characters)
-	{
-		fprintf(stderr, "%c", (char)c);
-	}
-	fprintf(stderr, "\"");
 }
 
 

@@ -56,15 +56,6 @@ ASTContainer::ASTContainer()
 }
 
 
-/** sets the container under construction to be this.
-	@param src source object.
- */
-ASTContainer::ASTContainer(const ASTContainer &src)
-{
-	current = this;
-}
-
-	
 /** Asks all members to construct themselves from the stack.
 	The members are asked to construct themselves in reverse order.
 	from a node stack.
@@ -75,19 +66,19 @@ void ASTContainer::construct(const InputRange &r, ASTStack &st)
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
 		ASTMember *member = *it;
-		member->construct(r, st);
+		member->construct(st);
 	}
+	// We don't need the members vector anymore, so clean up the storage it
+	// uses.
+	ASTMember_vector().swap(members);
 }
 
-
-//register the AST member to the current container.
-void ASTMember::_init()
+ASTMember::ASTMember()
 {
 	assert(current);
 	container_node = current;
 	current->members.push_back(this);
 }
-
 
 ASTParserDelegate::ASTParserDelegate()
 {

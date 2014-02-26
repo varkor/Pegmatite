@@ -69,45 +69,87 @@ class Input
 		 * The index into the buffer.
 		 */
 		Index	  idx;
+		/**
+		 * Constructs a new iterator into the specified input.
+		 */
 		inline iterator(Input *b, Index i) : buffer(b), idx(i) {}
 		public:
+		/**
+		 * Default constructor, constructs an invalid iterator into no buffer.
+		 */
 		inline iterator() : buffer(0), idx(-1) {}
+		/**
+		 * Dereference operator, returns the character represented by this
+		 * index.
+		 */
 		inline char32_t  operator*() const { return (*buffer)[idx]; }
+		/**
+		 * Move the iterator on to the next location.  Note that this does
+		 * *not* check for validity, so will allow constructing iterators past
+		 * the end of the permitted.  They will fail on dereference (this check
+		 * is performed in the `Input` class - iterators perform no validation.
+		 */
 		inline iterator &operator++()
 		{
 			idx++;
 			return *this;
 		}
+		/**
+		 * Move the iterator to the previous location.  Note that this does not
+		 * check validity.
+		 */
 		inline iterator &operator--()
 		{
 			idx--;
 			return *this;
 		}
+		/**
+		 * Compares iterators for equality.  Iterators are equal if they are
+		 * the same index in the same buffer.
+		 */
 		inline bool operator==(const iterator &other) const
 		{
 			return (buffer == other.buffer) && (idx == other.idx);
 		}
+		/**
+		 * Compares iterators for inequality.
+		 */
 		inline bool operator!=(const iterator &other) const
 		{
 			return !(*this == other);
 		}
+		/**
+		 * Compares locations of iterators in the input.
+		 */
 		inline bool operator>(const iterator &other) const
 		{
 			return (idx > other.idx);
 		}
+		/**
+		 * Compares locations of iterators in the input.
+		 */
 		inline bool operator<(const iterator &other) const
 		{
 			return (idx < other.idx);
 		}
+		/**
+		 * Subtracts one iterator from another, 
+		 */
 		inline Index operator-(const iterator &other) const
 		{
 			return idx-other.idx;
 		}
 	};
+	/**
+	 * Returns an iterator for the start of the input.
+	 */
 	inline iterator begin()
 	{
 		return iterator(this, 0);
 	}
+	/**
+	 * Returns an iterator for the end of the input.
+	 */
 	inline iterator end()
 	{
 		return iterator(this, size());
@@ -147,12 +189,20 @@ class Input
 	 * The index of the end of the buffer.
 	 */
 	Index	 buffer_end;
+	/**
+	 * Size for the static buffer.  Note that changing this will change the
+	 * ABI, so do not change it in shared library builds!
+	 */
 	static const std::size_t static_buffer_size = 128;
 	/**
 	 * A buffer that can be used to store characters by subclasses that do not
 	 * have the same underlying representation.
 	 */
 	char32_t  local_buffer[static_buffer_size];
+	/**
+	 * Slow path, filling in the buffer from the data source if a request can't
+	 * be satisfied from the cache.
+	 */
 	char32_t  slowCharacterLookup(Index n);
 	protected:
 	/**
@@ -172,6 +222,9 @@ class Input
 	 * Returns the size of the buffer.
 	 */
 	virtual Index size() const = 0;
+	/**
+	 * Virtual destructor.
+	 */
 	virtual ~Input();
 };
 
@@ -234,8 +287,8 @@ class StringInput : public Input
 	 * object exists.
 	 */
 	const std::string &getString() { return str; }
-	/*
-	 *A Constructs the wrapper from a string.  
+	/**
+	 * Constructs the wrapper from a string (`s`).  
 	 * The new object takes ownership of the character data in the string.
 	 */
 	StringInput(std::string &s) : str(std::move(s)) {}
@@ -271,17 +324,21 @@ struct ParserPosition
 	ParserPosition(Input &i);
 };
 
-
-
-/** type of procedure to invoke when a rule is successfully parsed.
-	@param b begin position of input.
-	@param e end position of input.
-	@param d pointer to user data.
+/**
+ * The callback that handles matches.  The arguments are the start and end of
+ * the matching range and some state for the current parse.
+ * When constructing an AST using the AST infrastructure, this will be a lambda
+ * binding the type of the AST node to create and the argument will be
+ * interpreted as an AST stack.
  */
-typedef std::function<void(const ParserPosition&, const ParserPosition&, void*)> parse_proc;
+typedef std::function<void(const ParserPosition&,
+                           const ParserPosition&, void*)> parse_proc;
 
 
-///input range.
+/**
+ * A range within input.  This is passed to `construct()` methods for AST
+ * classes and allows terminals to record the source location.
+ */
 class InputRange
 {
 public:
@@ -294,12 +351,18 @@ public:
 	///empty constructor.
 	InputRange() {}
 
-	/** constructor.
+	/** constructor.bbb
 		@param b begin position.
 		@param e end position.
 	 */
 	InputRange(const ParserPosition &b, const ParserPosition &e);
+	/**
+	 * Iterator to the start of the input range.
+	 */
 	Input::iterator begin() const { return start.it; };
+	/**
+	 * Iterator to the end of the input range.
+	 */
 	Input::iterator end() const { return finish.it; };
 };
 
@@ -343,10 +406,11 @@ public:
 ///type of error list.
 typedef std::list<Error> ErrorList;
 
+/**
+ * CharacterExpr is a concrete subclass of Expr, which is exposed to allow it to be 
+ */
 class CharacterExpr;
-class StringExpr;
 typedef std::shared_ptr<CharacterExpr> CharacterExprPtr;
-typedef std::shared_ptr<StringExpr> StringExprPtr;
 
 /**
  * A shared pointer to an expression.  All expression tree nodes use shared
@@ -354,58 +418,57 @@ typedef std::shared_ptr<StringExpr> StringExprPtr;
  */
 struct ExprPtr : public std::shared_ptr<Expr>
 {
+	/**
+	 * Construct an expression pointer wrapping an expression.
+	 */
 	ExprPtr(Expr *e) : std::shared_ptr<Expr>(e) {}
+	/**
+	 * Construct an expression pointer wrapping an expression that refers to a rule.
+	 */
 	ExprPtr(Rule &e);
-	ExprPtr(const CharacterExprPtr &e) :
-		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
-	ExprPtr(const StringExprPtr &e) :
-		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
+	/**
+	 * Construct an expression pointer wrapping a character expression.
+	 */
+	ExprPtr(const CharacterExprPtr &e);
+	/**
+	 * Construct an expression pointer wrapping a string expression created
+	 * from a string.
+	 */
 	ExprPtr(const char *);
+	/**
+	 * Construct an expression pointer wrapping a character expression created
+	 * from a character.
+	 */
 	ExprPtr(const char);
 };
 
 
-/** represents a rule.
+/**
+ * Rule class, which represents a rule in a grammar.  Rules are distinct from
+ * expressions, in that they are expected to be top-level constructs that can
+ * have actions associated with them.
  */
 class Rule
 {
 public:
-	/** character terminal constructor.
-		@param c character.
-	 */
-	Rule(int c);
-
-	/** null-terminated string terminal constructor.
-		@param s null-terminated string.
-	 */
-	Rule(const char *s);
-
-	/** null-terminated wide string terminal constructor.
-		@param s null-terminated string.
-	 */
-	Rule(const wchar_t *s);
-
-	/** constructor from expression.
-		@param e expression.
+	/** 
+	 * Constructs a rule, owning a reference to an expression.  Expressions may
+	 * be shared between rules.
 	 */
 	Rule(const ExprPtr e);
-
-	/** constructor from rule.
-		@param r rule.
+	/**
+	 * Copying rules is not allowed.
 	 */
-	Rule(Rule &r);
-
 	Rule(const Rule &r) = delete;
-	Rule(const Rule &&r);
-
-	/** sets the parse procedure.
-		@param p procedure.
+	/**
+	 * Move constructor for a rule, allows `rulename = {some expression}`
+	 * initialisation without performing copying.
 	 */
-	void set_parse_proc(parse_proc p);
-
+	Rule(const Rule &&r);
 private:
-
-	//internal expression
+	/**
+	 * The expression that this rule invokes.
+	 */
 	const ExprPtr expr;
 
 	//assignment not allowed
@@ -492,61 +555,10 @@ inline ExprPtr operator !(Rule &r)
 }
 
 
-/**
- * Character expression, matches a single character.
- */
-class CharacterExpr : public Expr
-{
-	/**
-	 * The character that will be recognised by this expression.
-	 */
-	int character;
-public:
-	CharacterExpr(int c) : character(c) {}
-	virtual bool parse_non_term(Context &con) const;
-	virtual bool parse_term(Context &con) const;
-	virtual void dump() const;
-	/**
-	 * Returns a range expression that recognises characters in the specified
-	 * range.
-	 */
-	ExprPtr operator-(const CharacterExpr &other);
-	ExprPtr operator-(int other);
-};
-
-/**
- * String expression.  Matches a sequence of characters.
- */
-class StringExpr : public Expr
-{
-public:
-	StringExpr(const char *s) : characters(s, s + strlen(s)) {}
-	StringExpr(const char *s, std::size_t length) : characters(s, s + length) {}
-	virtual bool parse_non_term(Context &con) const;
-	virtual bool parse_term(Context &con) const;
-	virtual void dump() const;
-private:
-	/**
-	 * The characters that this expression will match.
-	 */
-	std::vector<int> characters;
-};
-inline CharacterExprPtr operator "" _E(const char x)
-{
-	return CharacterExprPtr(new CharacterExpr(x));
-}
-inline StringExprPtr operator "" _E(const char *x, std::size_t len)
-{
-	return StringExprPtr(new StringExpr(x, len));
-}
-inline ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right)
-{
-	return (*left) - (*right);
-}
-inline ExprPtr operator-(const CharacterExprPtr &left, int right)
-{
-	return (*left) - right;
-}
+CharacterExprPtr operator "" _E(const char x);
+ExprPtr operator "" _E(const char *x, std::size_t len);
+ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right);
+ExprPtr operator-(const CharacterExprPtr &left, int right);
 
 
 
@@ -624,9 +636,19 @@ ExprPtr eof();
  */
 ExprPtr any();
 
+/**
+ * Parser delegate abstract class.  Subclasses of this are responsible for
+ * providing handlers for the rules in the grammar.
+ */
 struct ParserDelegate
 {
+	/**
+	 * Returns the handler for the specified rule.
+	 */
 	virtual parse_proc get_parse_proc(Rule &) const = 0;
+	/**
+	 * Virtual destructor, for cleaning up subclasses correctly.
+	 */
 	virtual ~ParserDelegate();
 };
 

@@ -78,42 +78,44 @@ public:                                                  \
 #endif
 
 
-/** Base class for AST nodes.
+/**
+ * Base class for AST nodes.
  */
 class ASTNode
 {
 public:
-	///constructor.
-	ASTNode() : parent_node(0) {}
-	
-	/** copy constructor.
-		@param n source object.
+	/**
+	 * Constructs the AST node, with a null parent.
 	 */
-	ASTNode(const ASTNode &n) : parent_node(0) {}
-
-	///destructor.
+	ASTNode() : parent_node(0) {}
+	/**
+	 * Copying AST nodes is not supported.
+	 */
+	ASTNode(const ASTNode&) = delete;
+	
+	/**
+	 * Destructor does nothing, virtual for subclasses to use.
+	 */
 	virtual ~ASTNode() {}
 	
-	/** assignment operator.
-		@param n source object.
-		@return reference to this.
-	 */
-	ASTNode &operator = (const ASTNode &n) { return *this; }
-	
-	/** get the parent node.
-		@return the parent node, if there is one.
+	/**
+	 * Returns the parent of this AST node, or `nullptr` if there isn't one
+	 * (either if this is the root, or if it is still in the stack waiting to
+	 * be added to the tree).
 	 */
 	ASTNode *parent() const { return parent_node; }
 	
-	/** interface for filling the contents of the node
-		from a node stack.
-		@param st stack.
+	/** 
+	 * Interface for constructing the AST node.  The input range `r` is the
+	 * range within the source.
 	 */
 	virtual void construct(const InputRange &r, ASTStack &st) {}
 	
 private:
-	//parent
-	ASTNode *parent_node;	
+	/**
+	 * The parent AST node.
+	 */
+	ASTNode *parent_node;
 	
 	template <class T, bool OPT> friend class ASTPtr;
 	template <class T> friend class ASTList;
@@ -121,24 +123,51 @@ private:
 
 #ifndef USE_RTTI
 protected:
+	/**
+	 * Returns the kind of object class.  This is a unique pointer that can be
+	 * tested against pointers returned by classKind() to determine whether
+	 * they can be safely compared.
+	 */
 	virtual char *kind() { return classKind(); }
+	/**
+	 * Returns the unique identifier for this class.
+	 */
 	static char *classKind()
 	{
 		static char ASTNodeid;
 		return &ASTNodeid;
 	}
 public:
+	/**
+	 * Root implementation of the RTTI-replacement for builds not wishing to
+	 * use RTTI.  This returns true if `x` is the value returned from
+	 * `classKind()`, or false otherwise.
+	 */
 	virtual bool isa(char *x)
 	{
 		return x == classKind();
 	}
+	/**
+	 * Returns true if this object is an instance of `T`.  Note that this
+	 * *only* works with single-inheritance hierarchies.  If you wish to use
+	 * multiple inheritance in your AST classes, then you must define
+	 * `USE_RTTI` and use the C++ RTTI mechanism.
+	 */
 	template <class T> bool isa()
 	{
 		return isa(T::classKind());
 	}
+	/**
+	 * Returns a pointer to this object as a pointer to a child class, or
+	 * `nullptr` if the cast would be unsafe.  
+	 *
+	 * Note that AST nodes are intended to be always used as unique pointers
+	 * and so the returned object is *only* valid as long as the unique pointer
+	 * is valid.
+	 */
 	template <class T> T* get_as()
 	{
-		return isa<T>() ? static_cast<T*>(this) : 0;
+		return isa<T>() ? static_cast<T*>(this) : nullptr;
 	}
 #else
 public:
@@ -155,42 +184,40 @@ class ASTMember;
 
 /** type of ast member vector.
  */
-typedef std::vector<ASTMember *> ASTMember_vector;
 
 
-/** base class for AST nodes with children.
+/** 
+ * The base class for non-leaf AST nodes.  Subclasses can have instances of
+ * `ASTMember` subclasses as fields and will automatically construct them.
  */
 class ASTContainer : public ASTNode
 {
 public:
-	/** sets the container under construction to be this.
+	/**
+	 * Constructs the container, setting a thread-local value to point to it
+	 * allowing constructors in fields of the subclass to register themselves
+	 * in the members vector.
 	 */
 	ASTContainer();
 
-	/** sets the container under construction to be this.
-		Members are not copied.
-		@param src source object.
-	 */
-	ASTContainer(const ASTContainer &src);
-
-	/** the assignment operator.
-		The members are not copied.
-		@param src source object.
-		@return reference to this.
-	 */
-	ASTContainer &operator = (const ASTContainer &src)
-	{
-		return *this;
-	}
-
-	/** Asks all members to construct themselves from the stack.
-		The members are asked to construct themselves in reverse order.
-		from a node stack.
-		@param st stack.
+	/** 
+	 * Asks all members to construct themselves from the stack. The members are
+	 * asked to construct themselves in reverse order from a node stack (`st`). 
+	 *
+	 * The input range (`r`) is unused, because the leaf nodes have already
+	 * constructed themselves at this point.
 	 */
 	virtual void construct(const InputRange &r, ASTStack &st);
 
 private:
+	/**
+	 * The type used for tracking the fields of subclasses.
+	 */
+	typedef std::vector<ASTMember *> ASTMember_vector;
+	/**
+	 * References to all of the fields of the subclass that will be
+	 * automatically constructed.
+	 */
 	ASTMember_vector members;
 
 	friend class ASTMember;
@@ -203,72 +230,42 @@ private:
 class ASTMember
 {
 public:
-	/** automatically registers itself to the container under construction.
+	/**
+	 * On construction, `ASTMember` sets its `container_node` field to the
+	 * `ASTContainer` currently under construction and registers itself with
+	 * the container, to be notified during the construction phase.
 	 */
-	ASTMember() { _init(); }
+	ASTMember();
 
-	/** automatically registers itself to the container under construction.
-		@param src source object.
-	 */
-	ASTMember(const ASTMember &src) { _init(); }
-
-	/** the assignment operator.
-		@param src source object.
-		@return reference to this.
-	 */
-	ASTMember &operator = (const ASTMember &src)
-	{
-		return *this;
-	}
-	
-	/** returns the container this belongs to.
-		@return the container this belongs to.
+	/** 
+	 * Returns the container of which this object is a field.
 	 */
 	ASTContainer *container() const { return container_node; }
 
-	/** interface for filling the the member from a node stack.
-		@param st stack.
+	/**
+	 * Interface for constructing references to AST objects from the stack.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st) = 0;
-
+	virtual void construct(ASTStack &st) = 0;
 private:
-	//the container this belongs to.
+	/**
+	 * The container that owns this object.
+	 */
 	ASTContainer *container_node;
-
-	//register the AST member to the current container.
-	void _init();
 };
 
 
-/** pointer to an AST object.
-	It assumes ownership of the object.
-	It pops an object of the given type from the stack.
-	@param T type of object to control.
-	@param OPT if true, the object becomes optional.
+/**
+ * An `ASTPtr` is a wrapper around a pointer to an AST object.  It is intended
+ * to be a member of an `ASTContainer` and will automatically pop the top item
+ * from the stack and claim it when building the AST..
  */
 template <class T, bool OPT = false> class ASTPtr : public ASTMember
 {
 public:
-	/** the default constructor.
-		@param obj object.
+	/** 
+	 * Constructs the object in the 
 	 */
-	ASTPtr(T *obj = 0) : ptr(obj)
-	{
-		_set_parent();
-	}
-
-	/** copies the given object.
-		The old object is deleted.
-		@param obj new object.
-		@return reference to this.
-	 */
-	ASTPtr<T, OPT> &operator = (const T *obj)
-	{
-		delete ptr;
-		ptr = obj ? new T(*obj) : 0;
-		_set_parent();
-		return *this;
-	}
+	ASTPtr() : ptr(nullptr) {}
 
 	/** gets the underlying ptr value.
 		@return the underlying ptr value.
@@ -295,12 +292,10 @@ public:
 		return ptr;
 	}
 
-	/** Pops a node from the stack.
-		@param st stack.
-		@exception std::logic_error thrown if the node is not of the appropriate type;
-			thrown only if OPT == false or if the stack is empty.
+	/**
+	 * Pops the next matching object from the AST stack `st` and claims it.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st)
+	virtual void construct(ASTStack &st)
 	{
 		//check the stack node
 		//if (st.empty()) throw std::logic_error("empty AST stack");
@@ -339,7 +334,6 @@ private:
 	//set parent of object
 	void _set_parent()
 	{
-		if (ptr) ptr->parent_node = container();
 	}
 };
 
@@ -374,10 +368,11 @@ public:
 		return child_objects;
 	}
 
-	/** Pops objects of type T from the stack until no more objects can be popped.
-		@param st stack.
+	/** 
+	 * Pops objects of type T from the stack (`st`) until no more objects can
+	 * be popped.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st)
+	virtual void construct(ASTStack &st)
 	{
 		for(;;)
 		{
@@ -434,14 +429,57 @@ private:
 std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
                                const ParserDelegate &d);
 
+/**
+ * A parser delegate that is responsible for creating AST nodes from the input.
+ *
+ * This class manages a mapping from rules in some grammar to AST nodes.
+ * Instances of the `BindAST` class that are fields of a subclass of this will
+ * automatically register rules on creation.
+ *
+ * The recommended use for this class is to only register rules on construction
+ * (either explicitly in the constructor or implicitly via `BindAST` members).
+ * This will give a completely reentrant delegate, which can be used by
+ * multiple threads to parse multiple inputs safely.
+ */
 class ASTParserDelegate : ParserDelegate
 {
+	/**
+	 * BindAST is a friend so that it can call the `set_parse_proc()` function,
+	 * which should never be called from anything else.
+	 */
+	template <class T> friend class BindAST;
+	private:
+	/**
+	 * The map from rules to parsing handlers.
+	 */
 	std::unordered_map<Rule*, parse_proc> handlers;
+	/**
+	 * Registers a callback in this delegate.  This should only be called from
+	 * the `static` version of this function.
+	 */
 	void set_parse_proc(Rule &r, parse_proc p);
+	/**
+	 * Registers a callback for a specific rule in the instance of this class
+	 * currently under construction in this thread.  This should only ever be
+	 * called by `BindAST` instances.
+	 */
+	static void bind_parse_proc(Rule &r, parse_proc p);
 	public:
+	/**
+	 * Default constructor, registers this class in thread-local storage so
+	 * that it can be referenced by BindAST fields in subclasses when their
+	 * constructors are run.
+	 */
 	ASTParserDelegate();
 	virtual parse_proc get_parse_proc(Rule &) const;
-	static void bind_parse_proc(Rule &r, parse_proc p);
+	/**
+	 * Parse an input `i`, starting from rule `g` in the grammar for which
+	 * this is a delegate.  The rule `ws` is used as whitespace.  Errors are
+	 * returned via the `el` parameter and the root of the AST via the `ast`
+	 * parameter.
+	 *
+	 * This function returns true on a successful parse, or false otherwise.
+	 */
 	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
 	                              std::unique_ptr<T> &ast) const
 	{
@@ -457,14 +495,14 @@ class ASTParserDelegate : ParserDelegate
 	}
 };
 
-/** AST function which creates an object of type T
-	and pushes it to the node stack.
+/**
+ * The `BindAST` class is responsible for 
  */
 template <class T> class BindAST
 {
 public:
-	/** constructor.
-		@param r Rule to attach the AST function to.
+	/**
+	 * Bind the AST class described in the
 	 */
 	BindAST(Rule &r)
 	{
