@@ -442,14 +442,14 @@ class ASTParserDelegate : ParserDelegate
 	ASTParserDelegate();
 	virtual parse_proc get_parse_proc(Rule &) const;
 	static void bind_parse_proc(Rule &r, parse_proc p);
-	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el, std::unique_ptr<T> &BindAST) const
+	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el, std::unique_ptr<T> &ast) const
 	{
 		std::unique_ptr<ASTNode> node = pegmatite::parse(i, g, ws, el, *this);
 		T *n = node->get_as<T>();
 		if (n)
 		{
 			node.release();
-			BindAST.reset(n);
+			ast.reset(n);
 			return true;
 		}
 		return false;
