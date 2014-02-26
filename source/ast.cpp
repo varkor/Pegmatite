@@ -70,7 +70,7 @@ ASTContainer::ASTContainer(const ASTContainer &src)
 	from a node stack.
 	@param st stack.
  */
-void ASTContainer::construct(const input_range &r, ASTStack &st)
+void ASTContainer::construct(const InputRange &r, ASTStack &st)
 {
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
@@ -94,15 +94,15 @@ ASTParserDelegate::ASTParserDelegate()
 	currentParserDelegate = this;
 }
 
-void ASTParserDelegate::set_parse_proc(rule &r, parse_proc p)
+void ASTParserDelegate::set_parse_proc(Rule &r, parse_proc p)
 {
 	handlers[std::addressof(r)] = p;
 }
-void ASTParserDelegate::bind_parse_proc(rule &r, parse_proc p)
+void ASTParserDelegate::bind_parse_proc(Rule &r, parse_proc p)
 {
 	currentParserDelegate->set_parse_proc(r, p);
 }
-parse_proc ASTParserDelegate::get_parse_proc(rule &r) const
+parse_proc ASTParserDelegate::get_parse_proc(Rule &r) const
 {
 	auto it = handlers.find(std::addressof(r));
 	if (it == handlers.end()) return 0;
@@ -115,10 +115,10 @@ parse_proc ASTParserDelegate::get_parse_proc(rule &r) const
 	@param ws whitespace rule.
 	@param el list of errors.
 	@param d user data, passed to the parse procedures.
-	@return pointer to ast node created, or null if there was an error.
+	@return pointer to AST node created, or null if there was an Error.
 		The return object must be deleted by the caller.
  */
-std::unique_ptr<ASTNode> parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d)
+std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el, const ParserDelegate &d)
 {
 	ASTStack st;
 	if (!parse(i, g, ws, el, d, &st)) return 0;

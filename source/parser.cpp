@@ -42,7 +42,7 @@ class ParsingState
 {
 public:
 	//position
-	pos position;
+	ParserPosition position;
 
 	//size of match vector
 	size_t matches;
@@ -57,20 +57,20 @@ public:
 class ParseMatch
 {
 public:
-	//rule matched
-	rule *matched_rule;
+	//Rule matched
+	Rule *matched_rule;
 
 	//begin position
-	pos start;
+	ParserPosition start;
 
 	//end position
-	pos finish;
+	ParserPosition finish;
 
 	//null constructor
 	ParseMatch() {}
 
 	//constructor from parameters
-	ParseMatch(rule *r, const pos &b, const pos &e) :
+	ParseMatch(Rule *r, const ParserPosition &b, const ParserPosition &e) :
 		matched_rule(r),
 		start(b),
 		finish(e)
@@ -89,14 +89,14 @@ public:
 	//match vector
 	typedef std::vector<ParseMatch> ParseMatch_vector;
 
-	//rule that parses whitespace
-	rule &whitespace_rule;
+	//Rule that parses whitespace
+	Rule &whitespace_rule;
 
 	//current position
-	pos position;
+	ParserPosition position;
 
-	//error position
-	pos error_pos;
+	//Error position
+	ParserPosition error_pos;
 
 	//input begin
 	Input::iterator start;
@@ -112,7 +112,7 @@ public:
 	bool unwinding;
 
 	//constructor
-	Context(Input &i, rule &ws, const ParserDelegate &d) :
+	Context(Input &i, Rule &ws, const ParserDelegate &d) :
 		whitespace_rule(ws),
 		position(i),
 		error_pos(i),
@@ -167,15 +167,15 @@ public:
 	}
 
 	//parse non-term rule.
-	bool parse_non_term(rule &r);
+	bool parse_non_term(Rule &r);
 
 	//parse term rule.
-	bool parse_term(rule &r);
+	bool parse_term(Rule &r);
 
 	//parse whitespace terminal
 	bool parse_ws() { return parse_term(whitespace_rule); }
 
-	parse_proc get_parse_proc(rule &r) const
+	parse_proc get_parse_proc(Rule &r) const
 	{
 		return delegate.get_parse_proc(r);
 	}
@@ -212,17 +212,17 @@ private:
 		MatchMode mode;
 
 		//constructor
-		RuleState(size_t pos = -1, MatchMode mode = PARSE) :
-			position(pos), mode(mode) {}
+		RuleState(size_t ParserPosition = -1, MatchMode mode = PARSE) :
+			position(ParserPosition), mode(mode) {}
 	};
-	std::unordered_map<rule*, RuleState> rule_states;
-	rule *unwind_target;
-	bool parse_rule(rule &r, bool (Context::*parse_func)(rule &));
 	//parse non-term rule.
-	bool _parse_non_term(rule &r);
-
 	//parse term rule.
-	bool _parse_term(rule &r);
+	std::unordered_map<Rule*, RuleState> rule_states;
+	Rule *unwind_target;
+	bool parse_rule(Rule &r, bool (Context::*parse_func)(Rule &));
+	bool _parse_non_term(Rule &r);
+
+	bool _parse_term(Rule &r);
 };
 
 }
@@ -719,7 +719,7 @@ class RuleReferenceExpr : public Expr
 {
 public:
 	//constructor.
-	RuleReferenceExpr(rule &r) : referenced_rule(r) { }
+	RuleReferenceExpr(Rule &r) : referenced_rule(r) { }
 
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
@@ -740,7 +740,7 @@ public:
 
 private:
 	//reference
-	rule &referenced_rule;
+	Rule &referenced_rule;
 };
 
 
@@ -809,12 +809,12 @@ namespace parserlib {
 
 
 //parse non-term rule.
-bool Context::parse_non_term(rule &r)
+bool Context::parse_non_term(Rule &r)
 {
 	return parse_rule(r, &Context::_parse_non_term);
 }
 
-bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
+bool Context::parse_rule(Rule &r, bool (Context::*parse_func)(Rule &))
 {
 	if (unwinding) return false;
 	//save the state of the rule
@@ -946,7 +946,7 @@ bool Context::parse_rule(rule &r, bool (Context::*parse_func)(rule &))
 
 
 //parse term rule.
-bool Context::parse_term(rule &r) 
+bool Context::parse_term(Rule &r) 
 {
 	return parse_rule(r, &Context::_parse_term);
 }
@@ -954,12 +954,12 @@ const bool debug_parsing = false;
 
 
 //parse non-term rule internal.
-bool Context::_parse_non_term(rule &r)
+bool Context::_parse_non_term(Rule &r)
 {
 	bool ok;
 	if (get_parse_proc(r))
 	{
-		pos b = position;
+		ParserPosition b = position;
 		ok = r.expr->parse_non_term(*this);
 		if (debug_parsing)
 		{
@@ -980,12 +980,12 @@ bool Context::_parse_non_term(rule &r)
 
 
 //parse term rule internal.
-bool Context::_parse_term(rule &r)
+bool Context::_parse_term(Rule &r)
 {
 	bool ok;
 	if (get_parse_proc(r))
 	{
-		pos b = position;
+		ParserPosition b = position;
 		ok = r.expr->parse_term(*this);
 		if (ok)
 		{
@@ -1001,9 +1001,9 @@ bool Context::_parse_term(rule &r)
 
 
 //get the next position
-static pos _next_pos(const pos &p)
+static ParserPosition _next_pos(const ParserPosition &p)
 {
-	pos r = p;
+	ParserPosition r = p;
 	++r.it;
 	++r.col;
 	return r;
@@ -1011,18 +1011,18 @@ static pos _next_pos(const pos &p)
 
 
 //get syntax error
-static error _syntax_error(Context &con)
+static Error _syntax_Error(Context &con)
 {
 	std::string str = "syntax error: ";
 	str += *con.error_pos.it;
-	return error(con.error_pos, _next_pos(con.error_pos), ERROR_SYNTAX_ERROR);
+	return Error(con.error_pos, _next_pos(con.error_pos), ERROR_SYNTAX_ERROR);
 }
 
 
 //get eof error
-static error _eof_error(Context &con)
+static Error _eof_Error(Context &con)
 {
-	return error(con.error_pos, con.error_pos, ERROR_INVALID_EOF);
+	return Error(con.error_pos, con.error_pos, ERROR_INVALID_EOF);
 }
 
 char32_t Input::slowCharacterLookup(Index n)
@@ -1076,7 +1076,7 @@ Input::Index UnicodeVectorInput::size() const
 /** constructor from input.
 	@param i input.
  */
-pos::pos(Input &i) :
+ParserPosition::ParserPosition(Input &i) :
 	it(i.begin()),
 	line(1),
 	col(1)
@@ -1132,7 +1132,7 @@ ExprPtr operator !(const ExprPtr &e)
 	@param b begin position.
 	@param e end position.
  */
-input_range::input_range(const pos &b, const pos &e) : start(b), finish(e) { }
+InputRange::InputRange(const ParserPosition &b, const ParserPosition &e) : start(b), finish(e) { }
 
 
 /** constructor.
@@ -1140,15 +1140,15 @@ input_range::input_range(const pos &b, const pos &e) : start(b), finish(e) { }
 	@param e end position.
 	@param t error type.
  */
-error::error(const pos &b, const pos &e, int t) :
-	input_range(b, e), error_type(t) { }
+Error::Error(const ParserPosition &b, const ParserPosition &e, int t) :
+	InputRange(b, e), error_type(t) { }
 
 
 /** compare on begin position.
 	@param e the other error to compare this with.
 	@return true if this comes before the previous error, false otherwise.
  */
-bool error::operator < (const error &e) const
+bool Error::operator < (const Error &e) const
 {
 	return start.it < e.start.it;
 }
@@ -1157,7 +1157,7 @@ bool error::operator < (const error &e) const
 /** character terminal constructor.
 	@param c character.
  */
-rule::rule(int c) :
+Rule::Rule(int c) :
 	expr(ExprPtr(new CharacterExpr(c)))
 {
 }
@@ -1166,7 +1166,7 @@ rule::rule(int c) :
 /** null-terminated string terminal constructor.
 	@param s null-terminated string.
  */
-rule::rule(const char *s) :
+Rule::Rule(const char *s) :
 	expr(new StringExpr(s))
 {
 }
@@ -1174,7 +1174,7 @@ rule::rule(const char *s) :
 /** constructor from expression.
 	@param e expression.
  */
-rule::rule(const ExprPtr e) :
+Rule::Rule(const ExprPtr e) :
 	expr(e)
 {
 }
@@ -1183,10 +1183,10 @@ rule::rule(const ExprPtr e) :
 /** constructor from rule.
 	@param r rule.
  */
-rule::rule(rule &r) : expr(new RuleReferenceExpr(r)) { }
+Rule::Rule(Rule &r) : expr(new RuleReferenceExpr(r)) { }
 ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
 ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
-ExprPtr::ExprPtr(rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
+ExprPtr::ExprPtr(Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
 
 
 /** creates a sequence of expressions.
@@ -1283,7 +1283,7 @@ ExprPtr any()
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, rule &g, rule &ws, error_list &el,
+bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
            const ParserDelegate &delegate, void *d)
 {
 	//prepare context
@@ -1295,7 +1295,7 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el,
 	//parse grammar
 	if (!con.parse_non_term(g))
 	{
-		el.push_back(_syntax_error(con));
+		el.push_back(_syntax_Error(con));
 		return false;
 	}
 
@@ -1307,11 +1307,11 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el,
 	{
 		if (con.error_pos.it < con.finish)
 		{
-			el.push_back(_syntax_error(con));
+			el.push_back(_syntax_Error(con));
 		}
 		else
 		{
-			el.push_back(_eof_error(con));
+			el.push_back(_eof_Error(con));
 		}
 		return false;
 	}

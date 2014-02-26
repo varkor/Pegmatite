@@ -68,7 +68,6 @@ Not in order:
 - Write parameterised delegate for generating semantic HTML markup
 - Write better documentation for how the AST construction works
 - Add error delegate
-- Rename classes so types start with uppercase
 - Check whether the `USE_RTTI` setting for the headers and library had to match
   it would be nice if it didn't...
 - Implement input sources wrapping std::string and ascii text files.

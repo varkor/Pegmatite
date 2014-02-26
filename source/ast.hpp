@@ -42,7 +42,7 @@ namespace parserlib {
 class ASTNode;
 template <class T, bool OPT> class ASTPtr;
 template <class T> class ASTList;
-template <class T> class ast;
+template <class T> class BindAST;
 
 
 /** type of AST node stack.
@@ -109,7 +109,7 @@ public:
 		from a node stack.
 		@param st stack.
 	 */
-	virtual void construct(const input_range &r, ASTStack &st) {}
+	virtual void construct(const InputRange &r, ASTStack &st) {}
 	
 private:
 	//parent
@@ -117,7 +117,7 @@ private:
 	
 	template <class T, bool OPT> friend class ASTPtr;
 	template <class T> friend class ASTList;
-	template <class T> friend class ast;
+	template <class T> friend class BindAST;
 
 #ifndef USE_RTTI
 protected:
@@ -188,7 +188,7 @@ public:
 		from a node stack.
 		@param st stack.
 	 */
-	virtual void construct(const input_range &r, ASTStack &st);
+	virtual void construct(const InputRange &r, ASTStack &st);
 
 private:
 	ASTMember_vector members;
@@ -229,7 +229,7 @@ public:
 	/** interface for filling the the member from a node stack.
 		@param st stack.
 	 */
-	virtual void construct(const input_range &r, ASTStack &st) = 0;
+	virtual void construct(const InputRange &r, ASTStack &st) = 0;
 
 private:
 	//the container this belongs to.
@@ -300,7 +300,7 @@ public:
 		@exception std::logic_error thrown if the node is not of the appropriate type;
 			thrown only if OPT == false or if the stack is empty.
 	 */
-	virtual void construct(const input_range &r, ASTStack &st)
+	virtual void construct(const InputRange &r, ASTStack &st)
 	{
 		//check the stack node
 		//if (st.empty()) throw std::logic_error("empty AST stack");
@@ -377,7 +377,7 @@ public:
 	/** Pops objects of type T from the stack until no more objects can be popped.
 		@param st stack.
 	 */
-	virtual void construct(const input_range &r, ASTStack &st)
+	virtual void construct(const InputRange &r, ASTStack &st)
 	{
 		for(;;)
 		{
@@ -431,25 +431,25 @@ private:
 	@return pointer to ast node created, or null if there was an error.
 		The return object must be deleted by the caller.
  */
-std::unique_ptr<ASTNode> parse(Input &i, rule &g, rule &ws, error_list &el, const ParserDelegate &d);
+std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el, const ParserDelegate &d);
 
 
 class ASTParserDelegate : ParserDelegate
 {
-	std::unordered_map<rule*, parse_proc> handlers;
-	void set_parse_proc(rule &r, parse_proc p);
+	std::unordered_map<Rule*, parse_proc> handlers;
+	void set_parse_proc(Rule &r, parse_proc p);
 	public:
 	ASTParserDelegate();
-	virtual parse_proc get_parse_proc(rule &) const;
-	static void bind_parse_proc(rule &r, parse_proc p);
-	template <class T> bool parse(Input &i, rule &g, rule &ws, error_list &el, std::unique_ptr<T> &ast) const
+	virtual parse_proc get_parse_proc(Rule &) const;
+	static void bind_parse_proc(Rule &r, parse_proc p);
+	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el, std::unique_ptr<T> &BindAST) const
 	{
 		std::unique_ptr<ASTNode> node = parserlib::parse(i, g, ws, el, *this);
 		T *n = node->get_as<T>();
 		if (n)
 		{
 			node.release();
-			ast.reset(n);
+			BindAST.reset(n);
 			return true;
 		}
 		return false;
@@ -459,19 +459,19 @@ class ASTParserDelegate : ParserDelegate
 /** AST function which creates an object of type T
 	and pushes it to the node stack.
  */
-template <class T> class ast
+template <class T> class BindAST
 {
 public:
 	/** constructor.
-		@param r rule to attach the AST function to.
+		@param r Rule to attach the AST function to.
 	 */
-	ast(rule &r)
+	BindAST(Rule &r)
 	{
-		ASTParserDelegate::bind_parse_proc(r, [](const pos &b, const pos &e, void *d)
+		ASTParserDelegate::bind_parse_proc(r, [](const ParserPosition &b, const ParserPosition &e, void *d)
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
-				obj->construct(input_range(b, e), *st);
+				obj->construct(InputRange(b, e), *st);
 				st->push_back(std::unique_ptr<ASTNode>(obj));
 			});
 	}

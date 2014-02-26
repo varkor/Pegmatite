@@ -39,7 +39,7 @@ namespace parserlib {
 
 class Expr;
 class Context;
-class rule;
+class Rule;
 
 
 /**
@@ -207,7 +207,7 @@ class AsciiFile : public Input
 
 
 ///position into the input.
-struct pos
+struct ParserPosition
 {
 	///iterator into the input.
 	Input::iterator it;
@@ -219,12 +219,12 @@ struct pos
 	int col;
 
 	///null constructor.
-	pos() {}
+	ParserPosition() {}
 
 	/** constructor from input.
 		@param i input.
 	 */
-	pos(Input &i);
+	ParserPosition(Input &i);
 };
 
 
@@ -234,27 +234,27 @@ struct pos
 	@param e end position of input.
 	@param d pointer to user data.
  */
-typedef std::function<void(const pos&, const pos&, void*)> parse_proc;
+typedef std::function<void(const ParserPosition&, const ParserPosition&, void*)> parse_proc;
 
 
 ///input range.
-class input_range
+class InputRange
 {
 public:
 	///begin position.
-	pos start;
+	ParserPosition start;
 
 	///end position.
-	pos finish;
+	ParserPosition finish;
 
 	///empty constructor.
-	input_range() {}
+	InputRange() {}
 
 	/** constructor.
 		@param b begin position.
 		@param e end position.
 	 */
-	input_range(const pos &b, const pos &e);
+	InputRange(const ParserPosition &b, const ParserPosition &e);
 	Input::iterator begin() const { return start.it; };
 	Input::iterator end() const { return finish.it; };
 };
@@ -274,8 +274,8 @@ enum ERROR_TYPE
 };
 
 
-///error.
-class error : public input_range
+///Error.
+class Error : public InputRange
 {
 public:
 	///type
@@ -286,18 +286,18 @@ public:
 		@param e end position.
 		@param t type.
 	 */
-	error(const pos &b, const pos &e, int t);
+	Error(const ParserPosition &b, const ParserPosition &e, int t);
 
 	/** compare on begin position.
 		@param e the other error to compare this with.
 		@return true if this comes before the previous error, false otherwise.
 	 */
-	bool operator < (const error &e) const;
+	bool operator < (const Error &e) const;
 };
 
 
 ///type of error list.
-typedef std::list<error> error_list;
+typedef std::list<Error> ErrorList;
 
 class CharacterExpr;
 class StringExpr;
@@ -311,7 +311,7 @@ typedef std::shared_ptr<StringExpr> StringExprPtr;
 struct ExprPtr : public std::shared_ptr<Expr>
 {
 	ExprPtr(Expr *e) : std::shared_ptr<Expr>(e) {}
-	ExprPtr(rule &e);
+	ExprPtr(Rule &e);
 	ExprPtr(const CharacterExprPtr &e) :
 		std::shared_ptr<Expr>(std::static_pointer_cast<Expr>(e)) {}
 	ExprPtr(const StringExprPtr &e) :
@@ -323,36 +323,36 @@ struct ExprPtr : public std::shared_ptr<Expr>
 
 /** represents a rule.
  */
-class rule
+class Rule
 {
 public:
 	/** character terminal constructor.
 		@param c character.
 	 */
-	rule(int c);
+	Rule(int c);
 
 	/** null-terminated string terminal constructor.
 		@param s null-terminated string.
 	 */
-	rule(const char *s);
+	Rule(const char *s);
 
 	/** null-terminated wide string terminal constructor.
 		@param s null-terminated string.
 	 */
-	rule(const wchar_t *s);
+	Rule(const wchar_t *s);
 
 	/** constructor from expression.
 		@param e expression.
 	 */
-	rule(const ExprPtr e);
+	Rule(const ExprPtr e);
 
 	/** constructor from rule.
 		@param r rule.
 	 */
-	rule(rule &r);
+	Rule(Rule &r);
 
-	rule(const rule &r) = delete;
-	rule(const rule &&r);
+	Rule(const Rule &r) = delete;
+	Rule(const Rule &&r);
 
 	/** sets the parse procedure.
 		@param p procedure.
@@ -365,7 +365,7 @@ private:
 	const ExprPtr expr;
 
 	//assignment not allowed
-	rule &operator = (rule &) = delete;
+	Rule &operator = (Rule &) = delete;
 
 	friend class Context;
 };
@@ -406,7 +406,7 @@ public:
 	@return a zero-or-more loop expression.
  */
 ExprPtr operator *(const ExprPtr &e);
-inline ExprPtr operator *(rule &r)
+inline ExprPtr operator *(Rule &r)
 {
 	return *ExprPtr(r);
 }
@@ -415,7 +415,7 @@ inline ExprPtr operator *(rule &r)
 	@return a one-or-more loop expression.
  */
 ExprPtr operator +(const ExprPtr &e);
-inline ExprPtr operator +(rule &r)
+inline ExprPtr operator +(Rule &r)
 {
 	return +ExprPtr(r);
 }
@@ -424,7 +424,7 @@ inline ExprPtr operator +(rule &r)
 	@return an optional expression.
  */
 ExprPtr operator -(const ExprPtr &e);
-inline ExprPtr operator -(rule &r)
+inline ExprPtr operator -(Rule &r)
 {
 	return -ExprPtr(r);
 }
@@ -433,7 +433,7 @@ inline ExprPtr operator -(rule &r)
 	@return an AND-expression.
  */
 ExprPtr operator &(const ExprPtr &e);
-inline ExprPtr operator &(rule &r)
+inline ExprPtr operator &(Rule &r)
 {
 	return &ExprPtr(r);
 }
@@ -442,7 +442,7 @@ inline ExprPtr operator &(rule &r)
 	@return a NOT-expression.
  */
 ExprPtr operator !(const ExprPtr &e);
-inline ExprPtr operator !(rule &r)
+inline ExprPtr operator !(Rule &r)
 {
 	return !ExprPtr(r);
 }
@@ -513,7 +513,7 @@ inline ExprPtr operator-(const CharacterExprPtr &left, int right)
 	@return an expression which parses a sequence.
  */
 ExprPtr operator >> (const ExprPtr &left, const ExprPtr &right);
-inline ExprPtr operator >> (rule &left, const ExprPtr &right)
+inline ExprPtr operator >> (Rule &left, const ExprPtr &right)
 {
 	return ExprPtr(left) >> right;
 }
@@ -525,7 +525,7 @@ inline ExprPtr operator >> (rule &left, const ExprPtr &right)
 	@return an expression which parses a choice.
  */
 ExprPtr operator | (const ExprPtr &left, const ExprPtr &right);
-inline ExprPtr operator | (rule &left, const ExprPtr &right)
+inline ExprPtr operator | (Rule &left, const ExprPtr &right)
 {
 	return ExprPtr(left) | right;
 }
@@ -582,7 +582,7 @@ ExprPtr any();
 
 struct ParserDelegate
 {
-	virtual parse_proc get_parse_proc(rule &) const = 0;
+	virtual parse_proc get_parse_proc(Rule &) const = 0;
 	virtual ~ParserDelegate();
 };
 
@@ -596,7 +596,7 @@ struct ParserDelegate
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, rule &g, rule &ws, error_list &el,
+bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
            const ParserDelegate &delegate, void *d);
 
 
@@ -605,7 +605,7 @@ bool parse(Input &i, rule &g, rule &ws, error_list &el,
 	@param ir input range.
 	@return the stream.
  */
-template <class T> T &operator << (T &stream, const input_range &ir)
+template <class T> T &operator << (T &stream, const InputRange &ir)
 {
 	for(auto c : ir)
 	{
