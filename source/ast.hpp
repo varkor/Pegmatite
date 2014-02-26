@@ -431,8 +431,8 @@ private:
 	@return pointer to ast node created, or null if there was an error.
 		The return object must be deleted by the caller.
  */
-std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el, const ParserDelegate &d);
-
+std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
+                               const ParserDelegate &d);
 
 class ASTParserDelegate : ParserDelegate
 {
@@ -442,7 +442,8 @@ class ASTParserDelegate : ParserDelegate
 	ASTParserDelegate();
 	virtual parse_proc get_parse_proc(Rule &) const;
 	static void bind_parse_proc(Rule &r, parse_proc p);
-	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el, std::unique_ptr<T> &ast) const
+	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
+	                              std::unique_ptr<T> &ast) const
 	{
 		std::unique_ptr<ASTNode> node = pegmatite::parse(i, g, ws, el, *this);
 		T *n = node->get_as<T>();
@@ -467,7 +468,8 @@ public:
 	 */
 	BindAST(Rule &r)
 	{
-		ASTParserDelegate::bind_parse_proc(r, [](const ParserPosition &b, const ParserPosition &e, void *d)
+		ASTParserDelegate::bind_parse_proc(r, [](const ParserPosition &b,
+		                                         const ParserPosition &e, void *d)
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
