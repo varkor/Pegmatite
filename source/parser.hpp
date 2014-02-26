@@ -183,14 +183,19 @@ class UnicodeVectorInput : public Input
 	/**
 	 * A reference to the vector being used as input.
 	 */
-	std::shared_ptr<std::vector<char32_t>> &vector;
+	const std::vector<char32_t> vector;
 	public:
 	/**
-	 * Constructs the wrapper referencing the underlying vector.  The vector
-	 * should not be modified for the lifetime of this object, and this object
-	 * must outlive any AST nodes created by parsing it.
+	 * Returns an immutable reference to the vector.  The returned value is
+	 * guaranteed to remain valid and not be modified for as long as the input
+	 * object exists.
 	 */
-	UnicodeVectorInput(std::shared_ptr<std::vector<char32_t>> &v) : vector(v) {}
+	const std::vector<char32_t> &getVector() { return vector; }
+	/**
+	 * Constructs the wrapper from a vector.  
+	 * The new object takes ownership of the character data in the vector.
+	 */
+	UnicodeVectorInput(std::vector<char32_t> &v) : vector(std::move(v)) {}
 	/**
 	 * Provides direct access to the underlying vector's storage.
 	 */
@@ -201,8 +206,47 @@ class UnicodeVectorInput : public Input
 	virtual Index size() const;
 };
 
-class AsciiFile : public Input
+/**
+ * A concrete Input class that wraps a file.  The file is assumed to be in
+ * ASCII.  Note that this does *NOT* include UTF-8 unless it is restricted to
+ * the 7-bit subset, as individual characters are promoted directly.  There is
+ * no support in this class for characters that require longer encodings.
+ */
+class AsciiFileInput : public Input
 {
+
+};
+
+/**
+ * A concrete Input subclass that wraps a std::string, providing access to the
+ * underlying characters.
+ */
+class StringInput : public Input
+{
+	/**
+	 * The string representing the underlying data.
+	 */
+	const std::string str;
+	public:
+	/**
+	 * Returns an immutable reference to the vector.  The returned value is
+	 * guaranteed to remain valid and not be modified for as long as the input
+	 * object exists.
+	 */
+	const std::string &getString() { return str; }
+	/*
+	 *A Constructs the wrapper from a string.  
+	 * The new object takes ownership of the character data in the string.
+	 */
+	StringInput(std::string &s) : str(std::move(s)) {}
+	/**
+	 * Provides direct access to the underlying string's storage.
+	 */
+	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b);
+	/**
+	 * Returns the size of the string.
+	 */
+	virtual Index size() const;
 };
 
 

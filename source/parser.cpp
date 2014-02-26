@@ -1059,17 +1059,40 @@ char32_t Input::slowCharacterLookup(Index n)
 Input::~Input() {}
 bool  UnicodeVectorInput::fillBuffer(Index start, Index &length, char32_t *&b)
 {
-	if (start > vector->size())
+	if (start > vector.size())
 	{
 		return false;
 	}
-	length = vector->size() - start;
-	b = vector->data() + start;
+	length = vector.size() - start;
+	// The buffer can't be const because this function is allowed to write into
+	// it, but the caller guarantees that it will not write to the returned
+	// value.
+	// We should probably clean up this interface to a const char32_t* instead
+	// of a bool...
+	b = const_cast<char32_t*>(vector.data() + start);
 	return true;
 }
 Input::Index UnicodeVectorInput::size() const
 {
-	return vector->size();
+	return vector.size();
+}
+
+bool  StringInput::fillBuffer(Index start, Index &length, char32_t *&b)
+{
+	if (start > str.size())
+	{
+		return false;
+	}
+	length = std::min(length, str.size() - start);
+	for (Index i=start ; i<length ; i++)
+	{
+		b[i] = str[i];
+	}
+	return true;
+}
+Input::Index StringInput::size() const
+{
+	return str.size();
 }
 
 
