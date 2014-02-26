@@ -225,7 +225,8 @@ private:
 };
 
 
-/** Base class for children of ASTContainer.
+/**
+ * Base class for children of `ASTContainer`.
  */
 class ASTMember
 {
