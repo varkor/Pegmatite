@@ -471,7 +471,9 @@ private:
 	 */
 	const ExprPtr expr;
 
-	//assignment not allowed
+	/**
+	 * Copying rules is not allowed.
+	 */
 	Rule &operator = (Rule &) = delete;
 
 	friend class Context;
