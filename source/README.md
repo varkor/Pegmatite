@@ -1,4 +1,4 @@
-Parserlib design overview
+Pegmatite design overview
 =========================
 
 This is a fork and extensive rewrite of Achilleas Margaritis's ParserLib.  It
@@ -58,6 +58,14 @@ This macro will be compiled away if you do define `USE_RTTI`, so you can
 provide grammars built with ParserLib that don't force consumers to use or
 not-use RTTI.  It is also completely safe to build without `USE_RTTI`, but
 still compile with RTTI.
+
+What is Pegmatite
+-----------------
+
+Pegmatite is a very crystalline, intrusive igneous rock composed of
+interlocking crystals usually larger than 2.5 cm in size.
+
+It is also a Parsing Expression Grammar library that rocks!
 
 To do
 -----

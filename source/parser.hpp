@@ -24,8 +24,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#ifndef PEGMATITE_PARSER_HPP
+#define PEGMATITE_PARSER_HPP
 
 
 #include <vector>
@@ -34,7 +34,7 @@
 #include <functional>
 
 
-namespace parserlib {
+namespace pegmatite {
 
 
 class Expr;
@@ -660,7 +660,7 @@ template <class T> T &operator << (T &stream, const InputRange &ir)
 
 
 
-} //namespace parserlib
+} //namespace pegmatite
 
 
-#endif //PARSER_HPP
+#endif //PEGMATITE_PARSER_HPP

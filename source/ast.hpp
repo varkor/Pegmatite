@@ -25,8 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef AST_HPP
-#define AST_HPP
+#ifndef PEGMATITE_AST_HPP
+#define PEGMATITE_AST_HPP
 
 
 #include <cassert>
@@ -36,7 +36,7 @@
 #include "parser.hpp"
 
 
-namespace parserlib {
+namespace pegmatite {
 
 
 class ASTNode;
@@ -53,7 +53,7 @@ typedef std::vector<std::unique_ptr<ASTNode>> ASTStack;
 #define PARSELIB_RTTI(thisclass, superclass)
 #else
 /**
- * Define the methods required for parserlib's lightweight RTTI replacement to
+ * Define the methods required for pegmatite's lightweight RTTI replacement to
  * work.  This should be used at the end of the class definition and will
  * provide support for safe downcasting.
  */
@@ -444,7 +444,7 @@ class ASTParserDelegate : ParserDelegate
 	static void bind_parse_proc(Rule &r, parse_proc p);
 	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el, std::unique_ptr<T> &BindAST) const
 	{
-		std::unique_ptr<ASTNode> node = parserlib::parse(i, g, ws, el, *this);
+		std::unique_ptr<ASTNode> node = pegmatite::parse(i, g, ws, el, *this);
 		T *n = node->get_as<T>();
 		if (n)
 		{
@@ -478,7 +478,7 @@ public:
 };
 
 
-} //namespace parserlib
+} //namespace pegmatite
 
 
-#endif //AST_HPP
+#endif //PEGMATITE_AST_HPP

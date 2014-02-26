@@ -33,7 +33,7 @@
 #include "parser.hpp"
 
 
-using namespace parserlib;
+using namespace pegmatite;
 
 namespace {
 //parser state
@@ -79,7 +79,7 @@ public:
 };
 
 }
-namespace parserlib
+namespace pegmatite
 {
 
 //parsing context
@@ -805,7 +805,7 @@ ParsingState::ParsingState(Context &con) :
 
 }
 
-namespace parserlib {
+namespace pegmatite {
 
 
 //parse non-term rule.
@@ -1418,5 +1418,5 @@ void StringExpr::dump() const
 
 
 
-} //namespace parserlib
+} //namespace pegmatite
 

@@ -37,16 +37,16 @@ namespace {
  */
 // FIXME: Should be thread_local, but that doesn't seem to work on OS X for
 // some reason (__thread does)
-__thread parserlib::ASTContainer *current = 0;
+__thread pegmatite::ASTContainer *current = 0;
 /**
  * The current parser delegate.  When constructing an object, this is set and
  * then the constructors for the fields run, accessing it to detect their
  * parents.
  */
-__thread parserlib::ASTParserDelegate *currentParserDelegate;
+__thread pegmatite::ASTParserDelegate *currentParserDelegate;
 }
 
-namespace parserlib {
+namespace pegmatite {
 
 /** sets the container under construction to be this.
  */
@@ -127,4 +127,4 @@ std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el, const
 	return std::move(st[0]);
 }
 
-} //namespace parserlib
+} //namespace pegmatite

@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(libparser)
+project(libpegmatite)
 
-set(libparser 0.1)
+set(libpegmatite 0.1)
 
-set(libparser_CXX_SRCS
+set(libpegmatite_CXX_SRCS
 	ast.cpp
 	parser.cpp
 )
-set(libparser_CXX_SRCS
+set(libpegmatite_CXX_SRCS
 	ast.cpp
 	parser.cpp
 )
 
-add_library(parser SHARED ${libparser_CXX_SRCS})
-add_library(parser-static STATIC ${libparser_CXX_SRCS})
-set_target_properties(parser-static PROPERTIES
+add_library(pegmatite SHARED ${libpegmatite_CXX_SRCS})
+add_library(pegmatite-static STATIC ${libpegmatite_CXX_SRCS})
+set_target_properties(pegmatite-static PROPERTIES
 	POSITION_INDEPENDENT_CODE true
-	OUTPUT_NAME "parser")
+	OUTPUT_NAME "pegmatite")
 
 list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
 

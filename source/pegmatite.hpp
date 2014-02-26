@@ -24,11 +24,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef PARSERLIB_HPP
-#define PARSERLIB_HPP
-
-
+#ifndef PEGMATITE_HPP
+#define PEGMATITE_HPP
+#include "parser.hpp"
 #include "ast.hpp"
-
-
-#endif //PARSERLIB_HPP
+#endif //PEGMATITE_HPP
