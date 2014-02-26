@@ -72,10 +72,8 @@ To do
 
 Not in order:
 
-- Finish reindenting code
 - Write parameterised delegate for generating semantic HTML markup
 - Write better documentation for how the AST construction works
-- Add error delegate
 - Check whether the `USE_RTTI` setting for the headers and library had to match
   it would be nice if it didn't...
-- Implement input sources wrapping std::string and ascii text files.
+- Implement input source wrapping ascii text files.
