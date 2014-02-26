@@ -297,28 +297,19 @@ public:
 	 */
 	virtual void construct(ASTStack &st)
 	{
-		//check the stack node
-		//if (st.empty()) throw std::logic_error("empty AST stack");
-	
+		assert(!st.empty() && "Stack must not be empty");
 		//get the node
 		ASTNode *node = st.back().get();
 		
 		//get the object
 		T *obj = node->get_as<T>();
 		
+		assert((obj || OPT) && "Required objects must exist!");
 		//if the object is optional, simply return
-		if (OPT)
+		if (OPT && !obj)
 		{
-			if (!obj) return;
+			return;
 		}
-		
-		//else if the object is mandatory, throw an exception
-		else
-		{
-			//if (!obj) throw std::logic_error("invalid AST node");
-		}
-		
-		
 		//set the new object
 		ptr.reset(obj);
 		//pop the node from the stack
