@@ -246,7 +246,7 @@ public:
 	 * Interface for constructing references to AST objects from the stack.
 	 */
 	virtual void construct(ASTStack &st) = 0;
-private:
+protected:
 	/**
 	 * The container that owns this object.
 	 */
@@ -324,17 +324,14 @@ public:
 		//pop the node from the stack
 		st.back().release();
 		st.pop_back();
-		_set_parent();
+		ptr->parent_node = container_node;
 	}
 
 private:
-	//ptr
+	/**
+	 * The node that we are pointing to.
+	 */
 	std::unique_ptr<T> ptr;
-	
-	//set parent of object
-	void _set_parent()
-	{
-	}
 };
 
 
