@@ -76,4 +76,3 @@ Not in order:
 - Write better documentation for how the AST construction works
 - Check whether the `USE_RTTI` setting for the headers and library had to match
   it would be nice if it didn't...
-- Implement input source wrapping ascii text files.

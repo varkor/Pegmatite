@@ -50,6 +50,12 @@ class Rule;
  */
 class Input
 {
+	protected:
+	/**
+	 * Size for the static buffer.  Note that changing this will change the
+	 * ABI, so do not change it in shared library builds!
+	 */
+	static const std::size_t static_buffer_size = 128;
 	public:
 	/**
 	 * The type of indexes into the buffer.
@@ -190,11 +196,6 @@ class Input
 	 */
 	Index	 buffer_end;
 	/**
-	 * Size for the static buffer.  Note that changing this will change the
-	 * ABI, so do not change it in shared library builds!
-	 */
-	static const std::size_t static_buffer_size = 128;
-	/**
 	 * A buffer that can be used to store characters by subclasses that do not
 	 * have the same underlying representation.
 	 */
@@ -260,14 +261,28 @@ class UnicodeVectorInput : public Input
 };
 
 /**
- * A concrete Input class that wraps a file.  The file is assumed to be in
+ * A concrete `Input` class that wraps a file.  The file is assumed to be in
  * ASCII.  Note that this does *NOT* include UTF-8 unless it is restricted to
  * the 7-bit subset, as individual characters are promoted directly.  There is
  * no support in this class for characters that require longer encodings.
  */
-class AsciiFileInput : public Input
+struct AsciiFileInput : public Input
 {
-
+	/**
+	 * Construct a parser input from a specified file descriptor.
+	 */
+	AsciiFileInput(int file);
+	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b);
+	virtual Index size() const;
+	private:
+	/**
+	 * The file descriptor for the file that this encapsulates.
+	 */
+	int fd;
+	/**
+	 * The size of the file.
+	 */
+	size_t file_size;
 };
 
 /**

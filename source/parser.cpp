@@ -30,6 +30,11 @@
 #include <cassert>
 #include <stdexcept>
 #include <unordered_map>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+
 #include "parser.hpp"
 
 
@@ -1202,6 +1207,42 @@ Input::Index StringInput::size() const
 	return str.size();
 }
 
+AsciiFileInput::AsciiFileInput(int file) : fd(file)
+{
+	struct stat buf;
+	if (fstat(fd, &buf) != 0)
+	{
+		file_size = 0;
+		perror("Input error");
+	}
+	else
+	{
+		file_size = buf.st_size;
+	}
+}
+
+const std::size_t Input::static_buffer_size;
+bool AsciiFileInput::fillBuffer(Index start, Index &length, char32_t *&b)
+{
+	if (start > file_size)
+	{
+		return false;
+	}
+	char buffer[static_buffer_size];
+	// This should be a no-op
+	length = std::min(length, static_buffer_size);
+	length = std::min(length, file_size - start);
+	pread(fd, buffer, length, start);
+	for (Index i=0 ; i<length ; i++)
+	{
+		b[i] = buffer[i];
+	}
+	return true;
+}
+Input::Index AsciiFileInput::size() const
+{
+	return file_size;
+}
 
 /** constructor from input.
 	@param i input.
