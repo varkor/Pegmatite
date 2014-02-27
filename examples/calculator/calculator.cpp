@@ -1,181 +1,268 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "parserlib.hpp"
+#include "pegmatite.hpp"
+// This is very bad style, but it's okay for a short example...
 using namespace std;
-using namespace parserlib;
+using namespace pegmatite;
 
 
-/**** GRAMMAR DECLARATIONS ****/
-
-
-extern rule expr_, add, mul;
-
-
-rule ws = *expr(' ');
-
-
-rule digit = range('0', '9');
-
-
-rule num = +digit >> -('.' >> +digit >> -(set("eE") >> -set("+-") >> +digit));
-
-
-rule val = num
-         | '(' >> expr_ >> ')';
-
-/**** non-left recursive grammar ****/
-
-/*
-rule mul_op = '*' >> val;
-rule div_op = '/' >> val;
-rule mul = val >> *(mul_op | div_op);
-
-
-/*rule add_op = '+' >> mul;
-rule sub_op = '-' >> mul;
-rule add = mul >> *(add_op | sub_op);
-*/
-
-
-/**** left recursive grammar ****/
-
-
-rule mul_op = mul >> '*' >> val;
-rule div_op = mul >> '/' >> val;
-rule mul = mul_op
-         | div_op
-         | val;
-
-
-rule add_op = add >> '+' >> mul;
-rule sub_op = add >> '-' >> mul;
-rule add = add_op
-         | sub_op
-         | mul;
-
-
-rule expr_ = add;
-
-
-/**** AST DECLARATIONS ****/
-
-
-class expr_t : public ast_container {
+/**
+ * The AST namespace contains the abstract syntax tree for this grammar.  
+ */
+namespace AST
+{
+/**
+ * The base class for expressions in our language.
+ */
+class Expression : public ASTContainer
+{
 public:
-    virtual double eval() const = 0;
-    virtual void print(int depth = 0, int tab = 4) const = 0;
+	/**
+	 * Evaluate this expression.  Returns a `double` representing the result of
+	 * the evaluation.
+	 */
+	virtual double eval() const = 0;
+	/**
+	 * Print the node, at the specified indent depth.
+	 */
+	virtual void print(int depth = 0) const = 0;
 };
 
 
-class num_t : public expr_t {
+/**
+ * AST node representing a number.
+ */
+class Number : public Expression
+{
 public:
-    virtual void construct(ast_stack &st) {
-        stringstream stream;
-        for(input::iterator it = m_begin.m_it; it != m_end.m_it; ++it) {
-            stream << (char)*it;
-        }
-        stream >> m_value;
-    }
+	/**
+	 * Construct the numerical value from the text in the input range.
+	 */
+	virtual void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &st)
+	{
+		stringstream stream;
+		for(char c : r)
+		{
+			stream << c;
+		}
+		stream >> value;
+	}
 
-    virtual double eval() const {
-        return m_value;
-    }
+	virtual double eval() const
+	{
+		return value;
+	}
 
-    virtual void print(int depth, int tab) const {
-        cout << string(depth * tab, ' ') << m_value << endl;
-    }
+	virtual void print(int depth) const
+	{
+		cout << string(depth, '\t') << value << endl;
+	}
 
 private:
-    double m_value;
+	double value;
 };
 
 
-class binary_expr_t : public expr_t {
+/**
+ * Superclass for all of the binary expressions.  Contains pointers to the left
+ * and right children.  Subclasses encode the operation type.
+ */
+class BinaryExpression : public Expression 
+{
+protected:
+	/**
+	 * The pointers to the left and right nodes.  The `ASTPtr` class will
+	 * automatically fill these in when this node is constructed, popping the
+	 * two top values from the AST stack.
+	 */
+	ASTPtr<Expression> left, right;
 public:
-    ast_ptr<expr_t> left, right;
 
-    virtual void print(int depth, int tab) const {
-        left->print(depth);
-        right->print(depth);
-    }
+	virtual void print(int depth) const
+	{
+		left->print(depth);
+		right->print(depth);
+	}
+};
+
+/**
+ * Add expression node.
+ */
+class AddExpression : public BinaryExpression
+{
+public:
+	virtual double eval() const
+	{
+		return left->eval() + right->eval();
+	}
+
+	virtual void print(int depth) const
+	{
+		cout << string(depth, '\t') << "+" << endl;
+		BinaryExpression::print(depth+1);
+	}
 };
 
 
-class add_t : public binary_expr_t {
+/**
+ * Subtract expression node.
+ */
+class SubtractExpression : public BinaryExpression
+{
 public:
-    virtual double eval() const {
-        return left->eval() + right->eval();
-    }
+	virtual double eval() const
+	{
+		return left->eval() - right->eval();
+	}
 
-    virtual void print(int depth, int tab) const {
-        cout << string(depth * tab, ' ') << "+" << endl;
-        binary_expr_t::print(depth+1, tab);
-    }
+	virtual void print(int depth) const
+	{
+		cout << string(depth, '\t') << "-" << endl;
+		BinaryExpression::print(depth+1);
+	}
 };
 
-
-class sub_t : public binary_expr_t {
+/**
+ * Multiply expression node.
+ */
+class MultiplyExpression : public BinaryExpression
+{
 public:
-    virtual double eval() const {
-        return left->eval() - right->eval();
-    }
+	virtual double eval() const
+	{
+		return left->eval() * right->eval();
+	}
 
-    virtual void print(int depth, int tab) const {
-        cout << string(depth * tab, ' ') << "-" << endl;
-        binary_expr_t::print(depth+1, tab);
-    }
+	virtual void print(int depth) const
+	{
+		cout << string(depth, '\t') << "*" << endl;
+		BinaryExpression::print(depth+1);
+	}
 };
 
-
-class mul_t : public binary_expr_t {
+/**
+ * Divide expression node.
+ */
+class DivideExpression : public BinaryExpression
+{
 public:
-    virtual double eval() const {
-        return left->eval() * right->eval();
-    }
-
-    virtual void print(int depth, int tab) const {
-        cout << string(depth * tab, ' ') << "*" << endl;
-        binary_expr_t::print(depth+1, tab);
-    }
-};
-
-
-class div_t_ : public binary_expr_t {
-public:
-    virtual double eval() const {
+	virtual double eval() const
+	{
 		double ret = 0;
 		double rval = right->eval();
 		if (rval != 0)
 		{
 			ret = left->eval() / rval;
 		}
-        return ret;
-    }
+		return ret;
+	}
 
-    virtual void print(int depth, int tab) const {
-        cout << string(depth * tab, ' ') << "/" << endl;
-        binary_expr_t::print(depth+1, tab);
-    }
+	virtual void print(int depth) const
+	{
+		cout << string(depth, '\t') << "/" << endl;
+		BinaryExpression::print(depth+1);
+	}
+};
+}
+
+namespace Parser
+{
+/**
+ * The (singleton) calculator grammar.
+ */
+struct CalculatorGrammar
+{
+	/**
+	 * Only spaces are recognised as whitespace in this toy example.
+	 */
+	Rule ws             = ' '_E;
+	/**
+	 * Digits are things in the range 0-9.
+	 */
+	Rule digit          = '0'_E - '9';
+	/**
+	 * Numbers are one or more digits, optionally followed by a decimal point,
+	 * and one or more digits, optionally followed by an exponent (which may
+	 * also be negative.
+	 */
+	Rule num            = +digit >> -('.'_E >> +digit >> - (set("eE") >> -set("+-") >> +digit));
+	/**
+	 * Values are either numbers or expressions in brackets (highest precedence).
+	 */
+	Rule val            = num |  '(' >> expr >> ')';
+	/**
+	 * Multiply operations are values or multiply, or divide operations,
+	 * followed by a multiply symbol, followed by a value.  The sides can never
+	 * be add or subtract operations, because they have lower precedence and so
+	 * can only be parents of multiply or divide operations (or children via
+	 * parenthetical expressions), not direct children.
+	 */
+	Rule mul_op         = mul >> '*' >> val;
+	/**
+	 * Divide operations follow the same syntax as multiply.
+	 */
+	Rule div_op         = mul >> '/' >> val;
+	/**
+	 * Multiply-precedence operations are either multiply or divide operations,
+	 * or simple values (numbers of parenthetical expressions).
+	 */
+	Rule mul            = mul_op | div_op | val;
+
+
+	/**
+	 * Add operations can have any expression on the left (including other add
+	 * expressions), but only higher-precedence operations on the right.
+	 */
+	Rule add_op         = expr >> '+' >> mul;
+	/**
+	 * Subtract operations follow the same structure as add.
+	 */
+	Rule sub_op         = expr >> '-' >> mul;
+	/**
+	 * Expressions can be any of the other types.
+	 */
+	Rule expr           = add_op | sub_op | mul;
+
+	/**
+	 * Returns a singleton instance of this grammar.
+	 */
+	static const CalculatorGrammar& get()
+	{
+		static CalculatorGrammar g;
+		return g;
+	}
+	private:
+	/**
+	 * Private constructor.  This class is immutable, and so only the `get()`
+	 * method should be used to return the singleton instance.
+	 */
+	CalculatorGrammar() {};
 };
 
 
-/**** GRAMMAR-AST CONNECTIONS ****/
 
+/**
+ * CalculatorParser, constructs an AST from an input string.
+ */
+class CalculatorParser : public ASTParserDelegate
+{
+	BindAST<AST::Number> num = CalculatorGrammar::get().num;
+	BindAST<AST::AddExpression> add = CalculatorGrammar::get().add_op;
+	BindAST<AST::SubtractExpression> sub = CalculatorGrammar::get().sub_op;
+	BindAST<AST::MultiplyExpression> mul = CalculatorGrammar::get().mul_op;
+	BindAST<AST::DivideExpression> div = CalculatorGrammar::get().div_op;
+	public:
+	const CalculatorGrammar &g = CalculatorGrammar::get();
+};
 
-ast<num_t> ast_num(num);
-ast<add_t> ast_add(add_op);
-ast<sub_t> ast_sub(sub_op);
-ast<mul_t> ast_mul(mul_op);
-ast<div_t_> ast_div(div_op);
+}
 
-
-/**** MAIN ****/
-
-
-//main
-int main() {
-	for(;;) {
+int main()
+{
+	Parser::CalculatorParser p;
+	for(;;)
+	{
 		string s;
 
 		cout << "enter a math expression (+ - * /, floats, parentheses) or enter to exit:\n";
@@ -183,32 +270,30 @@ int main() {
 		if (s.empty()) break;
 
 		//convert the string to input
-		input i(s.begin(), s.end());
+		StringInput i(s);
 
 		//parse
-		error_list el;
-		expr_t* root = 0;
-		parse(i, expr_, ::ws, el, root);
+		ErrorList el;
+		unique_ptr<AST::Expression> root = 0;
+		p.parse(i, p.g.expr, p.g.ws, el, root);
 
 		//on success
-		if (root) {
+		if (root)
+		{
 			double v = root->eval();
 			cout << "success\n";
 			cout << "result = " << v << endl;
 			cout << "parse tree:\n";
-			root->print(0, 2);
-			delete root;
+			root->print(0);
 		}
 
 		//on error
-		else {
+		else
+		{
 			cout << "errors: \n";
-			for(error_list::iterator it = el.begin();
-				it != el.end();
-				++it)
+			for(auto &err : el)
 			{
-				error &err = *it;
-				cout << "line " << err.m_begin.m_line << ", col " << err.m_begin.m_col << ": ";
+				cout << "line " << err.start.line << ", col " << err.finish.col << ": ";
 				wcout << "syntax error" << endl;
 			}
 		}
@@ -216,5 +301,5 @@ int main() {
 		//next input
 		cout << endl;
 	}
-    return 0;
+	return 0;
 }
