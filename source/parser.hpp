@@ -440,7 +440,7 @@ struct ExprPtr : public std::shared_ptr<Expr>
 	/**
 	 * Construct an expression pointer wrapping an expression that refers to a rule.
 	 */
-	ExprPtr(Rule &e);
+	ExprPtr(const Rule &e);
 	/**
 	 * Construct an expression pointer wrapping a character expression.
 	 */
@@ -493,7 +493,7 @@ private:
 	/**
 	 * Copying rules is not allowed.
 	 */
-	Rule &operator = (Rule &) = delete;
+	Rule &operator = (const Rule &) = delete;
 
 	friend class Context;
 };
@@ -534,7 +534,7 @@ public:
 	@return a zero-or-more loop expression.
  */
 ExprPtr operator *(const ExprPtr &e);
-inline ExprPtr operator *(Rule &r)
+inline ExprPtr operator *(const Rule &r)
 {
 	return *ExprPtr(r);
 }
@@ -543,7 +543,7 @@ inline ExprPtr operator *(Rule &r)
 	@return a one-or-more loop expression.
  */
 ExprPtr operator +(const ExprPtr &e);
-inline ExprPtr operator +(Rule &r)
+inline ExprPtr operator +(const Rule &r)
 {
 	return +ExprPtr(r);
 }
@@ -552,7 +552,7 @@ inline ExprPtr operator +(Rule &r)
 	@return an optional expression.
  */
 ExprPtr operator -(const ExprPtr &e);
-inline ExprPtr operator -(Rule &r)
+inline ExprPtr operator -(const Rule &r)
 {
 	return -ExprPtr(r);
 }
@@ -561,7 +561,7 @@ inline ExprPtr operator -(Rule &r)
 	@return an AND-expression.
  */
 ExprPtr operator &(const ExprPtr &e);
-inline ExprPtr operator &(Rule &r)
+inline ExprPtr operator &(const Rule &r)
 {
 	return &ExprPtr(r);
 }
@@ -570,7 +570,7 @@ inline ExprPtr operator &(Rule &r)
 	@return a NOT-expression.
  */
 ExprPtr operator !(const ExprPtr &e);
-inline ExprPtr operator !(Rule &r)
+inline ExprPtr operator !(const Rule &r)
 {
 	return !ExprPtr(r);
 }
@@ -590,11 +590,6 @@ ExprPtr operator-(const CharacterExprPtr &left, int right);
 	@return an expression which parses a sequence.
  */
 ExprPtr operator >> (const ExprPtr &left, const ExprPtr &right);
-inline ExprPtr operator >> (Rule &left, const ExprPtr &right)
-{
-	return ExprPtr(left) >> right;
-}
-
 
 /** creates a choice of expressions.
 	@param left left operand.
@@ -602,11 +597,6 @@ inline ExprPtr operator >> (Rule &left, const ExprPtr &right)
 	@return an expression which parses a choice.
  */
 ExprPtr operator | (const ExprPtr &left, const ExprPtr &right);
-inline ExprPtr operator | (Rule &left, const ExprPtr &right)
-{
-	return ExprPtr(left) | right;
-}
-
 
 /** converts a parser expression into a terminal.
 	@param e expression.
@@ -666,7 +656,7 @@ struct ParserDelegate
 	/**
 	 * Returns the handler for the specified rule.
 	 */
-	virtual parse_proc get_parse_proc(Rule &) const = 0;
+	virtual parse_proc get_parse_proc(const Rule &) const = 0;
 	/**
 	 * Virtual destructor, for cleaning up subclasses correctly.
 	 */
@@ -683,7 +673,7 @@ struct ParserDelegate
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
+bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
            const ParserDelegate &delegate, void *d);
 
 

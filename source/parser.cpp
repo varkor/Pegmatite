@@ -62,8 +62,8 @@ public:
 class ParseMatch
 {
 public:
-	//Rule matched
-	Rule *matched_rule;
+	//const Rule matched
+	const Rule *matched_rule;
 
 	//begin position
 	ParserPosition start;
@@ -75,7 +75,7 @@ public:
 	ParseMatch() {}
 
 	//constructor from parameters
-	ParseMatch(Rule *r, const ParserPosition &b, const ParserPosition &e) :
+	ParseMatch(const Rule *r, const ParserPosition &b, const ParserPosition &e) :
 		matched_rule(r),
 		start(b),
 		finish(e)
@@ -168,8 +168,8 @@ public:
 	//match vector
 	typedef std::vector<ParseMatch> ParseMatch_vector;
 
-	//Rule that parses whitespace
-	Rule &whitespace_rule;
+	//const Rule that parses whitespace
+	const Rule &whitespace_rule;
 
 	//current position
 	ParserPosition position;
@@ -191,7 +191,7 @@ public:
 	bool unwinding;
 
 	//constructor
-	Context(Input &i, Rule &ws, const ParserDelegate &d) :
+	Context(Input &i, const Rule &ws, const ParserDelegate &d) :
 		whitespace_rule(ws),
 		position(i),
 		error_pos(i),
@@ -246,15 +246,15 @@ public:
 	}
 
 	//parse non-term rule.
-	bool parse_non_term(Rule &r);
+	bool parse_non_term(const Rule &r);
 
 	//parse term rule.
-	bool parse_term(Rule &r);
+	bool parse_term(const Rule &r);
 
 	//parse whitespace terminal
 	bool parse_ws() { return parse_term(whitespace_rule); }
 
-	parse_proc get_parse_proc(Rule &r) const
+	parse_proc get_parse_proc(const Rule &r) const
 	{
 		return delegate.get_parse_proc(r);
 	}
@@ -296,12 +296,12 @@ private:
 	};
 	//parse non-term rule.
 	//parse term rule.
-	std::unordered_map<Rule*, RuleState> rule_states;
-	Rule *unwind_target;
-	bool parse_rule(Rule &r, bool (Context::*parse_func)(Rule &));
-	bool _parse_non_term(Rule &r);
+	std::unordered_map<const Rule*, RuleState> rule_states;
+	const Rule *unwind_target;
+	bool parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &));
+	bool _parse_non_term(const Rule &r);
 
-	bool _parse_term(Rule &r);
+	bool _parse_term(const Rule &r);
 };
 
 }
@@ -798,7 +798,7 @@ class RuleReferenceExpr : public Expr
 {
 public:
 	//constructor.
-	RuleReferenceExpr(Rule &r) : referenced_rule(r) { }
+	RuleReferenceExpr(const Rule &r) : referenced_rule(r) { }
 
 	//parse with whitespace
 	virtual bool parse_non_term(Context &con) const
@@ -819,7 +819,7 @@ public:
 
 private:
 	//reference
-	Rule &referenced_rule;
+	const Rule &referenced_rule;
 };
 
 
@@ -921,12 +921,12 @@ namespace pegmatite {
 
 
 //parse non-term rule.
-bool Context::parse_non_term(Rule &r)
+bool Context::parse_non_term(const Rule &r)
 {
 	return parse_rule(r, &Context::_parse_non_term);
 }
 
-bool Context::parse_rule(Rule &r, bool (Context::*parse_func)(Rule &))
+bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &))
 {
 	if (unwinding) return false;
 	//save the state of the rule
@@ -1058,7 +1058,7 @@ bool Context::parse_rule(Rule &r, bool (Context::*parse_func)(Rule &))
 
 
 //parse term rule.
-bool Context::parse_term(Rule &r) 
+bool Context::parse_term(const Rule &r) 
 {
 	return parse_rule(r, &Context::_parse_term);
 }
@@ -1066,7 +1066,7 @@ const bool debug_parsing = false;
 
 
 //parse non-term rule internal.
-bool Context::_parse_non_term(Rule &r)
+bool Context::_parse_non_term(const Rule &r)
 {
 	bool ok;
 	if (get_parse_proc(r))
@@ -1092,7 +1092,7 @@ bool Context::_parse_non_term(Rule &r)
 
 
 //parse term rule internal.
-bool Context::_parse_term(Rule &r)
+bool Context::_parse_term(const Rule &r)
 {
 	bool ok;
 	if (get_parse_proc(r))
@@ -1324,7 +1324,7 @@ bool Error::operator < (const Error &e) const
 	return start.it < e.start.it;
 }
 
-Rule::Rule(const ExprPtr e) :
+const Rule::Rule(const ExprPtr e) :
 	expr(e)
 {
 }
@@ -1335,7 +1335,7 @@ Rule::Rule(const ExprPtr e) :
  */
 ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
 ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
-ExprPtr::ExprPtr(Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
+ExprPtr::ExprPtr(const Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
 
 
 /** creates a sequence of expressions.
@@ -1432,7 +1432,7 @@ ExprPtr any()
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
+bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
            const ParserDelegate &delegate, void *d)
 {
 	//prepare context

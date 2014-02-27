@@ -415,8 +415,8 @@ private:
 	@return pointer to ast node created, or null if there was an error.
 		The return object must be deleted by the caller.
  */
-std::unique_ptr<ASTNode> parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
-                               const ParserDelegate &d);
+std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
+                               ErrorList &el, const ParserDelegate &d);
 
 /**
  * A parser delegate that is responsible for creating AST nodes from the input.
@@ -441,18 +441,18 @@ class ASTParserDelegate : ParserDelegate
 	/**
 	 * The map from rules to parsing handlers.
 	 */
-	std::unordered_map<Rule*, parse_proc> handlers;
+	std::unordered_map<const Rule*, parse_proc> handlers;
 	/**
 	 * Registers a callback in this delegate.  This should only be called from
 	 * the `static` version of this function.
 	 */
-	void set_parse_proc(Rule &r, parse_proc p);
+	void set_parse_proc(const Rule &r, parse_proc p);
 	/**
 	 * Registers a callback for a specific rule in the instance of this class
 	 * currently under construction in this thread.  This should only ever be
 	 * called by `BindAST` instances.
 	 */
-	static void bind_parse_proc(Rule &r, parse_proc p);
+	static void bind_parse_proc(const Rule &r, parse_proc p);
 	public:
 	/**
 	 * Default constructor, registers this class in thread-local storage so
@@ -460,7 +460,7 @@ class ASTParserDelegate : ParserDelegate
 	 * constructors are run.
 	 */
 	ASTParserDelegate();
-	virtual parse_proc get_parse_proc(Rule &) const;
+	virtual parse_proc get_parse_proc(const Rule &) const;
 	/**
 	 * Parse an input `i`, starting from rule `g` in the grammar for which
 	 * this is a delegate.  The rule `ws` is used as whitespace.  Errors are
@@ -469,8 +469,8 @@ class ASTParserDelegate : ParserDelegate
 	 *
 	 * This function returns true on a successful parse, or false otherwise.
 	 */
-	template <class T> bool parse(Input &i, Rule &g, Rule &ws, ErrorList &el,
-	                              std::unique_ptr<T> &ast) const
+	template <class T> bool parse(Input &i, const Rule &g, const Rule &ws,
+	                              ErrorList &el, std::unique_ptr<T> &ast) const
 	{
 		std::unique_ptr<ASTNode> node = pegmatite::parse(i, g, ws, el, *this);
 		T *n = node->get_as<T>();
@@ -493,7 +493,7 @@ public:
 	/**
 	 * Bind the AST class described in the
 	 */
-	BindAST(Rule &r)
+	BindAST(const Rule &r)
 	{
 		ASTParserDelegate::bind_parse_proc(r, [](const ParserPosition &b,
 		                                         const ParserPosition &e, void *d)
