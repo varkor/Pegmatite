@@ -472,6 +472,10 @@ public:
 	 */
 	Rule(const ExprPtr e);
 	/**
+	 * Constructor for creating rules from character expressions.
+	 */
+	Rule(const CharacterExprPtr e) : Rule(ExprPtr(e)) {}
+	/**
 	 * Copying rules is not allowed.
 	 */
 	Rule(const Rule &r) = delete;
