@@ -50,14 +50,14 @@ template <class T> class BindAST;
 typedef std::vector<std::unique_ptr<ASTNode>> ASTStack;
 
 #ifdef USE_RTTI
-#define PARSELIB_RTTI(thisclass, superclass)
+#define PEGMATITE_RTTI(thisclass, superclass)
 #else
 /**
  * Define the methods required for pegmatite's lightweight RTTI replacement to
  * work.  This should be used at the end of the class definition and will
  * provide support for safe downcasting.
  */
-#define PARSELIB_RTTI(thisclass, superclass)             \
+#define PEGMATITE_RTTI(thisclass, superclass)             \
 	friend ASTNode;                                      \
 protected:                                               \
 	virtual char *kind()                                 \
@@ -221,7 +221,7 @@ private:
 	ASTMember_vector members;
 
 	friend class ASTMember;
-	PARSELIB_RTTI(ASTContainer, ASTNode)
+	PEGMATITE_RTTI(ASTContainer, ASTNode)
 };
 
 

@@ -27,6 +27,7 @@ public:
 	 * Print the node, at the specified indent depth.
 	 */
 	virtual void print(int depth = 0) const = 0;
+	PEGMATITE_RTTI(Expression, ASTContainer);
 };
 
 
