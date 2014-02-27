@@ -279,7 +279,7 @@ public:
 	/** auto conversion to the underlying object ptr.
 		@return the underlying ptr value.
 	 */
-	operator T *() const
+	const std::unique_ptr<T> &operator *() const
 	{
 		return ptr;
 	}
@@ -287,7 +287,7 @@ public:
 	/** member access.
 		@return the underlying ptr value.
 	 */
-	T *operator ->() const
+	const std::unique_ptr<T> &operator ->() const
 	{
 		assert(ptr);
 		return ptr;
