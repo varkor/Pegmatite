@@ -5,12 +5,8 @@ project(libpegmatite)
 set(libpegmatite 0.1)
 
 set(libpegmatite_CXX_SRCS
-	ast.cpp
-	parser.cpp
-)
-set(libpegmatite_CXX_SRCS
-	ast.cpp
-	parser.cpp
+	ast.cc
+	parser.cc
 )
 
 add_library(pegmatite SHARED ${libpegmatite_CXX_SRCS})

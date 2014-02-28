@@ -33,7 +33,7 @@
 #include <list>
 #include <unordered_map>
 #include <memory>
-#include "parser.hpp"
+#include "parser.hh"
 
 
 namespace pegmatite {

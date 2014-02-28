@@ -743,8 +743,8 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @PROJECT_SOURCE_DIR@/ast.hpp \
-                         @PROJECT_SOURCE_DIR@/parser.hpp \
+INPUT                  = @PROJECT_SOURCE_DIR@/ast.hh \
+                         @PROJECT_SOURCE_DIR@/parser.hh \
                          @PROJECT_SOURCE_DIR@/README.md
 
 # This tag can be used to specify the character encoding of the source files

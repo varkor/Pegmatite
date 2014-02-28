@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <cassert>
-#include "ast.hpp"
+#include "ast.hh"
 
 
 namespace {
@@ -115,7 +115,6 @@ std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
 	ASTStack st;
 	if (!parse(i, g, ws, el, d, &st)) return 0;
 	assert(st.size() == 1);
-	fprintf(stderr, "Pointer %p\n", st[0].get());
 	return std::move(st[0]);
 }
 

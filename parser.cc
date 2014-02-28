@@ -35,7 +35,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include "parser.hpp"
+#include "parser.hh"
 
 
 using namespace pegmatite;

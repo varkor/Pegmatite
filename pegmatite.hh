@@ -26,6 +26,6 @@
  */
 #ifndef PEGMATITE_HPP
 #define PEGMATITE_HPP
-#include "parser.hpp"
-#include "ast.hpp"
+#include "parser.hh"
+#include "ast.hh"
 #endif //PEGMATITE_HPP

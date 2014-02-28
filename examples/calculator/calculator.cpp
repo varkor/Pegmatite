@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "pegmatite.hpp"
+#include "pegmatite.hh"
 // This is very bad style, but it's okay for a short example...
 using namespace std;
 using namespace pegmatite;
