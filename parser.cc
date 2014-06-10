@@ -274,8 +274,6 @@ private:
 	enum MatchMode
 	{
 		PARSE,
-		REJECT,
-		ACCEPT
 	};
 
 	//state
@@ -934,7 +932,6 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			}
 			break;
 		case REJECT:
-		case ACCEPT:
 			if (lr)
 			{
 				ok = false;
