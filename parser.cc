@@ -930,9 +930,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 				//branches are examined
 				states.back().mode = REJECT;
 				ok = (this->*parse_func)(r);
-				assert(state_size < states.size());
-				states.resize(state_size);
-				return ok;
+				break;
 			}
 			else
 			{
