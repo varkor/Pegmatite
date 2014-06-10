@@ -177,21 +177,21 @@ struct CalculatorGrammar
 	/**
 	 * Only spaces are recognised as whitespace in this toy example.
 	 */
-	Rule ws             = ' '_E;
+	Rule ws     = " \t\n"_E;
 	/**
 	 * Digits are things in the range 0-9.
 	 */
-	Rule digit          = '0'_E - '9';
+	Rule digit  = '0'_E - '9';
 	/**
 	 * Numbers are one or more digits, optionally followed by a decimal point,
 	 * and one or more digits, optionally followed by an exponent (which may
 	 * also be negative.
 	 */
-	Rule num            = +digit >> -('.'_E >> +digit >> - (set("eE") >> -set("+-") >> +digit));
+	Rule num    = +digit >> -('.'_E >> +digit >> -("eE"_S >> -("+-"_S) >> +digit));
 	/**
 	 * Values are either numbers or expressions in brackets (highest precedence).
 	 */
-	Rule val            = num |  '(' >> expr >> ')';
+	Rule val    = num |  '(' >> expr >> ')';
 	/**
 	 * Multiply operations are values or multiply, or divide operations,
 	 * followed by a multiply symbol, followed by a value.  The sides can never
@@ -199,31 +199,31 @@ struct CalculatorGrammar
 	 * can only be parents of multiply or divide operations (or children via
 	 * parenthetical expressions), not direct children.
 	 */
-	Rule mul_op         = mul >> '*' >> val;
+	Rule mul_op = mul >> '*' >> val;
 	/**
 	 * Divide operations follow the same syntax as multiply.
 	 */
-	Rule div_op         = mul >> '/' >> val;
+	Rule div_op = mul >> '/' >> val;
 	/**
 	 * Multiply-precedence operations are either multiply or divide operations,
 	 * or simple values (numbers of parenthetical expressions).
 	 */
-	Rule mul            = mul_op | div_op | val;
+	Rule mul    = mul_op | div_op | val;
 
 
 	/**
 	 * Add operations can have any expression on the left (including other add
 	 * expressions), but only higher-precedence operations on the right.
 	 */
-	Rule add_op         = expr >> '+' >> mul;
+	Rule add_op = expr >> '+' >> mul;
 	/**
 	 * Subtract operations follow the same structure as add.
 	 */
-	Rule sub_op         = expr >> '-' >> mul;
+	Rule sub_op = expr >> '-' >> mul;
 	/**
 	 * Expressions can be any of the other types.
 	 */
-	Rule expr           = add_op | sub_op | mul;
+	Rule expr   = add_op | sub_op | mul;
 
 	/**
 	 * Returns a singleton instance of this grammar.
