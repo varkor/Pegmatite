@@ -481,7 +481,6 @@ class ASTParserDelegate : ParserDelegate
 };
 
 /**
- * The `BindAST` class is responsible for 
  * The `BindAST` class is responsible for binding an action to a rule.  The
  * template argument is the `ASTNode` subclass representing the action.  Its
  * `construct()` method will be called when the rule is matched.
