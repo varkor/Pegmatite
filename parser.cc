@@ -270,10 +270,21 @@ public:
 	}
 
 private:
-	//mode
+	/**
+	 * The mode for parsing a rule.  
+	 */
 	enum MatchMode
 	{
+		/**
+		 * Parse as normal.  If we're left recursing, then try again in reject
+		 * mode.
+		 */
 		PARSE,
+		/**
+		 * Parse as normal only if we are not left recursing.  If we are, then
+		 * fail this rule to force backtracking.
+		 */
+		REJECT
 	};
 
 	//state
@@ -890,8 +901,13 @@ bool Context::parse_non_term(const Rule &r)
 
 bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &))
 {
-	//save the state of the rule
+	// For each rule, we maintain a vector consisting of where it was last
+	// encountered (in the input stream) and what the parsing mode was.
 	auto &states = rule_states[std::addressof(r)];
+	// If this is the first time that we've encountered this rule, then set the
+	// last position and mode to values that will trigger a normal parse: We
+	// can't be in left recursion if this is the first time that we've
+	// encountered the rule.
 	size_t last_pos = -1;
 	MatchMode last_mode = PARSE;
 	if (!states.empty())
@@ -901,13 +917,16 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 		last_mode = last.mode;
 	}
 
-	//success/failure result
+	// Return value (success or failure of parse)
 	bool ok;
 
-	//compute the new position
+	// Compute the new position in the stream.  We're only tracking offsets to
+	// detect left recursion, not storing iterators.
 	size_t new_pos = position.it - start;
 
-	//check if we have left recursion
+	// Check if we have left recursion.  We are in a left-recursive state if
+	// the last time that we encountered this rule was at the same point in the
+	// input.
 	bool lr = new_pos == last_pos;
 
 	switch (last_mode)
