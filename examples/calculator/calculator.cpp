@@ -43,7 +43,7 @@ public:
 	virtual void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &st)
 	{
 		stringstream stream;
-		for(char c : r)
+		for (char c : r)
 		{
 			stream << c;
 		}
@@ -262,7 +262,7 @@ class CalculatorParser : public ASTParserDelegate
 int main()
 {
 	Parser::CalculatorParser p;
-	for(;;)
+	for (;;)
 	{
 		string s;
 
@@ -292,7 +292,7 @@ int main()
 		else
 		{
 			cout << "errors: \n";
-			for(auto &err : el)
+			for (auto &err : el)
 			{
 				cout << "line " << err.start.line << ", col " << err.finish.col << ": ";
 				wcout << "syntax error" << endl;
