@@ -60,10 +60,6 @@ typedef std::vector<std::unique_ptr<ASTNode>> ASTStack;
 #define PEGMATITE_RTTI(thisclass, superclass)             \
 	friend ASTNode;                                      \
 protected:                                               \
-	virtual char *kind()                                 \
-	{                                                    \
-		return thisclass::classKind();                   \
-	}                                                    \
 	static char *classKind()                             \
 	{                                                    \
 		static char thisclass ## id;                     \
@@ -72,7 +68,7 @@ protected:                                               \
 public:                                                  \
 	virtual bool isa(char *x)                            \
 	{                                                    \
-		return (x == kind()) ||                          \
+		return (x == classKind()) ||                          \
 				(superclass::isa(x));                    \
 	}
 #endif
