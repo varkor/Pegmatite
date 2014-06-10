@@ -920,7 +920,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	// the objects around.
 
 	//handle the mode of the rule
-	switch (states.back().mode)
+	switch (last_mode)
 	{
 		//normal parse
 		case PARSE:
@@ -939,9 +939,8 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 				ok = (this->*parse_func)(r);
 			}
 			break;
-
-		//reject the left recursive rule
 		case REJECT:
+		case ACCEPT:
 			if (lr)
 			{
 				ok = false;
@@ -950,21 +949,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			{
 				states.back().mode = PARSE;
 				ok = (this->*parse_func)(r);
-				states.back().mode = REJECT;
-			}
-			break;
-
-		//accept the left recursive rule
-		case ACCEPT:
-			if (lr)
-			{
-				ok = true;
-			}
-			else
-			{
-				states.back().mode = PARSE;
-				ok = (this->*parse_func)(r);
-				states.back().mode = ACCEPT;
+				states.back().mode = last_mode;
 			}
 			break;
 	}
