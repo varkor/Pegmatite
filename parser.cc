@@ -188,8 +188,6 @@ public:
 
 	const ParserDelegate &delegate;
 
-	bool unwinding;
-
 	//constructor
 	Context(Input &i, const Rule &ws, const ParserDelegate &d) :
 		whitespace_rule(ws),
@@ -197,8 +195,7 @@ public:
 		error_pos(i),
 		start(i.begin()),
 		finish(i.end()),
-		delegate(d),
-		unwinding(false)
+		delegate(d)
 	{
 	}
 
@@ -297,7 +294,6 @@ private:
 	//parse non-term rule.
 	//parse term rule.
 	std::unordered_map<const Rule*, std::vector<RuleState>> rule_states;
-	const Rule *unwind_target;
 	bool parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &));
 	bool _parse_non_term(const Rule &r);
 
@@ -448,10 +444,6 @@ public:
 		ParsingState st(con);
 		if (!expr->parse_non_term(con))
 		{
-			if (con.unwinding)
-			{
-				return false;
-			}
 			con.restore(st);
 			return true;
 		}
@@ -463,10 +455,6 @@ public:
 			ParsingState st(con);
 			if (!expr->parse_non_term(con))
 			{
-				if (con.unwinding)
-				{
-					return false;
-				}
 				con.restore(st);
 				break;
 			}
@@ -482,10 +470,6 @@ public:
 		ParsingState st(con);
 		if (!expr->parse_term(con))
 		{
-			if (con.unwinding)
-			{
-				return false;
-			}
 			con.restore(st);
 			return true;
 		}
@@ -496,10 +480,6 @@ public:
 			ParsingState st(con);
 			if (!expr->parse_term(con))
 			{
-				if (con.unwinding)
-				{
-					return false;
-				}
 				con.restore(st);
 				break;
 			}
@@ -536,10 +516,6 @@ public:
 			ParsingState st(con);
 			if (!expr->parse_non_term(con))
 			{
-				if (con.unwinding)
-				{
-					return false;
-				}
 				con.restore(st);
 				break;
 			}
@@ -560,10 +536,6 @@ public:
 			ParsingState st(con);
 			if (!expr->parse_term(con))
 			{
-				if (con.unwinding)
-				{
-					return false;
-				}
 				con.restore(st);
 				break;
 			}
@@ -764,10 +736,6 @@ public:
 	{
 		ParsingState st(con);
 		if (left->parse_non_term(con)) return true;
-		if (con.unwinding)
-		{
-			return false;
-		}
 		con.restore(st);
 		return right->parse_non_term(con);
 	}
@@ -776,10 +744,6 @@ public:
 	{
 		ParsingState st(con);
 		if (left->parse_term(con)) return true;
-		if (con.unwinding)
-		{
-			return false;
-		}
 		con.restore(st);
 		return right->parse_term(con);
 	}
@@ -928,7 +892,6 @@ bool Context::parse_non_term(const Rule &r)
 
 bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &))
 {
-	if (unwinding) return false;
 	//save the state of the rule
 	auto &states = rule_states[std::addressof(r)];
 	size_t state_size = states.size();
@@ -967,12 +930,6 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 				//branches are examined
 				states.back().mode = REJECT;
 				ok = (this->*parse_func)(r);
-				if (unwinding)
-				{
-					assert(state_size < states.size());
-					states.resize(state_size);
-					return false;
-				}
 				assert(state_size < states.size());
 				states.resize(state_size);
 				return ok;
@@ -980,21 +937,6 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			else
 			{
 				ok = (this->*parse_func)(r);
-				if (unwinding)
-				{
-					if (unwind_target == std::addressof(r))
-					{
-						ok = true;
-						unwinding = false;
-					}
-					else
-					{
-						assert(state_size < states.size());
-						states.resize(state_size);
-						return false;
-					}
-				}
-				break;
 			}
 			break;
 
@@ -1008,12 +950,6 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			{
 				states.back().mode = PARSE;
 				ok = (this->*parse_func)(r);
-				if (unwinding)
-				{
-					assert(state_size < states.size());
-					states.resize(state_size);
-					return false;
-				}
 				states.back().mode = REJECT;
 			}
 			break;
@@ -1028,12 +964,6 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			{
 				states.back().mode = PARSE;
 				ok = (this->*parse_func)(r);
-				if (unwinding)
-				{
-					assert(state_size < states.size());
-					states.resize(state_size);
-					return false;
-				}
 				states.back().mode = ACCEPT;
 			}
 			break;
