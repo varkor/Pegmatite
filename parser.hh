@@ -577,6 +577,7 @@ inline ExprPtr operator !(const Rule &r)
 
 
 CharacterExprPtr operator "" _E(const char x);
+ExprPtr operator "" _S(const char *x, std::size_t len);
 ExprPtr operator "" _E(const char *x, std::size_t len);
 ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right);
 ExprPtr operator-(const CharacterExprPtr &left, int right);

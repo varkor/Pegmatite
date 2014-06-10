@@ -145,6 +145,10 @@ CharacterExprPtr operator "" _E(const char x)
 {
 	return CharacterExprPtr(new CharacterExpr(x));
 }
+ExprPtr operator "" _S(const char *x, std::size_t len)
+{
+	return set(x);
+}
 ExprPtr operator "" _E(const char *x, std::size_t len)
 {
 	return ExprPtr(new StringExpr(x, len));
