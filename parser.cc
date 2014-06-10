@@ -953,8 +953,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	}
 
 	//restore the rule's state
-	assert(state_size < states.size());
-	states.resize(state_size);
+	states.pop_back();
 
 	return ok;
 }
