@@ -296,7 +296,7 @@ private:
 	};
 	//parse non-term rule.
 	//parse term rule.
-	std::unordered_map<const Rule*, RuleState> rule_states;
+	std::unordered_map<const Rule*, std::vector<RuleState>> rule_states;
 	const Rule *unwind_target;
 	bool parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &));
 	bool _parse_non_term(const Rule &r);
@@ -930,8 +930,16 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 {
 	if (unwinding) return false;
 	//save the state of the rule
-	RuleState &rule_state = rule_states[std::addressof(r)];
-	RuleState old_state = rule_state;
+	auto &states = rule_states[std::addressof(r)];
+	size_t state_size = states.size();
+	size_t last_pos = -1;
+	MatchMode last_mode = PARSE;
+	if (state_size > 0)
+	{
+		auto &last = states.back();
+		last_pos = last.position;
+		last_mode = last.mode;
+	}
 
 	//success/failure result
 	bool ok;
@@ -940,57 +948,34 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	size_t new_pos = position.it - start;
 
 	//check if we have left recursion
-	bool lr = new_pos == rule_state.position;
+	bool lr = new_pos == last_pos;
 
 	//update the rule's state
-	rule_state.position = new_pos;
+	states.push_back(RuleState(new_pos, last_mode));
+	// Note that we have to look this value up in the vector every time that we
+	// use it, because the vector will realloc() its internal storage and move
+	// the objects around.
 
 	//handle the mode of the rule
-	switch (rule_state.mode)
+	switch (states.back().mode)
 	{
 		//normal parse
 		case PARSE:
 			if (lr)
 			{
-				//first try to parse the rule by rejecting it, so alternative branches are examined
-				rule_state.mode = REJECT;
+				//first try to parse the rule by rejecting it, so alternative
+				//branches are examined
+				states.back().mode = REJECT;
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
+					assert(state_size < states.size());
+					states.resize(state_size);
 					return false;
 				}
-
-				//if the first try is successful, try accepting the rule,
-				//so other elements of the sequence are parsed
-				if (ok)
-				{
-					rule_state.mode = ACCEPT;
-
-					//loop until no more parsing can be done
-					for(;;)
-					{
-						//store the correct state, in order to backtrack if the call fails
-						ParsingState st(*this);
-
-						//update the rule position to the current position,
-						//because at this state the rule is resolving the left recursion
-						rule_state.position = position.it - start;
-
-						//if parsing fails, restore the last good state and stop
-						if (!(this->*parse_func)(r))
-						{
-							restore(st);
-							break;
-						}
-					}
-
-					//since the left recursion was resolved successfully,
-					//return via a non-local exit
-					rule_state = old_state;
-					unwind_target = std::addressof(r);
-					unwinding = true;
-					return false;
-				}
+				assert(state_size < states.size());
+				states.resize(state_size);
+				return ok;
 			}
 			else
 			{
@@ -1004,7 +989,8 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 					}
 					else
 					{
-						rule_state = old_state;
+						assert(state_size < states.size());
+						states.resize(state_size);
 						return false;
 					}
 				}
@@ -1020,13 +1006,15 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			}
 			else
 			{
-				rule_state.mode = PARSE;
+				states.back().mode = PARSE;
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
+					assert(state_size < states.size());
+					states.resize(state_size);
 					return false;
 				}
-				rule_state.mode = REJECT;
+				states.back().mode = REJECT;
 			}
 			break;
 
@@ -1038,19 +1026,22 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			}
 			else
 			{
-				rule_state.mode = PARSE;
+				states.back().mode = PARSE;
 				ok = (this->*parse_func)(r);
 				if (unwinding)
 				{
+					assert(state_size < states.size());
+					states.resize(state_size);
 					return false;
 				}
-				rule_state.mode = ACCEPT;
+				states.back().mode = ACCEPT;
 			}
 			break;
 	}
 
 	//restore the rule's state
-	rule_state = old_state;
+	assert(state_size < states.size());
+	states.resize(state_size);
 
 	return ok;
 }
