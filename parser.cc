@@ -892,10 +892,9 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 {
 	//save the state of the rule
 	auto &states = rule_states[std::addressof(r)];
-	size_t state_size = states.size();
 	size_t last_pos = -1;
 	MatchMode last_mode = PARSE;
-	if (state_size > 0)
+	if (!states.empty())
 	{
 		auto &last = states.back();
 		last_pos = last.position;
