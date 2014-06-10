@@ -57,7 +57,7 @@ typedef std::vector<std::unique_ptr<ASTNode>> ASTStack;
  * work.  This should be used at the end of the class definition and will
  * provide support for safe downcasting.
  */
-#define PEGMATITE_RTTI(thisclass, superclass)             \
+#define PEGMATITE_RTTI(thisclass, superclass)            \
 	friend ASTNode;                                      \
 protected:                                               \
 	static char *classKind()                             \
@@ -68,7 +68,7 @@ protected:                                               \
 public:                                                  \
 	virtual bool isa(char *x)                            \
 	{                                                    \
-		return (x == classKind()) ||                          \
+		return (x == classKind()) ||                     \
 				(superclass::isa(x));                    \
 	}
 #endif
