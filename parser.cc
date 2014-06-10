@@ -913,13 +913,6 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	//check if we have left recursion
 	bool lr = new_pos == last_pos;
 
-	//update the rule's state
-	states.push_back(RuleState(new_pos, last_mode));
-	// Note that we have to look this value up in the vector every time that we
-	// use it, because the vector will realloc() its internal storage and move
-	// the objects around.
-
-	//handle the mode of the rule
 	switch (last_mode)
 	{
 		//normal parse
@@ -928,13 +921,16 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			{
 				//first try to parse the rule by rejecting it, so alternative
 				//branches are examined
-				states.back().mode = REJECT;
+				states.push_back(RuleState(new_pos, REJECT));
 				ok = (this->*parse_func)(r);
+				states.pop_back();
 				break;
 			}
 			else
 			{
+				states.push_back(RuleState(new_pos, PARSE));
 				ok = (this->*parse_func)(r);
+				states.pop_back();
 			}
 			break;
 		case REJECT:
@@ -945,15 +941,12 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 			}
 			else
 			{
-				states.back().mode = PARSE;
+				states.push_back(RuleState(new_pos, PARSE));
 				ok = (this->*parse_func)(r);
-				states.back().mode = last_mode;
+				states.pop_back();
 			}
 			break;
 	}
-
-	//restore the rule's state
-	states.pop_back();
 
 	return ok;
 }
