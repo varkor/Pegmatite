@@ -209,17 +209,15 @@ struct CalculatorGrammar
 	 * or simple values (numbers of parenthetical expressions).
 	 */
 	Rule mul    = mul_op | div_op | val;
-
-
 	/**
 	 * Add operations can have any expression on the left (including other add
 	 * expressions), but only higher-precedence operations on the right.
 	 */
-	Rule add_op = expr >> '+' >> mul;
+	Rule add_op = expr >> '+' >> expr;
 	/**
 	 * Subtract operations follow the same structure as add.
 	 */
-	Rule sub_op = expr >> '-' >> mul;
+	Rule sub_op = expr >> '-' >> expr;
 	/**
 	 * Expressions can be any of the other types.
 	 */
