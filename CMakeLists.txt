@@ -16,8 +16,11 @@ set_target_properties(pegmatite-static PROPERTIES
 	OUTPUT_NAME "pegmatite")
 
 list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
-
+option(USE_RTTI "Use native C++ RTTI" ON)
 option(BUILD_DOCUMENTATION "Use Doxygen to create the HTML based API documentation" OFF)
+if (USE_RTTI)
+	add_definitions(-DUSE_RTTI=1)
+endif()
 if(BUILD_DOCUMENTATION)
 	FIND_PACKAGE(Doxygen)
 	if (NOT DOXYGEN_FOUND)
