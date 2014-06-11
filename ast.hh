@@ -243,6 +243,7 @@ public:
 	 * Interface for constructing references to AST objects from the stack.
 	 */
 	virtual void construct(ASTStack &st) = 0;
+	virtual ~ASTMember();
 protected:
 	/**
 	 * The container that owns this object.
@@ -385,6 +386,7 @@ public:
 			obj->parent_node = ASTMember::container();
 		}
 	}
+	virtual ~ASTList() {}
 
 private:
 	//objects

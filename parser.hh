@@ -168,7 +168,6 @@ class Input
 	inline char32_t operator[](Index n)
 	{
 		// If the local buffer can satisfy the request, fetch the value
-		char32_t v;
 		if ((n >= buffer_start) && (n < buffer_end))
 		{
 			return buffer[n - buffer_start];
@@ -180,7 +179,7 @@ class Input
 	 * so that the first request will trigger a fetch from the underlying
 	 * storage.
 	 */
-	Input() : buffer_start(1), buffer_end(0), buffer(0) {}
+	Input() : buffer(0), buffer_start(1), buffer_end(0) {}
 	private:
 	/**
 	 * A pointer to the start of the buffer.  This must be a contiguous block

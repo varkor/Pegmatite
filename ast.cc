@@ -79,6 +79,7 @@ ASTMember::ASTMember()
 	container_node = current;
 	current->members.push_back(this);
 }
+ASTMember::~ASTMember() {}
 
 ASTParserDelegate::ASTParserDelegate()
 {
