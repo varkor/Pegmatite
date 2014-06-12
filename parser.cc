@@ -357,7 +357,7 @@ public:
 	virtual void dump() const
 	{
 		fprintf(stderr, "[");
-		char c;
+		char c = 0;
 		for (bool v : mSetExpr)
 		{
 			if (v)
