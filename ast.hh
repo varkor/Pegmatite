@@ -290,6 +290,11 @@ public:
 		return ptr;
 	}
 
+	explicit operator bool() const noexcept
+	{
+		return (bool)ptr;
+	}
+
 	/**
 	 * Pops the next matching object from the AST stack `st` and claims it.
 	 */
