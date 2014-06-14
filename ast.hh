@@ -300,6 +300,11 @@ public:
 	 */
 	virtual void construct(ASTStack &st)
 	{
+
+		if (st.empty() && OPT)
+		{
+			return;
+		}
 		assert(!st.empty() && "Stack must not be empty");
 		//get the node
 		ASTNode *node = st.back().get();
