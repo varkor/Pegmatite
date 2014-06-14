@@ -850,6 +850,33 @@ public:
 		fprintf(stderr, "$AnyExpr");
 	}
 };
+class DebugExpr : public Expr
+{
+	std::function<void()> fn;
+public:
+	DebugExpr(std::function<void()> f) : fn(f) {}
+
+	//parse with whitespace
+	virtual bool parse_non_term(Context &con) const
+	{
+		fn();
+		return true;
+	}
+
+	//parse terminal
+	virtual bool parse_term(Context &con) const
+	{
+		fn();
+		return true;
+	}
+
+	virtual void dump() const
+	{
+		fprintf(stderr, "<DEBUG: ");
+		fn();
+		fprintf(stderr, ">");
+	}
+};
 
 //constructor
 ParsingState::ParsingState(Context &con) :
@@ -1334,6 +1361,11 @@ ExprPtr eof()
 ExprPtr any()
 {
 	return ExprPtr(new AnyExpr());
+}
+
+ExprPtr debug(std::function<void()> fn)
+{
+	return ExprPtr(new DebugExpr(fn));
 }
 
 

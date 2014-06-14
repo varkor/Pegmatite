@@ -648,6 +648,12 @@ ExprPtr eof();
 ExprPtr any();
 
 /**
+ * Returns a new expression that is always successfully matched and executes
+ * the argument function when it is matched.
+ */
+ExprPtr debug(std::function<void()> fn);
+
+/**
  * Parser delegate abstract class.  Subclasses of this are responsible for
  * providing handlers for the rules in the grammar.
  */
