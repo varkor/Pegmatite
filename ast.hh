@@ -33,11 +33,27 @@
 #include <list>
 #include <unordered_map>
 #include <memory>
+#include <cxxabi.h>
 #include "parser.hh"
 
 
 namespace pegmatite {
 
+template <class T> void debug_log(const char *msg, int depth, T *obj)
+{
+#ifdef DEBUG_AST_CONSTRUCTION
+	const char *mangled = typeid(T).name();
+	char *buffer = (char*)malloc(strlen(mangled));
+	int err;
+	size_t s;
+	char *demangled = abi::__cxa_demangle(mangled, buffer, &s,
+		&err);
+	fprintf(stderr, "[%d] %s %s (%p) off the AST stack\n",
+			depth, msg,
+		demangled ? demangled : mangled, obj);
+	free((void*)(demangled ? demangled : buffer));
+#endif // DEBUG_AST_CONSTRUCTION
+}
 
 class ASTNode;
 template <class T, bool OPT> class ASTPtr;
@@ -318,6 +334,7 @@ public:
 		{
 			return;
 		}
+		debug_log("Popped", st.size()-1, obj);
 		//set the new object
 		ptr.reset(obj);
 		//pop the node from the stack
@@ -384,6 +401,7 @@ public:
 			//if the object was not not of the appropriate type,
 			//end the list parsing
 			if (!obj) return;
+			debug_log("Popped", st.size()-1, obj);
 			
 			//remove the node from the stack
 			st.back().release();
@@ -512,6 +530,7 @@ public:
 				T *obj = new T();
 				obj->construct(InputRange(b, e), *st);
 				st->push_back(std::unique_ptr<ASTNode>(obj));
+				debug_log("Constructed", st->size()-1, obj);
 			});
 	}
 };
