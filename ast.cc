@@ -66,7 +66,7 @@ void ASTContainer::construct(const InputRange &r, ASTStack &st)
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
 		ASTMember *member = *it;
-		member->construct(st);
+		member->construct(r, st);
 	}
 	// We don't need the members vector anymore, so clean up the storage it
 	// uses.
@@ -116,7 +116,7 @@ std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
 	ASTStack st;
 	if (!parse(i, g, ws, el, d, &st)) return 0;
 	assert(st.size() == 1);
-	return std::move(st[0]);
+	return std::move(st[0].second);
 }
 
 } //namespace pegmatite

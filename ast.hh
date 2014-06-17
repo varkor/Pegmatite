@@ -61,9 +61,10 @@ template <class T> class ASTList;
 template <class T> class BindAST;
 
 
+typedef std::pair<const InputRange, std::unique_ptr<ASTNode>> ASTStackEntry;
 /** type of AST node stack.
  */
-typedef std::vector<std::unique_ptr<ASTNode>> ASTStack;
+typedef std::vector<ASTStackEntry> ASTStack;
 
 #ifdef USE_RTTI
 #define PEGMATITE_RTTI(thisclass, superclass)
@@ -121,7 +122,7 @@ public:
 	 * Interface for constructing the AST node.  The input range `r` is the
 	 * range within the source.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st) {}
+	virtual void construct(const InputRange &r, ASTStack &st) = 0;
 	
 private:
 	/**
@@ -258,7 +259,7 @@ public:
 	/**
 	 * Interface for constructing references to AST objects from the stack.
 	 */
-	virtual void construct(ASTStack &st) = 0;
+	virtual void construct(const InputRange &r, ASTStack &st) = 0;
 	virtual ~ASTMember();
 protected:
 	/**
@@ -314,16 +315,15 @@ public:
 	/**
 	 * Pops the next matching object from the AST stack `st` and claims it.
 	 */
-	virtual void construct(ASTStack &st)
+	virtual void construct(const InputRange &r, ASTStack &st)
 	{
-
 		if (st.empty() && OPT)
 		{
 			return;
 		}
 		assert(!st.empty() && "Stack must not be empty");
 		//get the node
-		ASTNode *node = st.back().get();
+		ASTNode *node = st.back().second.get();
 		
 		//get the object
 		T *obj = node->get_as<T>();
@@ -338,7 +338,7 @@ public:
 		//set the new object
 		ptr.reset(obj);
 		//pop the node from the stack
-		st.back().release();
+		st.back().second.release();
 		st.pop_back();
 		ptr->parent_node = container_node;
 	}
@@ -385,15 +385,26 @@ public:
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
 	 */
-	virtual void construct(ASTStack &st)
+	virtual void construct(const InputRange &r, ASTStack &st)
 	{
 		for(;;)
 		{
-			//if the stack is empty
+			// If the stack is empty, don't fetch anything from it
 			if (st.empty()) break;
+			// Get the top entry on the stack
+			ASTStackEntry &e = st.back();
+			const InputRange &childRange = e.first;
+			// If the entry isn't within the range of this, then it's just
+			// something of the same type that happens to be adjacent to this
+			// entry.
+			if ((childRange.begin() < r.begin()) ||
+			    (childRange.end() > r.end()))
+			{
+				break;
+			}
 			
 			//get the node
-			ASTNode *node = st.back().get();
+			ASTNode *node = e.second.get();
 			
 			//get the object
 			T *obj = node->get_as<T>();
@@ -404,7 +415,7 @@ public:
 			debug_log("Popped", st.size()-1, obj);
 			
 			//remove the node from the stack
-			st.back().release();
+			e.second.release();
 			st.pop_back();
 			
 			//insert the object in the list, in reverse order
@@ -528,8 +539,9 @@ public:
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
-				obj->construct(InputRange(b, e), *st);
-				st->push_back(std::unique_ptr<ASTNode>(obj));
+				InputRange r(b,e);
+				obj->construct(r, *st);
+				st->push_back(std::make_pair(r, std::unique_ptr<ASTNode>(obj)));
 				debug_log("Constructed", st->size()-1, obj);
 			});
 	}
