@@ -190,6 +190,11 @@ public:
 	//matches
 	ParseMatch_vector matches;
 
+	/**
+	 * Depth of parsing.  Used for trace expressions.
+	 */
+	int depth = 0;
+
 	const ParserDelegate &delegate;
 
 	//constructor
@@ -850,6 +855,62 @@ public:
 		fprintf(stderr, "$AnyExpr");
 	}
 };
+/**
+ * Trace expressions have no effect on parsing.  They wrap another expression
+ * and log a message when parsing for it begins and ends, along with whether it
+ * succeeds.
+ */
+class TraceExpr : public Expr
+{
+	/**
+	 * The message to log for this expression.
+	 */
+	const char *message;
+	/**
+	 * The real expression that will handle the parsing.
+	 */
+	const ExprPtr expr;
+public:
+	TraceExpr(const char *m, const ExprPtr e) : message(m), expr(e) {}
+
+	virtual bool parse_non_term(Context &con) const
+	{
+		fprintf(stderr, "[%d] Trying %s (line %d, column %d)\n",
+		                con.depth++,
+		                message,
+		                con.position.line,
+		                con.position.col);
+		bool result = expr->parse_non_term(con);
+		fprintf(stderr, "[%d] %s %s (line %d, column %d)\n",
+		                --con.depth,
+		                message,
+		                result ? "succeeded" : "failed",
+		                con.position.line,
+		                con.position.col);
+		return result;
+	}
+	virtual bool parse_term(Context &con) const
+	{
+		fprintf(stderr, "[%d] Trying %s (line %d, column %d)\n",
+		                con.depth++,
+		                message,
+		                con.position.line,
+		                con.position.col);
+		bool result = expr->parse_term(con);
+		fprintf(stderr, "[%d] %s %s (line %d, column %d)\n",
+		                --con.depth,
+		                message,
+		                result ? "succeeded" : "failed",
+		                con.position.line,
+		                con.position.col);
+		return result;
+	}
+
+	virtual void dump() const
+	{
+		expr->dump();
+	}
+};
 class DebugExpr : public Expr
 {
 	std::function<void()> fn;
@@ -1366,6 +1427,10 @@ ExprPtr any()
 ExprPtr debug(std::function<void()> fn)
 {
 	return ExprPtr(new DebugExpr(fn));
+}
+ExprPtr trace_debug(const char *msg, const ExprPtr e)
+{
+	return ExprPtr(new TraceExpr(msg, e));
 }
 
 

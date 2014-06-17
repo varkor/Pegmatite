@@ -582,6 +582,22 @@ ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right);
 ExprPtr operator-(const CharacterExprPtr &left, int right);
 
 
+/**
+ * Traces attempts to parse an expression, logging a message when the rule is
+ * entered and exited.
+ */
+#ifdef DEBUG_PARSING
+ExprPtr trace_debug(const char *msg, const ExprPtr e);
+inline ExprPtr trace(const char *msg, const ExprPtr e)
+{
+	return trace_debug(msg, e);
+}
+#else
+inline ExprPtr trace(const char *msg, const ExprPtr e)
+{
+	return e;
+}
+#endif
 
 
 /** creates a sequence of expressions.
