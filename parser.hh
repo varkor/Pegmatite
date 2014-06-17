@@ -475,9 +475,9 @@ public:
 	 */
 	Rule(const CharacterExprPtr e) : Rule(ExprPtr(e)) {}
 	/**
-	 * Copying rules is not allowed.
+	 * Copying rules is not allowed.  Attempting to do so creates a new rule referencing the old.
 	 */
-	Rule(const Rule &r) = delete;
+	Rule(const Rule &r) : Rule(ExprPtr(r)) {}
 	/**
 	 * Move constructor for a rule, allows `rulename = {some expression}`
 	 * initialisation without performing copying.
