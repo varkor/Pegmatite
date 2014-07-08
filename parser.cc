@@ -1327,7 +1327,7 @@ bool Error::operator < (const Error &e) const
 	return start.it < e.start.it;
 }
 
-const Rule::Rule(const ExprPtr e) :
+Rule::Rule(const ExprPtr e) :
 	expr(e)
 {
 }
