@@ -381,6 +381,11 @@ public:
 		return child_objects;
 	}
 
+	typename container::iterator begin() { return child_objects.begin(); }
+	typename container::iterator end() { return child_objects.begin(); }
+	typename container::reverse_iterator rbegin() { return child_objects.begin(); }
+	typename container::reverse_iterator rend() { return child_objects.begin(); }
+
 	/** 
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
