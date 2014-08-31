@@ -42,7 +42,7 @@ namespace pegmatite {
 template <class T> void debug_log(const char *msg, int depth, T *obj)
 {
 #ifdef DEBUG_AST_CONSTRUCTION
-	const char *mangled = typeid(T).name();
+	const char *mangled = typeid(*obj).name();
 	char *buffer = (char*)malloc(strlen(mangled));
 	int err;
 	size_t s;
