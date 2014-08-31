@@ -864,39 +864,34 @@ class TraceExpr : public Expr
 	 * The real expression that will handle the parsing.
 	 */
 	const ExprPtr expr;
+	void log(int depth, const char *event, const char *result, Context &con) const
+	{
+		fprintf(stderr, "[%d] ", depth);
+		for (int i=0 ; i<depth ; i++)
+		{
+			fprintf(stderr, " ");
+		}
+		fprintf(stderr, "%s %s (line %d, column %d)\n",
+		                event,
+		                result,
+		                con.position.line,
+		                con.position.col);
+	}
 public:
 	TraceExpr(const char *m, const ExprPtr e) : message(m), expr(e) {}
 
 	virtual bool parse_non_term(Context &con) const
 	{
-		fprintf(stderr, "[%d] Trying %s (line %d, column %d)\n",
-		                con.depth++,
-		                message,
-		                con.position.line,
-		                con.position.col);
+		log(con.depth++, "Trying", message, con);
 		bool result = expr->parse_non_term(con);
-		fprintf(stderr, "[%d] %s %s (line %d, column %d)\n",
-		                --con.depth,
-		                message,
-		                result ? "succeeded" : "failed",
-		                con.position.line,
-		                con.position.col);
+		log(--con.depth, message, result ? "succeeded" : "failed", con);
 		return result;
 	}
 	virtual bool parse_term(Context &con) const
 	{
-		fprintf(stderr, "[%d] Trying %s (line %d, column %d)\n",
-		                con.depth++,
-		                message,
-		                con.position.line,
-		                con.position.col);
+		log(con.depth++, "Trying", message, con);
 		bool result = expr->parse_term(con);
-		fprintf(stderr, "[%d] %s %s (line %d, column %d)\n",
-		                --con.depth,
-		                message,
-		                result ? "succeeded" : "failed",
-		                con.position.line,
-		                con.position.col);
+		log(--con.depth, message, result ? "succeeded" : "failed", con);
 		return result;
 	}
 
