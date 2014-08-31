@@ -1131,16 +1131,16 @@ static Error _eof_Error(Context &con)
 
 char32_t Input::slowCharacterLookup(Index n)
 {
+	const int back_seek = static_buffer_size / 4;
 	if (n >= size())
 	{
 		return 0;
 	}
 	// Optimise backtracking by jumping back 64 characters so subsequent
 	// forward scans are fast.
-	// TODO: Profile and find out if 64 is a sensible made-up number.
 	if (n < buffer_start)
 	{
-		buffer_start = (n > 64) ? n - 64 : 0;
+		buffer_start = (n > back_seek) ? n - back_seek : 0;
 	}
 	else
 	{
@@ -1153,12 +1153,9 @@ char32_t Input::slowCharacterLookup(Index n)
 		buffer_end = 0;
 		return 0;
 	}
-	buffer_end = n + length;
-	if ((n >= buffer_start) && (n < buffer_end))
-	{
-		return buffer[buffer_start - n];
-	}
-	return 0;
+	buffer_end = buffer_start + length;
+	assert((n >= buffer_start) && (n < buffer_end));
+	return buffer[n - buffer_start];
 }
 Input::~Input() {}
 bool  UnicodeVectorInput::fillBuffer(Index start, Index &length, char32_t *&b)
