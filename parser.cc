@@ -169,9 +169,6 @@ ExprPtr::ExprPtr(const CharacterExprPtr &e) :
 class Context
 {
 public:
-	//match vector
-	typedef std::vector<ParseMatch> ParseMatch_vector;
-
 	//const Rule that parses whitespace
 	const Rule &whitespace_rule;
 
@@ -188,7 +185,7 @@ public:
 	Input::iterator finish;
 
 	//matches
-	ParseMatch_vector matches;
+	std::vector<ParseMatch> matches;
 
 	/**
 	 * Depth of parsing.  Used for trace expressions.
@@ -268,11 +265,8 @@ public:
 	//execute all the parse procs
 	void do_parse_procs(void *d) const
 	{
-		for(ParseMatch_vector::const_iterator it = matches.begin();
-			it != matches.end();
-			++it)
+		for(const auto &m : matches)
 		{
-			const ParseMatch &m = *it;
 			parse_proc p = get_parse_proc(*(m.matched_rule));
 			p(m.start, m.finish, d);
 		}
