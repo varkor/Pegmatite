@@ -56,7 +56,7 @@ class Input
 	 * Size for the static buffer.  Note that changing this will change the
 	 * ABI, so do not change it in shared library builds!
 	 */
-	static const std::size_t static_buffer_size = 128;
+	static const std::size_t static_buffer_size = 512;
 	public:
 	/**
 	 * The type of indexes into the buffer.
