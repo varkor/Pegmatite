@@ -115,6 +115,14 @@ std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
 {
 	ASTStack st;
 	if (!parse(i, g, ws, el, d, &st)) return 0;
+	if (st.size() > 1)
+	{
+		int i = 0;
+		for (auto &I : st)
+		{
+			fprintf(stderr, "[%d] %s\n", i++, typeid(*I.second.get()).name());
+		}
+	}
 	assert(st.size() == 1);
 	return std::move(st[0].second);
 }
