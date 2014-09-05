@@ -322,8 +322,19 @@ public:
 			return;
 		}
 		assert(!st.empty() && "Stack must not be empty");
+		ASTStackEntry &e = st.back();
+		const InputRange &childRange = e.first;
+		// If the entry isn't within the range of this, then it's just
+		// something of the same type that happens to be adjacent to this
+		// entry.
+		if ((childRange.begin() < r.begin()) ||
+			(childRange.end() > r.end()))
+		{
+			assert(!OPT && "Required object not found");
+			return;
+		}
 		//get the node
-		ASTNode *node = st.back().second.get();
+		ASTNode *node = e.second.get();
 		
 		//get the object
 		T *obj = node->get_as<T>();
