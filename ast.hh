@@ -330,7 +330,7 @@ public:
 		if ((childRange.begin() < r.begin()) ||
 			(childRange.end() > r.end()))
 		{
-			assert(!OPT && "Required object not found");
+			assert(OPT && "Required object not found");
 			return;
 		}
 		//get the node
