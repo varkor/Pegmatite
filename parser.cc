@@ -30,6 +30,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -272,6 +273,11 @@ public:
 		}
 	}
 
+	/**
+	 * Empty the cache.
+	 */
+	void clear_cache() { cache.clear(); }
+
 private:
 	/**
 	 * The mode for parsing a rule.  
@@ -310,6 +316,55 @@ private:
 	bool _parse_non_term(const Rule &r);
 
 	bool _parse_term(const Rule &r);
+
+	/**
+	 * The key used in the parsing cache.
+	 */
+	struct CacheKey
+	{
+		/**
+		 * The rule for which this cache entry applies.
+		 */
+		const Rule      *rule;
+		/**
+		 * The start address for this rule.
+		 */
+		Input::iterator  start;
+		/**
+		 * Compare two keys for equality.
+		 */
+		bool operator==(const CacheKey &other) const
+		{
+			return (rule == other.rule) && (start == other.start);
+		}
+	};
+	/**
+	 * The hash calculator for CacheKey objects.  Note that performance of the
+	 * parser is *highly* dependent on the quality of this hash function.
+	 */
+	struct CacheKeyHash
+	{
+		/**
+		 * The hash function, xors the hash of the rule and the start index
+		 * together.
+		 */
+		size_t operator()(const CacheKey &k) const
+		{
+			std::hash<const Rule*> h;
+			std::hash<Input::Index> hi;
+			return h(k.rule) ^ (hi(k.start.index() << 1));
+		}
+	};
+	/**
+	 * The type for cached entries.  The cache contains the position after
+	 * parsing a rule and the list of rules that were matched.
+	 */
+	typedef std::pair<ParserPosition, std::vector<ParseMatch>> CacheEntry;
+	/*
+	 * The cache.  After each rule is parsed, we cache the result to avoid
+	 * recomputing.  Note that we currently do not cache parse failures.
+	 */
+	std::unordered_map<CacheKey, CacheEntry, CacheKeyHash> cache;
 };
 
 }
@@ -1010,6 +1065,23 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	// input.
 	bool lr = new_pos == last_pos;
 
+	// Look up the current rule and parser position in the cache to see if
+	// we've been here before and successfully parsed the rule.
+	CacheKey k = { std::addressof(r), position.it };
+	auto cache_entry = cache.find(k);
+	if (cache_entry != cache.end())
+	{
+		// If we have a cache entry then grab the list of matched rules and the
+		// end parsing position from the cache and don't bother trying to apply
+		// the rules again.
+		auto cached_matches = cache_entry->second.second;
+		matches.insert(matches.end(), cached_matches.begin(), cached_matches.end());
+		position = cache_entry->second.first;
+		return true;
+	}
+
+	size_t new_match_index = matches.size();
+
 	switch (last_mode)
 	{
 		//normal parse
@@ -1042,6 +1114,31 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 				states.pop_back();
 			}
 			break;
+	}
+
+	// If we successfully parsed the input, then cache the result.
+	if (ok)
+	{
+		// To prevent the cache growing too large, if it starts to get quite
+		// big, delete everything.  256is a mostly arbitrary number generated
+		// by running a big(ish) parse with a few different values and finding
+		// the place where the increase in memory didn't come with a noticeable
+		// speedup.
+		if (cache.size() > 256)
+		{
+			cache.clear();
+		}
+		// Insert the new cache entry
+		auto &new_cache = cache[k];
+		new_cache.first = position;
+		auto &cached_matches = new_cache.second;
+		cached_matches.clear();
+		// If there some rules were matched, record them
+		if (matches.size() > new_match_index)
+		{
+			cached_matches.insert(cached_matches.begin(), matches.begin() +
+					new_match_index, matches.end());
+		}
 	}
 
 	return ok;
@@ -1462,6 +1559,8 @@ bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
 		}
 		return false;
 	}
+
+	con.clear_cache();
 
 	//success; execute the parse procedures
 	con.do_parse_procs(d);

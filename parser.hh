@@ -146,6 +146,10 @@ class Input
 		{
 			return idx-other.idx;
 		}
+		/**
+		 * Returns the index into the input stream.
+		 */
+		Index index() const { return idx; }
 	};
 	/**
 	 * Returns an iterator for the start of the input.
