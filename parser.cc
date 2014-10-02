@@ -280,7 +280,7 @@ public:
 
 private:
 	/**
-	 * The mode for parsing a rule.  
+	 * The mode for parsing a rule.
 	 */
 	enum MatchMode
 	{
