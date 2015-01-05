@@ -181,13 +181,13 @@ struct CalculatorGrammar
 	/**
 	 * Digits are things in the range 0-9.
 	 */
-	Rule digit  = '0'_E - '9';
+	Rule digits  = "[0-9]+"_R;
 	/**
 	 * Numbers are one or more digits, optionally followed by a decimal point,
 	 * and one or more digits, optionally followed by an exponent (which may
 	 * also be negative.
 	 */
-	Rule num    = +digit >> -('.'_E >> +digit >> -("eE"_S >> -("+-"_S) >> +digit));
+	Rule num    = digits >> -('.'_E >> digits >> -("eE"_S >> -("+-"_S) >> digits));
 	/**
 	 * Values are either numbers or expressions in brackets (highest precedence).
 	 */
