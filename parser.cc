@@ -371,7 +371,9 @@ private:
 
 namespace{
 
-//set expression.
+/**
+ * Set expression: matches characters in a set.
+ */
 class SetExpr : public Expr
 {
 public:
