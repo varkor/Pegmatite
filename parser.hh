@@ -65,7 +65,7 @@ class Input
 	/**
 	 * Iterator, refers back into the input stream.
 	 */
-	class iterator
+	class iterator : public std::iterator<std::bidirectional_iterator_tag, char32_t>
 	{
 		friend Input;
 		/**
