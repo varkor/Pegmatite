@@ -102,6 +102,14 @@ class Input
 			return *this;
 		}
 		/**
+		 * Move the iterator forward by the specified amount.
+		 */
+		inline iterator &operator+=(size_t amount)
+		{
+			idx += amount;
+			return *this;
+		}
+		/**
 		 * Move the iterator to the previous location.  Note that this does not
 		 * check validity.
 		 */
@@ -589,6 +597,10 @@ ExprPtr operator "" _S(const char *x, std::size_t len);
  * Constructs a literal expression.
  */
 ExprPtr operator "" _E(const char *x, std::size_t len);
+/**
+ * Constructs a regular expression.
+ */
+ExprPtr operator "" _R(const char *x, std::size_t len);
 ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right);
 ExprPtr operator-(const CharacterExprPtr &left, int right);
 
@@ -637,6 +649,16 @@ ExprPtr term(const ExprPtr &e);
 	@return an expression which parses a single character out of a set.
  */
 ExprPtr set(const char *s);
+
+/**
+ * Creates a regex expression from the specified string.
+ */
+ExprPtr regex(const char *s);
+
+/**
+ * Creates a regex expression from the specified wide string.
+ */
+ExprPtr regex(const wchar_t *s);
 
 
 /** creates a set expression from a null-terminated wide string.

@@ -29,6 +29,7 @@
 #include <cstring>
 #include <cassert>
 #include <stdexcept>
+#include <regex>
 #include <unordered_map>
 #include <unordered_set>
 #include <sys/stat.h>
@@ -233,6 +234,15 @@ public:
 	{
 		++position.it;
 		++position.col;
+	}
+
+	/**
+	 * Consume the specified number of characters in the input.
+	 */
+	void consume(size_t chars)
+	{
+		position.it += chars;
+		position.col += chars;
 	}
 
 	//next line
@@ -451,6 +461,109 @@ private:
 		}
 		con.set_error_pos();
 		return false;
+	}
+};
+
+/**
+ * Adaptor that modifies the type of the iterator.  This lets us use iterators
+ * with things that expect char or whcar_t iterators (as long as casts work
+ * appropriately).
+ */
+template<typename Src, typename Out, typename In>
+class IteratorAdaptor : public std::iterator<std::bidirectional_iterator_tag, Out>
+{
+		Src s;
+		public:
+		inline IteratorAdaptor(Src src) : s(src) {}
+		inline IteratorAdaptor() {}
+		inline Out operator*() const { return (Out)*s; }
+		inline IteratorAdaptor &operator++()
+		{
+			++s;
+			return *this;
+		}
+		inline IteratorAdaptor<Src, Out,In> &operator--()
+		{
+			--s;
+			return *this;
+		}
+		inline bool operator==(const IteratorAdaptor<Src, Out,In> &other) const
+		{
+			return s == other.s;
+		}
+		inline bool operator!=(const IteratorAdaptor<Src, Out,In> &other) const
+		{
+			return s != other.s;
+		}
+		inline bool operator>(const IteratorAdaptor<Src, Out,In> &other) const
+		{
+			return s > other.s;
+		}
+		inline bool operator<(const IteratorAdaptor<Src, Out,In> &other) const
+		{
+			return s < other.s;
+		}
+};
+
+/**
+ * Preform a regular expression match, starting at `begin` and trying to match
+ * up to `end`.  Returns true if the regular expression matches the input,
+ * false otherwise.  If there is a match, then `length` will be set to the
+ * length of the match.
+ */
+template <typename T>
+bool regexMatch(Input::iterator begin,
+                Input::iterator end,
+                const std::basic_regex<T> &r,
+                size_t &length)
+{
+	typedef IteratorAdaptor<Input::iterator, T, char32_t> Iterator;
+	std::match_results<Iterator> match;
+	Iterator b(begin), e(end);
+	if (std::regex_search(b, e, match, r, std::regex_constants::match_continuous))
+	{
+		length = match.length();
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Matches characters that correspond to a given regular expression.
+ */
+template<typename CharTy>
+class RegexExpr : public Expr
+{
+	std::basic_regex<CharTy> r;
+	bool parse(Context &con) const
+	{
+		size_t length;
+		if (regexMatch(con.position.it, con.finish, r, length))
+		{
+			con.consume(length);
+			return true;
+		}
+		con.set_error_pos();
+		return false;
+	}
+public:
+	RegexExpr(const CharTy *s) : r(s, std::regex_constants::optimize) {}
+	RegexExpr(const CharTy *s, size_t count) : r(s, count, std::regex_constants::optimize) {}
+
+	virtual bool parse_non_term(Context &con) const
+	{
+		return parse(con);
+	}
+
+	//parse terminal
+	virtual bool parse_term(Context &con) const
+	{
+		return parse(con);
+	}
+
+	virtual void dump() const
+	{
+		fprintf(stderr, "<regex>");
 	}
 };
 
@@ -1465,6 +1578,26 @@ ExprPtr term(const ExprPtr &e)
 ExprPtr set(const char *s)
 {
 	return ExprPtr(new SetExpr(s));
+}
+
+/**
+ * Creates a regex expression from the specified string.
+ */
+ExprPtr regex(const char *s)
+{
+	return ExprPtr(new RegexExpr<char>(s));
+}
+
+/**
+ * Creates a regex expression from the specified wide string.
+ */
+ExprPtr regex(const wchar_t *s)
+{
+	return ExprPtr(new RegexExpr<wchar_t>(s));
+}
+ExprPtr operator "" _R(const char *x, std::size_t len)
+{
+	return ExprPtr(new RegexExpr<char>(x, len));
 }
 
 
