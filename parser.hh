@@ -328,6 +328,45 @@ class StringInput : public Input
 	 */
 	Index size() const override;
 };
+
+template<class T>
+class IteratorInput : public Input
+{
+	/**
+	 * The iterator for the start of the input.
+	 */
+	T begin;
+	/**
+	 * The iterator for the end of the input.
+	 */
+	T end;
+	public:
+	/**
+	 * Construct an input that reads from between the two iterators specified.
+	 */
+	IteratorInput(T b, T e) : begin(b), end(e) {}
+	/**
+	 * Copy the data into the buffer.
+	 */
+	bool fillBuffer(Index start, Index &length, char32_t *&b) override
+	{
+		if (start > (Index)(end-begin))
+		{
+			length = 0;
+			return false;
+		}
+		Index copied = 0;
+		for (T i=(begin+start) ; (i != end) && (copied < length) ; ++i)
+		{
+			b[copied++] = (char32_t)(*i);
+		}
+		length = copied;
+		return true;
+	}
+	/**
+	 * Returns the size of the string.
+	 */
+	Index size() const override { return (Index)(end - begin); }
 };
 
 
