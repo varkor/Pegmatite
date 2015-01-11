@@ -265,11 +265,11 @@ class UnicodeVectorInput : public Input
 	/**
 	 * Provides direct access to the underlying vector's storage.
 	 */
-	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b);
+	bool  fillBuffer(Index start, Index &length, char32_t *&b) override;
 	/**
 	 * Returns the size of the vector.
 	 */
-	virtual Index size() const;
+	Index size() const override;
 };
 
 /**
@@ -284,8 +284,8 @@ struct AsciiFileInput : public Input
 	 * Construct a parser input from a specified file descriptor.
 	 */
 	AsciiFileInput(int file);
-	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b);
-	virtual Index size() const;
+	bool  fillBuffer(Index start, Index &length, char32_t *&b) override;
+	Index size() const override;
 	private:
 	/**
 	 * The file descriptor for the file that this encapsulates.
@@ -322,11 +322,12 @@ class StringInput : public Input
 	/**
 	 * Provides direct access to the underlying string's storage.
 	 */
-	virtual bool  fillBuffer(Index start, Index &length, char32_t *&b);
+	bool  fillBuffer(Index start, Index &length, char32_t *&b) override;
 	/**
 	 * Returns the size of the string.
 	 */
-	virtual Index size() const;
+	Index size() const override;
+};
 };
 
 
