@@ -261,7 +261,7 @@ class UnicodeVectorInput : public Input
 	 * Constructs the wrapper from a vector.  
 	 * The new object takes ownership of the character data in the vector.
 	 */
-	UnicodeVectorInput(std::vector<char32_t> &v) : vector(std::move(v)) {}
+	UnicodeVectorInput(std::vector<char32_t> &&v) : vector(v) {}
 	/**
 	 * Provides direct access to the underlying vector's storage.
 	 */
@@ -318,7 +318,7 @@ class StringInput : public Input
 	 * Constructs the wrapper from a string (`s`).  
 	 * The new object takes ownership of the character data in the string.
 	 */
-	StringInput(std::string &s) : str(std::move(s)) {}
+	StringInput(std::string &&s) : str(s) {}
 	/**
 	 * Provides direct access to the underlying string's storage.
 	 */
