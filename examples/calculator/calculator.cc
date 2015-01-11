@@ -269,7 +269,7 @@ int main()
 		if (s.empty()) break;
 
 		//convert the string to input
-		StringInput i(s);
+		StringInput i(std::move(s));
 
 		//parse
 		ErrorList el;
