@@ -147,7 +147,7 @@ CharacterExprPtr operator "" _E(const char x)
 {
 	return CharacterExprPtr(new CharacterExpr(x));
 }
-ExprPtr operator "" _S(const char *x, std::size_t len)
+ExprPtr operator "" _S(const char *x, std::size_t)
 {
 	return set(x);
 }
@@ -1082,14 +1082,14 @@ public:
 	DebugExpr(std::function<void()> f) : fn(f) {}
 
 	//parse with whitespace
-	virtual bool parse_non_term(Context &con) const
+	virtual bool parse_non_term(Context &) const
 	{
 		fn();
 		return true;
 	}
 
 	//parse terminal
-	virtual bool parse_term(Context &con) const
+	virtual bool parse_term(Context &) const
 	{
 		fn();
 		return true;
@@ -1174,7 +1174,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	}
 
 	// Return value (success or failure of parse)
-	bool ok;
+	bool ok = false;
 
 	// Compute the new position in the stream.  We're only tracking offsets to
 	// detect left recursion, not storing iterators.

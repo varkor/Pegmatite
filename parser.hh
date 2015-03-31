@@ -661,7 +661,7 @@ inline ExprPtr trace(const char *msg, const ExprPtr e)
 	return trace_debug(msg, e);
 }
 #else
-inline ExprPtr trace(const char *msg, const ExprPtr e)
+inline ExprPtr trace(const char *, const ExprPtr e)
 {
 	return e;
 }
