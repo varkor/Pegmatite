@@ -487,6 +487,11 @@ class IteratorAdaptor : public std::iterator<std::bidirectional_iterator_tag, Ou
 			--s;
 			return *this;
 		}
+		inline IteratorAdaptor<Src, Out,In> &operator++(int)
+		{
+			s++;
+			return *this;
+		}
 		inline bool operator==(const IteratorAdaptor<Src, Out,In> &other) const
 		{
 			return s == other.s;
