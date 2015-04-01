@@ -101,9 +101,9 @@ class Input
 			idx++;
 			return *this;
 		}
-	        inline iterator &operator++(int)
+	        inline iterator &operator++(int inc)
 		{
-			idx++;
+			idx += inc;
 			return *this;
 		}
 		/**

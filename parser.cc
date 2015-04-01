@@ -482,14 +482,14 @@ class IteratorAdaptor : public std::iterator<std::bidirectional_iterator_tag, Ou
 			++s;
 			return *this;
 		}
+		inline IteratorAdaptor<Src, Out,In> &operator++(int inc)
+		{
+			s += inc;
+			return *this;
+		}
 		inline IteratorAdaptor<Src, Out,In> &operator--()
 		{
 			--s;
-			return *this;
-		}
-		inline IteratorAdaptor<Src, Out,In> &operator++(int)
-		{
-			s++;
 			return *this;
 		}
 		inline bool operator==(const IteratorAdaptor<Src, Out,In> &other) const
@@ -1174,7 +1174,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	}
 
 	// Return value (success or failure of parse)
-	bool ok = false;
+	bool ok;
 
 	// Compute the new position in the stream.  We're only tracking offsets to
 	// detect left recursion, not storing iterators.
