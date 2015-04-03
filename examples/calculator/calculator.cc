@@ -194,16 +194,17 @@ struct CalculatorGrammar
 	Rule val    = num |  '(' >> expr >> ')';
 	/**
 	 * Multiply operations are values or multiply, or divide operations,
-	 * followed by a multiply symbol, followed by a value.  The sides can never
-	 * be add or subtract operations, because they have lower precedence and so
-	 * can only be parents of multiply or divide operations (or children via
-	 * parenthetical expressions), not direct children.
+	 * followed by a multiply symbol, followed by a values, or multiply or
+	 * divide operations.  The sides can never be add or subtract operations,
+	 * because they have lower precedence and so can only be parents of
+	 * multiply or divide operations (or children via parenthetical
+	 * expressions), not direct children.
 	 */
-	Rule mul_op = mul >> '*' >> val;
+	Rule mul_op = mul >> '*' >> mul;
 	/**
 	 * Divide operations follow the same syntax as multiply.
 	 */
-	Rule div_op = mul >> '/' >> val;
+	Rule div_op = mul >> '/' >> mul;
 	/**
 	 * Multiply-precedence operations are either multiply or divide operations,
 	 * or simple values (numbers of parenthetical expressions).
