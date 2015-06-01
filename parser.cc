@@ -1555,9 +1555,9 @@ Rule::Rule(const ExprPtr e) :
 /** constructor from rule.
 	@param r rule.
  */
-ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
-ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
-ExprPtr::ExprPtr(const Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
+ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {}
+ExprPtr::ExprPtr(const char32_t s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {}
+ExprPtr::ExprPtr(const Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {}
 
 
 /** creates a sequence of expressions.

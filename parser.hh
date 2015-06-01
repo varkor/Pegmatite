@@ -438,11 +438,11 @@ public:
 	/**
 	 * Iterator to the start of the input range.
 	 */
-	Input::iterator begin() const { return start.it; };
+	Input::iterator begin() const { return start.it; }
 	/**
 	 * Iterator to the end of the input range.
 	 */
-	Input::iterator end() const { return finish.it; };
+	Input::iterator end() const { return finish.it; }
 	/**
 	 * Convert this range to a std::string.
 	 */
