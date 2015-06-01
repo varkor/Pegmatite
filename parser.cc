@@ -214,7 +214,7 @@ public:
 	}
 
 	//get the current symbol
-	int symbol() const
+	char32_t symbol() const
 	{
 		assert(!end());
 		return *position.it;
@@ -316,7 +316,7 @@ private:
 		MatchMode mode;
 
 		//constructor
-		RuleState(size_t ParserPosition = -1, MatchMode mode = PARSE) :
+		RuleState(size_t ParserPosition = Input::npos, MatchMode mode = PARSE) :
 			position(ParserPosition), mode(mode) {}
 	};
 	//parse non-term rule.
@@ -392,7 +392,7 @@ public:
 	{
 		for(; *s; ++s)
 		{
-			_add(*s);
+			_add(static_cast<char32_t>(*s));
 		}
 	}
 
@@ -438,7 +438,7 @@ private:
 	std::vector<bool> mSetExpr;
 
 	//add character
-	void _add(size_t i)
+	void _add(char32_t i)
 	{
 		if (i >= mSetExpr.size())
 		{
@@ -528,7 +528,7 @@ bool regexMatch(Input::iterator begin,
 	Iterator b(begin), e(end);
 	if (std::regex_search(b, e, match, r, std::regex_constants::match_continuous))
 	{
-		length = match.length();
+		length = static_cast<size_t>(match.length());
 		return true;
 	}
 	return false;
@@ -1165,7 +1165,7 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 	// last position and mode to values that will trigger a normal parse: We
 	// can't be in left recursion if this is the first time that we've
 	// encountered the rule.
-	size_t last_pos = -1;
+	size_t last_pos = Input::npos;
 	MatchMode last_mode = PARSE;
 	if (!states.empty())
 	{
@@ -1257,8 +1257,10 @@ bool Context::parse_rule(const Rule &r, bool (Context::*parse_func)(const Rule &
 		// If there some rules were matched, record them
 		if (matches.size() > new_match_index)
 		{
+			const auto index =
+				static_cast<Input::iterator::difference_type>(new_match_index);
 			cached_matches.insert(cached_matches.begin(), matches.begin() +
-					new_match_index, matches.end());
+					index, matches.end());
 		}
 	}
 
@@ -1405,7 +1407,7 @@ bool  StringInput::fillBuffer(Index start, Index &length, char32_t *&b)
 	length = std::min(length, str.size() - start);
 	for (Index i=start ; i<length ; i++)
 	{
-		b[i] = str[i];
+		b[i] = static_cast<char32_t>(str[i]);
 	}
 	return true;
 }
@@ -1424,7 +1426,7 @@ AsciiFileInput::AsciiFileInput(int file) : fd(file)
 	}
 	else
 	{
-		file_size = buf.st_size;
+		file_size = static_cast<Index>(buf.st_size);
 	}
 }
 
@@ -1439,10 +1441,10 @@ bool AsciiFileInput::fillBuffer(Index start, Index &length, char32_t *&b)
 	// This should be a no-op
 	length = std::min(length, static_buffer_size);
 	length = std::min(length, file_size - start);
-	pread(fd, buffer, length, start);
+	pread(fd, buffer, length, static_cast<off_t>(start));
 	for (Index i=0 ; i<length ; i++)
 	{
-		b[i] = buffer[i];
+		b[i] = static_cast<char32_t>(buffer[i]);
 	}
 	return true;
 }
@@ -1714,7 +1716,7 @@ static inline bool parseCharacter(Context &con, int character)
 {
 	if (!con.end())
 	{
-		int ch = con.symbol();
+		char32_t ch = con.symbol();
 		if (ch == character)
 		{
 			con.next_col();

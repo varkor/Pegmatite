@@ -62,6 +62,7 @@ class Input
 	 * The type of indexes into the buffer.
 	 */
 	typedef size_t Index;
+	static const Index npos = static_cast<Index>(-1);
 	/**
 	 * Iterator, refers back into the input stream.
 	 */
@@ -84,7 +85,7 @@ class Input
 		/**
 		 * Default constructor, constructs an invalid iterator into no buffer.
 		 */
-		inline iterator() : buffer(0), idx(-1) {}
+		inline iterator() : buffer(0), idx(npos) {}
 		/**
 		 * Dereference operator, returns the character represented by this
 		 * index.
