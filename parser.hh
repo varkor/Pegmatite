@@ -304,6 +304,22 @@ struct AsciiFileInput : public Input
 	size_t file_size;
 };
 
+/** An Input that wraps a std::istream. */
+struct StreamInput : public Input
+{
+	public:
+	static StreamInput Create(std::istream&);
+
+	bool fillBuffer(Index start, Index &length, char32_t*&) override;
+	Index size() const override;
+
+	private:
+	StreamInput(std::istream&, size_t len);
+
+	const size_t length;
+	std::istream& stream;
+};
+
 /**
  * A concrete Input subclass that wraps a std::string, providing access to the
  * underlying characters.

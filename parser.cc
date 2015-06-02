@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <istream>
 #include <stdexcept>
 #include <regex>
 #include <unordered_map>
@@ -1451,6 +1452,52 @@ bool AsciiFileInput::fillBuffer(Index start, Index &length, char32_t *&b)
 Input::Index AsciiFileInput::size() const
 {
 	return file_size;
+}
+
+StreamInput StreamInput::Create(std::istream& s)
+{
+	const size_t start = s.tellg();
+	s.seekg(0, std::ios::end);
+
+	const size_t len = static_cast<size_t>(s.tellg()) - start;
+	s.seekg(start, std::ios::beg);
+
+	return StreamInput(s, len);
+}
+
+StreamInput::StreamInput(std::istream& s, size_t len)
+	: length(len), stream(s)
+{
+}
+
+bool StreamInput::fillBuffer(Index start, Index &len, char32_t *&b)
+{
+	if (start > length)
+	{
+		return false;
+	}
+
+	char buffer[static_buffer_size];
+	len = std::min(this->length, static_buffer_size);
+	len = std::min(len, this->length - start);
+
+	stream.read(buffer, len);
+	if (static_cast<Index>(stream.gcount()) != len)
+	{
+		return false;
+	}
+
+	for (Index i = 0 ; i < len; i++)
+	{
+		b[i] = static_cast<char32_t>(buffer[i]);
+	}
+
+	return true;
+}
+
+Input::Index StreamInput::size() const
+{
+	return length;
 }
 
 /** constructor from input.
