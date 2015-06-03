@@ -309,7 +309,8 @@ struct StreamInput : public Input
 {
 	/**
 	 * Construct a StreamInput from a std::istream.
-	 * Makes no assumptions about the current position of the stream.
+	 * Makes no assumptions about the current position of the stream,
+	 * but it must be seekable.
 	 */
 	static StreamInput Create(std::istream&);
 
