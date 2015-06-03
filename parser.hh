@@ -308,6 +308,10 @@ struct AsciiFileInput : public Input
 struct StreamInput : public Input
 {
 	public:
+	/**
+	 * Construct a StreamInput from a std::istream.
+	 * Makes no assumptions about the current position of the stream.
+	 */
 	static StreamInput Create(std::istream&);
 
 	bool fillBuffer(Index start, Index &length, char32_t*&) override;
