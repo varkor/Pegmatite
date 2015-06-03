@@ -307,7 +307,6 @@ struct AsciiFileInput : public Input
 /** An Input that wraps a std::istream. */
 struct StreamInput : public Input
 {
-	public:
 	/**
 	 * Construct a StreamInput from a std::istream.
 	 * Makes no assumptions about the current position of the stream.
