@@ -1378,6 +1378,22 @@ char32_t Input::slowCharacterLookup(Index n)
 	return buffer[n - buffer_start];
 }
 Input::~Input() {}
+
+class NoInput : public Input
+{
+public:
+	NoInput() : Input("<none>") {}
+
+	bool fillBuffer(Index, Index&, char32_t*&) override { return false; }
+	Index size() const override { return 0; }
+};
+
+const Input& Input::iterator::input() const
+{
+	static NoInput None;
+	return buffer ? *buffer : None;
+}
+
 bool  UnicodeVectorInput::fillBuffer(Index start, Index &length, char32_t *&b)
 {
 	if (start > vector.size())
@@ -1459,7 +1475,6 @@ Input::Index AsciiFileInput::size() const
  */
 ParserPosition::ParserPosition(Input &i) :
 	it(i.begin()),
-	filename(i.name()),
 	line(1),
 	col(1)
 {

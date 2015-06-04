@@ -87,6 +87,11 @@ class Input
 		 */
 		inline iterator() : buffer(0), idx(npos) {}
 		/**
+		 * Reference to the Input we were derived from.
+		 * Could be the "none" input.
+		 */
+		const Input& input() const;
+		/**
 		 * Dereference operator, returns the character represented by this
 		 * index.
 		 */
@@ -407,7 +412,7 @@ struct ParserPosition
 	Input::iterator it;
 
 	///user-meaningful filename.
-	std::string filename;
+	std::string filename() const { return it.input().name(); }
 
 	///line.
 	int line;
