@@ -215,7 +215,7 @@ class Input
 	 * A user-meaningful name.
 	 * This will typically be a filename, but it doesn't have to be.
 	 */
-	std::string	user_name;
+	const std::string	user_name;
 	/**
 	 * A pointer to the start of the buffer.  This must be a contiguous block
 	 * of memory, storing 32-bit characters.
