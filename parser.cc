@@ -1475,19 +1475,19 @@ Input::Index AsciiFileInput::size() const
 	return file_size;
 }
 
-StreamInput StreamInput::Create(std::istream& s)
+StreamInput StreamInput::Create(const std::string& name, std::istream& s)
 {
-	const size_t start = s.tellg();
+	const std::streamoff start = s.tellg();
 	s.seekg(0, std::ios::end);
 
-	const size_t len = static_cast<size_t>(s.tellg()) - start;
+	const std::streamoff len = s.tellg() - start;
 	s.seekg(start, std::ios::beg);
 
-	return StreamInput(s, len);
+	return StreamInput(name, s, static_cast<size_t>(len));
 }
 
-StreamInput::StreamInput(std::istream& s, size_t len)
-	: length(len), stream(s)
+StreamInput::StreamInput(const std::string& name, std::istream& s, size_t len)
+	: Input(name), length(len), stream(s)
 {
 }
 
@@ -1502,7 +1502,7 @@ bool StreamInput::fillBuffer(Index start, Index &len, char32_t *&b)
 	len = std::min(this->length, static_buffer_size);
 	len = std::min(len, this->length - start);
 
-	stream.read(buffer, len);
+	stream.read(buffer, static_cast<std::streamsize>(len));
 	if (static_cast<Index>(stream.gcount()) != len)
 	{
 		return false;

@@ -338,13 +338,13 @@ struct StreamInput : public Input
 	 * advancing its position until parsing is complete. Premature
 	 * stream closure will cause parsing errors.
 	 */
-	static StreamInput Create(std::istream&);
+	static StreamInput Create(const std::string& name, std::istream&);
 
 	bool fillBuffer(Index start, Index &length, char32_t*&) override;
 	Index size() const override;
 
 	private:
-	StreamInput(std::istream&, size_t len);
+	StreamInput(const std::string& name, std::istream&, size_t len);
 
 	const size_t length;
 	std::istream& stream;
