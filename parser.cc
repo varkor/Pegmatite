@@ -1679,10 +1679,12 @@ ExprPtr debug(std::function<void()> fn)
 {
 	return ExprPtr(new DebugExpr(fn));
 }
+#ifdef DEBUG_PARSING
 ExprPtr trace_debug(const char *msg, const ExprPtr e)
 {
 	return ExprPtr(new TraceExpr(msg, e));
 }
+#endif
 
 
 /** parses the given input.
