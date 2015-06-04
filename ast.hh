@@ -496,15 +496,14 @@ class ASTParserDelegate : ParserDelegate
 	 * The map from rules to parsing handlers.
 	 */
 	std::unordered_map<const Rule*, parse_proc> handlers;
+	protected:
 	/**
-	 * Registers a callback in this delegate.  This should only be called from
-	 * the `static` version of this function.
+	 * Registers a callback in this delegate.
 	 */
 	void set_parse_proc(const Rule &r, parse_proc p);
 	/**
 	 * Registers a callback for a specific rule in the instance of this class
-	 * currently under construction in this thread.  This should only ever be
-	 * called by `BindAST` instances.
+	 * currently under construction in this thread.
 	 */
 	static void bind_parse_proc(const Rule &r, parse_proc p);
 	public:
