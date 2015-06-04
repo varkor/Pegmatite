@@ -208,7 +208,7 @@ class Input
 	 *
 	 * @param name    user-meaningful input name (typically a filename)
 	 */
-	Input(std::string name)
+	Input(const std::string& name)
 		: user_name(name), buffer(0), buffer_start(1), buffer_end(0) {}
 	private:
 	/**
