@@ -108,8 +108,10 @@ public:
 	
 	/**
 	 * Destructor does nothing, virtual for subclasses to use.
+	 * Defined out-of-line to avoid emitting vtables in every translation
+	 * unit that includes this header.
 	 */
-	virtual ~ASTNode() {}
+	virtual ~ASTNode();
 	
 	/**
 	 * Returns the parent of this AST node, or `nullptr` if there isn't one

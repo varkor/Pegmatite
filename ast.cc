@@ -48,6 +48,15 @@ __thread pegmatite::ASTParserDelegate *currentParserDelegate;
 
 namespace pegmatite {
 
+/**
+ * Out-of-line virtual destructor forces vtable to be emitted in this
+ * translation unit only.
+ */
+ASTNode::~ASTNode()
+{
+}
+
+
 /** sets the container under construction to be this.
  */
 ASTContainer::ASTContainer()

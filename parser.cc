@@ -116,6 +116,14 @@ namespace pegmatite
 {
 
 /**
+ * Out-of-line virtual destructor forces vtable to be emitted in this
+ * translation unit only.
+ */
+Expr::~Expr()
+{
+}
+
+/**
  * Character expression, matches a single character.
  */
 class CharacterExpr : public Expr

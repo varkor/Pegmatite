@@ -576,8 +576,11 @@ public:
 	 * Virtual destructor for safe overloading.  Note that generally expression
 	 * objects are not meant to be deallocated, as they can be used by multiple
 	 * parsers. 
+	 *
+	 * Defined out-of-line to avoid emitting vtables in every translation
+	 * unit that includes this header.
 	 */
-	virtual ~Expr() { }
+	virtual ~Expr();
 
 	/**
 	 * Parse this expression as a non-terminal.  Non-terminals are permitted to
