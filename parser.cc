@@ -1416,7 +1416,8 @@ Input::Index StringInput::size() const
 	return str.size();
 }
 
-AsciiFileInput::AsciiFileInput(int file) : fd(file)
+AsciiFileInput::AsciiFileInput(std::string name, int file)
+	: Input(name), fd(file)
 {
 	struct stat buf;
 	if (fstat(fd, &buf) != 0)
@@ -1458,6 +1459,7 @@ Input::Index AsciiFileInput::size() const
  */
 ParserPosition::ParserPosition(Input &i) :
 	it(i.begin()),
+	filename(i.name()),
 	line(1),
 	col(1)
 {

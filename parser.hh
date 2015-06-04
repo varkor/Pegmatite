@@ -181,6 +181,13 @@ class Input
 		return iterator(this, size());
 	}
 	/**
+	 * Returns a user-meaningful name (typically a filename).
+	 */
+	std::string name() const
+	{
+		return user_name;
+	}
+	/**
 	 * Fetch the character at the specified index.  This is intended to be
 	 * inlined and returns the character from the cached buffer if possible,
 	 * falling back to the (non-inlined) slow path if not.
@@ -199,8 +206,14 @@ class Input
 	 * so that the first request will trigger a fetch from the underlying
 	 * storage.
 	 */
-	Input() : buffer(0), buffer_start(1), buffer_end(0) {}
+	Input(std::string name)
+		: user_name(name), buffer(0), buffer_start(1), buffer_end(0) {}
 	private:
+	/**
+	 * A user-meaningful name.
+	 * This will typically be a filename, but it doesn't have to be.
+	 */
+	std::string	user_name;
 	/**
 	 * A pointer to the start of the buffer.  This must be a contiguous block
 	 * of memory, storing 32-bit characters.
@@ -268,7 +281,8 @@ class UnicodeVectorInput : public Input
 	 * Constructs the wrapper from a vector.  
 	 * The new object takes ownership of the character data in the vector.
 	 */
-	UnicodeVectorInput(std::vector<char32_t> &&v) : vector(v) {}
+	UnicodeVectorInput(std::string name, std::vector<char32_t> &&v)
+		: Input(name), vector(v) {}
 	/**
 	 * Provides direct access to the underlying vector's storage.
 	 */
@@ -290,7 +304,7 @@ struct AsciiFileInput : public Input
 	/**
 	 * Construct a parser input from a specified file descriptor.
 	 */
-	AsciiFileInput(int file);
+	AsciiFileInput(std::string name, int file);
 	bool  fillBuffer(Index start, Index &length, char32_t *&b) override;
 	Index size() const override;
 	private:
@@ -325,12 +339,13 @@ class StringInput : public Input
 	 * Constructs the wrapper from a string (`s`).  
 	 * The new object takes ownership of the character data in the string.
 	 */
-	StringInput(std::string &&s) : str(s) {}
+	StringInput(std::string name, std::string &&s) : Input(name), str(s) {}
 	/**
 	 * Constructs the wrapper from a string (`s`).
 	 * The new object is copy-constructed from the string argument.
 	 */
-	StringInput(const std::string& s) : str(s) {}
+	StringInput(std::string name, const std::string& s)
+		: Input(name), str(s) {}
 	/**
 	 * Provides direct access to the underlying string's storage.
 	 */
@@ -356,7 +371,8 @@ class IteratorInput : public Input
 	/**
 	 * Construct an input that reads from between the two iterators specified.
 	 */
-	IteratorInput(T b, T e) : begin(b), end(e) {}
+	IteratorInput(std::string name, T b, T e)
+		: Input(name), begin(b), end(e) {}
 	/**
 	 * Copy the data into the buffer.
 	 */
@@ -387,6 +403,9 @@ struct ParserPosition
 {
 	///iterator into the input.
 	Input::iterator it;
+
+	///user-meaningful filename.
+	std::string filename;
 
 	///line.
 	int line;
