@@ -183,7 +183,7 @@ class Input
 	/**
 	 * Returns a user-meaningful name (typically a filename).
 	 */
-	std::string name() const
+	const std::string& name() const
 	{
 		return user_name;
 	}
