@@ -48,6 +48,15 @@ __thread pegmatite::ASTParserDelegate *currentParserDelegate;
 
 namespace pegmatite {
 
+/**
+ * Out-of-line virtual destructor forces vtable to be emitted in this
+ * translation unit only.
+ */
+ASTNode::~ASTNode()
+{
+}
+
+
 /** sets the container under construction to be this.
  */
 ASTContainer::ASTContainer()
@@ -110,11 +119,11 @@ parse_proc ASTParserDelegate::get_parse_proc(const Rule &r) const
 	@return pointer to AST node created, or null if there was an Error.
 		The return object must be deleted by the caller.
  */
-std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
+std::unique_ptr<ASTNode> parse(Input &input, const Rule &g, const Rule &ws,
                                ErrorList &el, const ParserDelegate &d)
 {
 	ASTStack st;
-	if (!parse(i, g, ws, el, d, &st)) return 0;
+	if (!parse(input, g, ws, el, d, &st)) return 0;
 	if (st.size() > 1)
 	{
 		int i = 0;

@@ -107,13 +107,21 @@ private:
 	/**
 	 * The characters that this expression will match.
 	 */
-	std::vector<int> characters;
+	std::vector<char32_t> characters;
 };
 
 
 }
 namespace pegmatite
 {
+
+/**
+ * Out-of-line virtual destructor forces vtable to be emitted in this
+ * translation unit only.
+ */
+Expr::~Expr()
+{
+}
 
 /**
  * Character expression, matches a single character.
@@ -123,12 +131,12 @@ class CharacterExpr : public Expr
 	/**
 	 * The character that will be recognised by this expression.
 	 */
-	int character;
+	char32_t character;
 public:
 	/**
 	 * Constructs a character expression from the specified integer.
 	 */
-	CharacterExpr(int c) : character(c) {}
+	CharacterExpr(char32_t c) : character(c) {}
 	virtual bool parse_non_term(Context &con) const;
 	virtual bool parse_term(Context &con) const;
 	virtual void dump() const;
@@ -141,10 +149,14 @@ public:
 	 * Returns a range expression that recognises characters in the specified
 	 * range.
 	 */
-	ExprPtr operator-(int other);
+	ExprPtr operator-(char32_t other);
 };
 
 CharacterExprPtr operator "" _E(const char x)
+{
+	return CharacterExprPtr(new CharacterExpr(static_cast<char32_t>(x)));
+}
+CharacterExprPtr operator "" _E(const char32_t x)
 {
 	return CharacterExprPtr(new CharacterExpr(x));
 }
@@ -160,7 +172,7 @@ ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right)
 {
 	return (*left) - (*right);
 }
-ExprPtr operator-(const CharacterExprPtr &left, int right)
+ExprPtr operator-(const CharacterExprPtr &left, char32_t right)
 {
 	return (*left) - right;
 }
@@ -317,8 +329,8 @@ private:
 		MatchMode mode;
 
 		//constructor
-		RuleState(size_t ParserPosition = Input::npos, MatchMode mode = PARSE) :
-			position(ParserPosition), mode(mode) {}
+		RuleState(size_t ParserPosition = Input::npos, MatchMode m = PARSE) :
+			position(ParserPosition), mode(m) {}
 	};
 	//parse non-term rule.
 	//parse term rule.
@@ -398,7 +410,7 @@ public:
 	}
 
 	//constructor from range.
-	SetExpr(int min, int max)
+	SetExpr(char32_t min, char32_t max)
 	{
 		assert(min >= 0);
 		assert(min <= max);
@@ -483,7 +495,7 @@ class IteratorAdaptor : public std::iterator<std::bidirectional_iterator_tag, Ou
 			++s;
 			return *this;
 		}
-		inline IteratorAdaptor<Src, Out,In> operator++(int inc)
+		inline IteratorAdaptor<Src, Out,In> operator++(int /*dummy*/)
 		{
 			auto copy = *this;
 			s++;
@@ -641,10 +653,10 @@ public:
 		for(;;)
 		{
 			con.parse_ws();
-			ParsingState st(con);
+			ParsingState s(con);
 			if (!expr->parse_non_term(con))
 			{
-				con.restore(st);
+				con.restore(s);
 				break;
 			}
 		}
@@ -666,10 +678,10 @@ public:
 		//parse the rest until no more parsing is possible
 		for(;;)
 		{
-			ParsingState st(con);
+			ParsingState s(con);
 			if (!expr->parse_term(con))
 			{
-				con.restore(st);
+				con.restore(s);
 				break;
 			}
 		}
@@ -877,8 +889,8 @@ public:
 class BinaryExpr : public Expr
 {
 public:
-	BinaryExpr(const ExprPtr &left, const ExprPtr &right) :
-		left(left), right(right) { }
+	BinaryExpr(const ExprPtr &l, const ExprPtr &r) :
+		left(l), right(r) { }
 protected:
 	const ExprPtr left, right;
 };
@@ -1113,9 +1125,9 @@ ParsingState::ParsingState(Context &con) :
 }
 
 static inline bool parseString(Context &con,
-                               const std::vector<int> &characters)
+                               const std::vector<char32_t> &characters)
 {
-	for (int c : characters)
+	for (char32_t c : characters)
 	{
 		if (con.end() || con.symbol() != c)
 		{
@@ -1137,7 +1149,7 @@ bool StringExpr::parse_term(Context &con) const
 void StringExpr::dump() const
 {
 	fprintf(stderr, "\"");
-	for (int c : characters)
+	for (char32_t c : characters)
 	{
 		fprintf(stderr, "%c", static_cast<char>(c));
 	}
@@ -1339,7 +1351,7 @@ static ParserPosition _next_pos(const ParserPosition &p)
 static Error _syntax_Error(Context &con)
 {
 	std::string str = "syntax error: ";
-	str += *con.error_pos.it;
+	str += static_cast<char>(*con.error_pos.it);
 	return Error(con.error_pos, _next_pos(con.error_pos), ERROR_SYNTAX_ERROR);
 }
 
@@ -1555,9 +1567,9 @@ Rule::Rule(const ExprPtr e) :
 /** constructor from rule.
 	@param r rule.
  */
-ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {};
-ExprPtr::ExprPtr(const char s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {};
-ExprPtr::ExprPtr(const Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {};
+ExprPtr::ExprPtr(const char *s) : std::shared_ptr<Expr>(new StringExpr(s)) {}
+ExprPtr::ExprPtr(const char32_t s) : std::shared_ptr<Expr>(new CharacterExpr(s)) {}
+ExprPtr::ExprPtr(const Rule &r) : std::shared_ptr<Expr>(new RuleReferenceExpr(r)) {}
 
 
 /** creates a sequence of expressions.
@@ -1627,7 +1639,7 @@ ExprPtr operator "" _R(const char *x, std::size_t len)
 	@param max max character.
 	@return an expression which parses a single character out of range.
  */
-ExprPtr range(int min, int max)
+ExprPtr range(char32_t min, char32_t max)
 {
 	return ExprPtr(new SetExpr(min, max));
 }
@@ -1667,10 +1679,12 @@ ExprPtr debug(std::function<void()> fn)
 {
 	return ExprPtr(new DebugExpr(fn));
 }
+#ifdef DEBUG_PARSING
 ExprPtr trace_debug(const char *msg, const ExprPtr e)
 {
 	return ExprPtr(new TraceExpr(msg, e));
 }
+#endif
 
 
 /** parses the given input.
@@ -1725,7 +1739,7 @@ bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
 
 ParserDelegate::~ParserDelegate() {}
 
-static inline bool parseCharacter(Context &con, int character)
+static inline bool parseCharacter(Context &con, char32_t character)
 {
 	if (!con.end())
 	{
@@ -1757,7 +1771,7 @@ ExprPtr CharacterExpr::operator-(const CharacterExpr &other)
 {
 	return range(character, other.character);
 }
-ExprPtr CharacterExpr::operator-(int other)
+ExprPtr CharacterExpr::operator-(char32_t other)
 {
 	return range(character, other);
 }

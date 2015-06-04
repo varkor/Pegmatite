@@ -43,7 +43,7 @@ template <class T> void debug_log(const char *msg, int depth, T *obj)
 {
 #ifdef DEBUG_AST_CONSTRUCTION
 	const char *mangled = typeid(*obj).name();
-	char *buffer = (char*)malloc(strlen(mangled));
+	char *buffer = static_cast<char*>(malloc(strlen(mangled)));
 	int err;
 	size_t s;
 	char *demangled = abi::__cxa_demangle(mangled, buffer, &s,
@@ -51,7 +51,7 @@ template <class T> void debug_log(const char *msg, int depth, T *obj)
 	fprintf(stderr, "[%d] %s %s (%p) off the AST stack\n",
 			depth, msg,
 		demangled ? demangled : mangled, obj);
-	free((void*)(demangled ? demangled : buffer));
+	free(static_cast<void*>(demangled ? demangled : buffer));
 #endif // DEBUG_AST_CONSTRUCTION
 }
 
@@ -108,8 +108,10 @@ public:
 	
 	/**
 	 * Destructor does nothing, virtual for subclasses to use.
+	 * Defined out-of-line to avoid emitting vtables in every translation
+	 * unit that includes this header.
 	 */
-	virtual ~ASTNode() {}
+	virtual ~ASTNode();
 	
 	/**
 	 * Returns the parent of this AST node, or `nullptr` if there isn't one
@@ -555,10 +557,10 @@ public:
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
-				InputRange r(b,e);
+				InputRange range(b,e);
 				debug_log("Constructing", st->size(), obj);
-				obj->construct(r, *st);
-				st->push_back(std::make_pair(r, std::unique_ptr<ASTNode>(obj)));
+				obj->construct(range, *st);
+				st->push_back(std::make_pair(range, std::unique_ptr<ASTNode>(obj)));
 				debug_log("Constructed", st->size()-1, obj);
 			});
 	}

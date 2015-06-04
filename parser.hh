@@ -438,11 +438,11 @@ public:
 	/**
 	 * Iterator to the start of the input range.
 	 */
-	Input::iterator begin() const { return start.it; };
+	Input::iterator begin() const { return start.it; }
 	/**
 	 * Iterator to the end of the input range.
 	 */
-	Input::iterator end() const { return finish.it; };
+	Input::iterator end() const { return finish.it; }
 	/**
 	 * Convert this range to a std::string.
 	 */
@@ -522,7 +522,7 @@ struct ExprPtr : public std::shared_ptr<Expr>
 	 * Construct an expression pointer wrapping a character expression created
 	 * from a character.
 	 */
-	ExprPtr(const char);
+	ExprPtr(const char32_t);
 };
 
 
@@ -576,8 +576,11 @@ public:
 	 * Virtual destructor for safe overloading.  Note that generally expression
 	 * objects are not meant to be deallocated, as they can be used by multiple
 	 * parsers. 
+	 *
+	 * Defined out-of-line to avoid emitting vtables in every translation
+	 * unit that includes this header.
 	 */
-	virtual ~Expr() { }
+	virtual ~Expr();
 
 	/**
 	 * Parse this expression as a non-terminal.  Non-terminals are permitted to
@@ -645,6 +648,7 @@ inline ExprPtr operator !(const Rule &r)
 
 
 CharacterExprPtr operator "" _E(const char x);
+CharacterExprPtr operator "" _E(const char32_t x);
 /**
  * Constructs a set expression.
  */
@@ -658,7 +662,7 @@ ExprPtr operator "" _E(const char *x, std::size_t len);
  */
 ExprPtr operator "" _R(const char *x, std::size_t len);
 ExprPtr operator-(const CharacterExprPtr &left, const CharacterExprPtr &right);
-ExprPtr operator-(const CharacterExprPtr &left, int right);
+ExprPtr operator-(const CharacterExprPtr &left, char32_t right);
 
 
 /**
@@ -729,7 +733,7 @@ ExprPtr set(const wchar_t *s);
 	@param max max character.
 	@return an expression which parses a single character out of range.
  */
-ExprPtr range(int min, int max);
+ExprPtr range(char32_t min, char32_t max);
 
 
 /** creates an expression which increments the line counter
