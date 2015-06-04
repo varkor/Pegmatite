@@ -205,6 +205,8 @@ class Input
 	 * Default constructor, sets the buffer start to be after the buffer end,
 	 * so that the first request will trigger a fetch from the underlying
 	 * storage.
+	 *
+	 * @param name    user-meaningful input name (typically a filename)
 	 */
 	Input(std::string name)
 		: user_name(name), buffer(0), buffer_start(1), buffer_end(0) {}
