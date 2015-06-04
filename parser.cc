@@ -317,8 +317,8 @@ private:
 		MatchMode mode;
 
 		//constructor
-		RuleState(size_t ParserPosition = Input::npos, MatchMode mode = PARSE) :
-			position(ParserPosition), mode(mode) {}
+		RuleState(size_t ParserPosition = Input::npos, MatchMode m = PARSE) :
+			position(ParserPosition), mode(m) {}
 	};
 	//parse non-term rule.
 	//parse term rule.
@@ -641,10 +641,10 @@ public:
 		for(;;)
 		{
 			con.parse_ws();
-			ParsingState st(con);
+			ParsingState s(con);
 			if (!expr->parse_non_term(con))
 			{
-				con.restore(st);
+				con.restore(s);
 				break;
 			}
 		}
@@ -666,10 +666,10 @@ public:
 		//parse the rest until no more parsing is possible
 		for(;;)
 		{
-			ParsingState st(con);
+			ParsingState s(con);
 			if (!expr->parse_term(con))
 			{
-				con.restore(st);
+				con.restore(s);
 				break;
 			}
 		}
@@ -877,8 +877,8 @@ public:
 class BinaryExpr : public Expr
 {
 public:
-	BinaryExpr(const ExprPtr &left, const ExprPtr &right) :
-		left(left), right(right) { }
+	BinaryExpr(const ExprPtr &l, const ExprPtr &r) :
+		left(l), right(r) { }
 protected:
 	const ExprPtr left, right;
 };
