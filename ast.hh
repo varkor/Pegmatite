@@ -43,7 +43,7 @@ template <class T> void debug_log(const char *msg, int depth, T *obj)
 {
 #ifdef DEBUG_AST_CONSTRUCTION
 	const char *mangled = typeid(*obj).name();
-	char *buffer = (char*)malloc(strlen(mangled));
+	char *buffer = static_cast<char*>(malloc(strlen(mangled)));
 	int err;
 	size_t s;
 	char *demangled = abi::__cxa_demangle(mangled, buffer, &s,
@@ -51,7 +51,7 @@ template <class T> void debug_log(const char *msg, int depth, T *obj)
 	fprintf(stderr, "[%d] %s %s (%p) off the AST stack\n",
 			depth, msg,
 		demangled ? demangled : mangled, obj);
-	free((void*)(demangled ? demangled : buffer));
+	free(static_cast<void*>(demangled ? demangled : buffer));
 #endif // DEBUG_AST_CONSTRUCTION
 }
 
