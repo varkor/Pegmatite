@@ -557,10 +557,10 @@ public:
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
-				InputRange input(b,e);
+				InputRange range(b,e);
 				debug_log("Constructing", st->size(), obj);
-				obj->construct(input, *st);
-				st->push_back(std::make_pair(input, std::unique_ptr<ASTNode>(obj)));
+				obj->construct(range, *st);
+				st->push_back(std::make_pair(range, std::unique_ptr<ASTNode>(obj)));
 				debug_log("Constructed", st->size()-1, obj);
 			});
 	}
