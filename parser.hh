@@ -307,10 +307,14 @@ struct AsciiFileInput : public Input
 /** An Input that wraps a std::istream. */
 struct StreamInput : public Input
 {
+	public:
 	/**
-	 * Construct a StreamInput from a std::istream.
-	 * Makes no assumptions about the current position of the stream,
-	 * but it must be seekable.
+	 * Create a StreamInput from a std::istream.
+	 *
+	 * The stream (which may start at any position) must be seekable.
+	 * The StreamInput object will share the referenced std::istream,
+	 * advancing its position until parsing is complete. Premature
+	 * stream closure will cause parsing errors.
 	 */
 	static StreamInput Create(std::istream&);
 
