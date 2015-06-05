@@ -1423,7 +1423,7 @@ Input::Index StringInput::size() const
 	return str.size();
 }
 
-AsciiFileInput::AsciiFileInput(const std::string& name, int file)
+AsciiFileInput::AsciiFileInput(int file, const std::string& name)
 	: Input(name), fd(file)
 {
 	struct stat buf;

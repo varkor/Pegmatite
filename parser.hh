@@ -289,7 +289,7 @@ class UnicodeVectorInput : public Input
 	 * Constructs the wrapper from a vector.  
 	 * The new object takes ownership of the character data in the vector.
 	 */
-	UnicodeVectorInput(const std::string& name, std::vector<char32_t> &&v)
+	UnicodeVectorInput(std::vector<char32_t> &&v, const std::string& name = "")
 		: Input(name), vector(v) {}
 	/**
 	 * Provides direct access to the underlying vector's storage.
@@ -312,7 +312,7 @@ struct AsciiFileInput : public Input
 	/**
 	 * Construct a parser input from a specified file descriptor.
 	 */
-	AsciiFileInput(const std::string& name, int file);
+	AsciiFileInput(int file, const std::string& name = "");
 	bool  fillBuffer(Index start, Index &length, char32_t *&b) override;
 	Index size() const override;
 	private:
@@ -347,13 +347,13 @@ class StringInput : public Input
 	 * Constructs the wrapper from a string (`s`).  
 	 * The new object takes ownership of the character data in the string.
 	 */
-	StringInput(const std::string& name, std::string &&s)
+	StringInput(std::string &&s, const std::string& name = "")
 		: Input(name), str(s) {}
 	/**
 	 * Constructs the wrapper from a string (`s`).
 	 * The new object is copy-constructed from the string argument.
 	 */
-	StringInput(const std::string& name, const std::string& s)
+	StringInput(const std::string& s, const std::string& name = "")
 		: Input(name), str(s) {}
 	/**
 	 * Provides direct access to the underlying string's storage.
@@ -380,7 +380,7 @@ class IteratorInput : public Input
 	/**
 	 * Construct an input that reads from between the two iterators specified.
 	 */
-	IteratorInput(const std::string& name, T b, T e)
+	IteratorInput(T b, T e, const std::string& name = "")
 		: Input(name), begin(b), end(e) {}
 	/**
 	 * Copy the data into the buffer.
