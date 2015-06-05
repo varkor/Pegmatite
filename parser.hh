@@ -413,7 +413,7 @@ struct ParserPosition
 	Input::iterator it;
 
 	///user-meaningful filename.
-	std::string filename() const { return it.input().name(); }
+	const std::string& filename() const { return it.input().name(); }
 
 	///line.
 	int line;
