@@ -1379,19 +1379,10 @@ char32_t Input::slowCharacterLookup(Index n)
 }
 Input::~Input() {}
 
-class NoInput : public Input
+const std::string& Input::iterator::filename() const
 {
-public:
-	NoInput() : Input("<none>") {}
-
-	bool fillBuffer(Index, Index&, char32_t*&) override { return false; }
-	Index size() const override { return 0; }
-};
-
-const Input& Input::iterator::input() const
-{
-	static NoInput None;
-	return buffer ? *buffer : None;
+	static std::string None("<invalid input>");
+	return buffer ? buffer->name() : None;
 }
 
 bool  UnicodeVectorInput::fillBuffer(Index start, Index &length, char32_t *&b)
