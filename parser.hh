@@ -326,6 +326,30 @@ struct AsciiFileInput : public Input
 	size_t file_size;
 };
 
+/** An Input that wraps a std::istream. */
+struct StreamInput : public Input
+{
+	public:
+	/**
+	 * Create a StreamInput from a std::istream.
+	 *
+	 * The stream (which may start at any position) must be seekable.
+	 * The StreamInput object will share the referenced std::istream,
+	 * advancing its position until parsing is complete. Premature
+	 * stream closure will cause parsing errors.
+	 */
+	static StreamInput Create(std::istream&);
+
+	bool fillBuffer(Index start, Index &length, char32_t*&) override;
+	Index size() const override;
+
+	private:
+	StreamInput(std::istream&, size_t len);
+
+	const size_t length;
+	std::istream& stream;
+};
+
 /**
  * A concrete Input subclass that wraps a std::string, providing access to the
  * underlying characters.
