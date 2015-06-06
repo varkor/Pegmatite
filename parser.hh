@@ -87,6 +87,12 @@ class Input
 		 */
 		inline iterator() : buffer(0), idx(npos) {}
 		/**
+		 * Filename given by Input this iterator is derived from.
+		 * Typically a real filename, but not guaranteed (e.g., could
+		 * be "-" when input is derived from stdin).
+		 */
+		const std::string& filename() const;
+		/**
 		 * Dereference operator, returns the character represented by this
 		 * index.
 		 */
@@ -181,6 +187,13 @@ class Input
 		return iterator(this, size());
 	}
 	/**
+	 * Returns a user-meaningful name (typically a filename).
+	 */
+	const std::string& name() const
+	{
+		return user_name;
+	}
+	/**
 	 * Fetch the character at the specified index.  This is intended to be
 	 * inlined and returns the character from the cached buffer if possible,
 	 * falling back to the (non-inlined) slow path if not.
@@ -198,9 +211,17 @@ class Input
 	 * Default constructor, sets the buffer start to be after the buffer end,
 	 * so that the first request will trigger a fetch from the underlying
 	 * storage.
+	 *
+	 * @param name    user-meaningful input name (typically a filename)
 	 */
-	Input() : buffer(0), buffer_start(1), buffer_end(0) {}
+	Input(const std::string& name)
+		: user_name(name), buffer(0), buffer_start(1), buffer_end(0) {}
 	private:
+	/**
+	 * A user-meaningful name.
+	 * This will typically be a filename, but it doesn't have to be.
+	 */
+	const std::string	user_name;
 	/**
 	 * A pointer to the start of the buffer.  This must be a contiguous block
 	 * of memory, storing 32-bit characters.
@@ -268,7 +289,8 @@ class UnicodeVectorInput : public Input
 	 * Constructs the wrapper from a vector.  
 	 * The new object takes ownership of the character data in the vector.
 	 */
-	UnicodeVectorInput(std::vector<char32_t> &&v) : vector(v) {}
+	UnicodeVectorInput(std::vector<char32_t> &&v, const std::string& name = "")
+		: Input(name), vector(v) {}
 	/**
 	 * Provides direct access to the underlying vector's storage.
 	 */
@@ -290,7 +312,7 @@ struct AsciiFileInput : public Input
 	/**
 	 * Construct a parser input from a specified file descriptor.
 	 */
-	AsciiFileInput(int file);
+	AsciiFileInput(int file, const std::string& name = "");
 	bool  fillBuffer(Index start, Index &length, char32_t *&b) override;
 	Index size() const override;
 	private:
@@ -325,12 +347,14 @@ class StringInput : public Input
 	 * Constructs the wrapper from a string (`s`).  
 	 * The new object takes ownership of the character data in the string.
 	 */
-	StringInput(std::string &&s) : str(s) {}
+	StringInput(std::string &&s, const std::string& name = "")
+		: Input(name), str(s) {}
 	/**
 	 * Constructs the wrapper from a string (`s`).
 	 * The new object is copy-constructed from the string argument.
 	 */
-	StringInput(const std::string& s) : str(s) {}
+	StringInput(const std::string& s, const std::string& name = "")
+		: Input(name), str(s) {}
 	/**
 	 * Provides direct access to the underlying string's storage.
 	 */
@@ -356,7 +380,8 @@ class IteratorInput : public Input
 	/**
 	 * Construct an input that reads from between the two iterators specified.
 	 */
-	IteratorInput(T b, T e) : begin(b), end(e) {}
+	IteratorInput(T b, T e, const std::string& name = "")
+		: Input(name), begin(b), end(e) {}
 	/**
 	 * Copy the data into the buffer.
 	 */
@@ -387,6 +412,9 @@ struct ParserPosition
 {
 	///iterator into the input.
 	Input::iterator it;
+
+	///user-meaningful filename.
+	const std::string& filename() const { return it.filename(); }
 
 	///line.
 	int line;

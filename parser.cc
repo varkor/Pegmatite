@@ -1391,6 +1391,13 @@ char32_t Input::slowCharacterLookup(Index n)
 	return buffer[n - buffer_start];
 }
 Input::~Input() {}
+
+const std::string& Input::iterator::filename() const
+{
+	static std::string None("<invalid input>");
+	return buffer ? buffer->name() : None;
+}
+
 bool  UnicodeVectorInput::fillBuffer(Index start, Index &length, char32_t *&b)
 {
 	if (start > vector.size())
@@ -1429,7 +1436,8 @@ Input::Index StringInput::size() const
 	return str.size();
 }
 
-AsciiFileInput::AsciiFileInput(int file) : fd(file)
+AsciiFileInput::AsciiFileInput(int file, const std::string& name)
+	: Input(name), fd(file)
 {
 	struct stat buf;
 	if (fstat(fd, &buf) != 0)
