@@ -288,13 +288,16 @@ public:
 	}
 
 	//execute all the parse procs
-	void do_parse_procs(void *d) const
+	bool do_parse_procs(void *d) const
 	{
 		for(const auto &m : matches)
 		{
 			parse_proc p = get_parse_proc(*(m.matched_rule));
-			p(m.start, m.finish, d);
+			if (not p(m.start, m.finish, d))
+				return false;
 		}
+
+		return true;
 	}
 
 	/**
@@ -1349,18 +1352,16 @@ static ParserPosition _next_pos(const ParserPosition &p)
 
 
 //get syntax error
-static Error _syntax_Error(Context &con)
+static void _syntax_Error(ErrorReporter err, Context &con)
 {
-	std::string str = "syntax error: ";
-	str += static_cast<char>(*con.error_pos.it);
-	return Error(con.error_pos, _next_pos(con.error_pos), ERROR_SYNTAX_ERROR);
+	err(InputRange(con.error_pos, _next_pos(con.error_pos)), "syntax error");
 }
 
 
 //get eof error
-static Error _eof_Error(Context &con)
+static void _eof_Error(ErrorReporter err, Context &con)
 {
-	return Error(con.error_pos, con.error_pos, ERROR_INVALID_EOF);
+	err(InputRange(con.error_pos, con.error_pos), "EOF");
 }
 
 char32_t Input::slowCharacterLookup(Index n)
@@ -1595,24 +1596,6 @@ std::string InputRange::str() const
 }
 
 
-/** constructor.
-	@param b begin position.
-	@param e end position.
-	@param t error type.
- */
-Error::Error(const ParserPosition &b, const ParserPosition &e, int t) :
-	InputRange(b, e), error_type(t) { }
-
-
-/** compare on begin position.
-	@param e the other error to compare this with.
-	@return true if this comes before the previous error, false otherwise.
- */
-bool Error::operator < (const Error &e) const
-{
-	return start.it < e.start.it;
-}
-
 Rule::Rule(const ExprPtr e) :
 	expr(e)
 {
@@ -1752,7 +1735,7 @@ ExprPtr trace_debug(const char *msg, const ExprPtr e)
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
+bool parse(Input &i, const Rule &g, const Rule &ws, ErrorReporter err,
            const ParserDelegate &delegate, void *d)
 {
 	//prepare context
@@ -1764,7 +1747,7 @@ bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
 	//parse grammar
 	if (!con.parse_non_term(g))
 	{
-		el.push_back(_syntax_Error(con));
+		_syntax_Error(err, con);
 		return false;
 	}
 
@@ -1776,11 +1759,11 @@ bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
 	{
 		if (con.error_pos.it < con.finish)
 		{
-			el.push_back(_syntax_Error(con));
+			_syntax_Error(err, con);
 		}
 		else
 		{
-			el.push_back(_eof_Error(con));
+			_eof_Error(err, con);
 		}
 		return false;
 	}
@@ -1788,8 +1771,7 @@ bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
 	con.clear_cache();
 
 	//success; execute the parse procedures
-	con.do_parse_procs(d);
-	return true;
+	return con.do_parse_procs(d);
 }
 
 ParserDelegate::~ParserDelegate() {}

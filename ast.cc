@@ -114,16 +114,16 @@ parse_proc ASTParserDelegate::get_parse_proc(const Rule &r) const
 	@param i input.
 	@param g root rule of grammar.
 	@param ws whitespace rule.
-	@param el list of errors.
+	@param err callback for reporting errors.
 	@param d user data, passed to the parse procedures.
 	@return pointer to AST node created, or null if there was an Error.
 		The return object must be deleted by the caller.
  */
 std::unique_ptr<ASTNode> parse(Input &input, const Rule &g, const Rule &ws,
-                               ErrorList &el, const ParserDelegate &d)
+                               ErrorReporter &err, const ParserDelegate &d)
 {
 	ASTStack st;
-	if (!parse(input, g, ws, el, d, &st)) return 0;
+	if (!parse(input, g, ws, err, d, &st)) return 0;
 	if (st.size() > 1)
 	{
 		int i = 0;

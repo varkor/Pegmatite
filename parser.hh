@@ -461,8 +461,10 @@ struct ParserPosition
  * When constructing an AST using the AST infrastructure, this will be a lambda
  * binding the type of the AST node to create and the argument will be
  * interpreted as an AST stack.
+ *
+ * @return whether or not the procedure executed successfully
  */
-typedef std::function<void(const ParserPosition&,
+typedef std::function<bool(const ParserPosition&,
                            const ParserPosition&, void*)> parse_proc;
 
 
@@ -501,45 +503,8 @@ public:
 	std::string str() const;
 };
 
-
-///enum with error types.
-enum ERROR_TYPE
-{
-	///syntax error
-	ERROR_SYNTAX_ERROR = 1,
-
-	///invalid end of file
-	ERROR_INVALID_EOF,
-
-	///first user error
-	ERROR_USER = 100
-};
-
-
-///Error.
-class Error : public InputRange
-{
-public:
-	///type
-	int error_type;
-
-	/** constructor.
-		@param b begin position.
-		@param e end position.
-		@param t type.
-	 */
-	Error(const ParserPosition &b, const ParserPosition &e, int t);
-
-	/** compare on begin position.
-		@param e the other error to compare this with.
-		@return true if this comes before the previous error, false otherwise.
-	 */
-	bool operator < (const Error &e) const;
-};
-
-
-///type of error list.
-typedef std::list<Error> ErrorList;
+/// A function type for reporting parser errors.
+typedef std::function<void (const InputRange&, std::string)> ErrorReporter;
 
 /**
  * CharacterExpr is a concrete subclass of Expr, which is exposed to allow it to be 
@@ -836,11 +801,11 @@ struct ParserDelegate
 	@param i input.
 	@param g root rule of grammar.
 	@param ws whitespace rule.
-	@param el list of errors.
+	@param err callback used to report errors.
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, const Rule &g, const Rule &ws, ErrorList &el,
+bool parse(Input &i, const Rule &g, const Rule &ws, ErrorReporter err,
            const ParserDelegate &delegate, void *d);
 
 
