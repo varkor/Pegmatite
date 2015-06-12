@@ -504,7 +504,7 @@ public:
 };
 
 /// A function type for reporting parser errors.
-typedef std::function<void (const InputRange&, std::string)> ErrorReporter;
+typedef std::function<void (const InputRange&, const std::string&)> ErrorReporter;
 
 /**
  * CharacterExpr is a concrete subclass of Expr, which is exposed to allow it to be 
