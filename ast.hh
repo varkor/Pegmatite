@@ -563,6 +563,7 @@ public:
 				obj->construct(range, *st);
 				st->push_back(std::make_pair(range, std::unique_ptr<ASTNode>(obj)));
 				debug_log("Constructed", st->size()-1, obj);
+				return true;
 			});
 	}
 };
