@@ -456,19 +456,6 @@ struct ParserPosition
 };
 
 /**
- * The callback that handles matches.  The arguments are the start and end of
- * the matching range and some state for the current parse.
- * When constructing an AST using the AST infrastructure, this will be a lambda
- * binding the type of the AST node to create and the argument will be
- * interpreted as an AST stack.
- *
- * @return whether or not the procedure executed successfully
- */
-typedef std::function<bool(const ParserPosition&,
-                           const ParserPosition&, void*)> parse_proc;
-
-
-/**
  * A range within input.  This is passed to `construct()` methods for AST
  * classes and allows terminals to record the source location.
  */
@@ -502,6 +489,18 @@ public:
 	 */
 	std::string str() const;
 };
+
+/**
+ * The callback that handles matches.  The arguments are the start and end of
+ * the matching range and some state for the current parse.
+ * When constructing an AST using the AST infrastructure, this will be a lambda
+ * binding the type of the AST node to create and the argument will be
+ * interpreted as an AST stack.
+ *
+ * @return whether or not the procedure executed successfully
+ */
+typedef std::function<bool(const InputRange&, void*)> parse_proc;
+
 
 /// A function type for reporting parser errors.
 typedef std::function<void (const InputRange&, const std::string&)> ErrorReporter;

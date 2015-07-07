@@ -553,12 +553,11 @@ public:
 	 */
 	BindAST(const Rule &r)
 	{
-		ASTParserDelegate::bind_parse_proc(r, [](const ParserPosition &b,
-		                                         const ParserPosition &e, void *d)
+		ASTParserDelegate::bind_parse_proc(r, [](const InputRange &range,
+		                                         void *d)
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
-				InputRange range(b,e);
 				debug_log("Constructing", st->size(), obj);
 				obj->construct(range, *st);
 				st->push_back(std::make_pair(range, std::unique_ptr<ASTNode>(obj)));

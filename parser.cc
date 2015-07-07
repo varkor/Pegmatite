@@ -69,11 +69,8 @@ public:
 	//const Rule matched
 	const Rule *matched_rule;
 
-	//begin position
-	ParserPosition start;
-
-	//end position
-	ParserPosition finish;
+	//source range
+	InputRange source;
 
 	//null constructor
 	ParseMatch() {}
@@ -81,8 +78,7 @@ public:
 	//constructor from parameters
 	ParseMatch(const Rule *r, const ParserPosition &b, const ParserPosition &e) :
 		matched_rule(r),
-		start(b),
-		finish(e)
+		source(b, e)
 	{
 	}
 };
@@ -293,7 +289,7 @@ public:
 		for(const auto &m : matches)
 		{
 			parse_proc p = get_parse_proc(*(m.matched_rule));
-			if (not p(m.start, m.finish, d))
+			if (not p(m.source, d))
 				return false;
 		}
 
