@@ -129,7 +129,8 @@ std::unique_ptr<ASTNode> parse(Input &input, const Rule &g, const Rule &ws,
 		int i = 0;
 		for (auto &I : st)
 		{
-			fprintf(stderr, "[%d] %s\n", i++, typeid(*I.second.get()).name());
+			auto *val = I.second.get();
+			fprintf(stderr, "[%d] %s\n", i++, typeid(*val).name());
 		}
 	}
 	assert(st.size() == 1);
