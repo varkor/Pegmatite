@@ -1460,7 +1460,15 @@ bool AsciiFileInput::fillBuffer(Index start, Index &length, char32_t *&b)
 	// This should be a no-op
 	length = std::min(length, static_buffer_size);
 	length = std::min(length, file_size - start);
-	pread(fd, buffer, length, static_cast<off_t>(start));
+	int bytes_to_read = length;
+	do {
+		int ret = pread(fd, buffer, length, static_cast<off_t>(start));
+		if (ret < 1)
+		{
+			return false;
+		}
+		bytes_to_read -= length;
+	} while (bytes_to_read > 0);
 	for (Index i=0 ; i<length ; i++)
 	{
 		b[i] = static_cast<char32_t>(buffer[i]);
