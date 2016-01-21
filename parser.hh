@@ -506,6 +506,7 @@ public:
  */
 typedef std::function<bool(const InputRange&, void*)> parse_proc;
 
+
 /// A function type for reporting parser errors.
 typedef std::function<void (const InputRange&, const std::string&)> ErrorReporter;
 void defaultErrorReporter(const InputRange& ir, const std::string& message);

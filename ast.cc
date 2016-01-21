@@ -1,6 +1,7 @@
 /*-
  * Copyright (c) 2012, Achilleas Margaritis
  * Copyright (c) 2014, David T. Chisnall
+ * Copyright (c) 2016, Jonathan Anderson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,14 +88,15 @@ ASTContainer::ASTContainer()
 	from a node stack.
 	@param st stack.
  */
-bool ASTContainer::construct(const InputRange &r, ASTStack &st)
+bool ASTContainer::construct(const InputRange &r, ASTStack &st,
+                             const ErrorReporter &err)
 {
 	bool success = true;
 
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
 		ASTMember *member = *it;
-		success |= member->construct(r, st);
+		success |= member->construct(r, st, err);
 	}
 	// We don't need the members vector anymore, so clean up the storage it
 	// uses.

@@ -1,6 +1,7 @@
 /*-
  * Copyright (c) 2012, Achilleas Margaritis
  * Copyright (c) 2014-2016, David T. Chisnall
+ * Copyright (c) 2016, Jonathan Anderson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,7 +127,8 @@ public:
 	 * Interface for constructing the AST node.  The input range `r` is the
 	 * range within the source.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st) = 0;
+	virtual bool construct(const InputRange &r, ASTStack &st,
+	                       const ErrorReporter&) = 0;
 
 private:
 	/**
@@ -225,7 +227,8 @@ public:
 	 * The input range (`r`) is unused, because the leaf nodes have already
 	 * constructed themselves at this point.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st);
+	virtual bool construct(const InputRange &r, ASTStack &st,
+	                       const ErrorReporter&) override;
 
 private:
 	/**
@@ -264,7 +267,8 @@ public:
 	/**
 	 * Interface for constructing references to AST objects from the stack.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st) = 0;
+	virtual bool construct(const InputRange &r, ASTStack &st,
+	                       const ErrorReporter&) = 0;
 	virtual ~ASTMember();
 protected:
 	/**
@@ -333,7 +337,8 @@ public:
 	/**
 	 * Pops the next matching object from the AST stack `st` and claims it.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st)
+	virtual bool construct(const InputRange &r, ASTStack &st,
+	                       const ErrorReporter &err)
 	{
 		if (st.empty() && Optional)
 		{
@@ -357,7 +362,12 @@ public:
 		//get the object
 		T *obj = node->get_as<T>();
 		if (obj == nullptr and not Optional)
+		{
+			err(childRange,
+				"Expected " + demangle(typeid(T).name())
+				+ ", found " + demangle(typeid(*node).name()));
 			return false;
+		}
 
 		//if the object is optional, simply return
 		if (Optional && !obj)
@@ -441,7 +451,8 @@ public:
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st)
+	virtual bool construct(const InputRange &r, ASTStack &st,
+	                       const ErrorReporter&) override
 	{
 		for(;;)
 		{
@@ -590,15 +601,16 @@ public:
 	/**
 	 * Bind the AST class described in the grammar to the rule specified.
 	 */
-	BindAST(const Rule &r)
+	BindAST(const Rule &r,
+	        const ErrorReporter &err = defaultErrorReporter)
 	{
-		ASTParserDelegate::bind_parse_proc(r, [](const InputRange &range,
-		                                         void *d)
+		ASTParserDelegate::bind_parse_proc(r, [err](const InputRange &range,
+		                                             void *d)
 			{
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
 				debug_log("Constructing", st->size(), obj);
-				if (not obj->construct(range, *st))
+				if (not obj->construct(range, *st, err))
 				{
 					debug_log("Failed", st->size(), obj);
 					return false;
@@ -615,7 +627,8 @@ public:
  */
 struct ASTString : public ASTMember, std::string
 {
-	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &,
+	               const ErrorReporter &) override
 	{
 		std::stringstream stream;
 		for_each(r.begin(), r.end(), [&](char c) {stream << c;});
@@ -632,7 +645,8 @@ template<typename T>
 struct ASTValue : ASTMember
 {
 	T value;
-	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &,
+	               const ErrorReporter &) override
 	{
 		constructValue(r, value);
 		return true;
