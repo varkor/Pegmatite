@@ -49,6 +49,22 @@ __thread pegmatite::ASTParserDelegate *currentParserDelegate;
 
 namespace pegmatite {
 
+
+std::string demangle(std::string mangled)
+{
+	int err;
+	size_t s;
+	char *buffer = static_cast<char*>(malloc(mangled.length()));
+
+	char *demangled = abi::__cxa_demangle(mangled.c_str(), buffer, &s, &err);
+	std::string result = demangled ? demangled : mangled;
+
+	free(demangled ? demangled : buffer);
+
+	return result;
+}
+
+
 /**
  * Out-of-line virtual destructor forces vtable to be emitted in this
  * translation unit only.
