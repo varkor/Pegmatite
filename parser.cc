@@ -1514,6 +1514,12 @@ bool StreamInput::fillBuffer(Index start, Index &len, char32_t *&b)
 	len = std::min(this->length, static_buffer_size);
 	len = std::min(len, this->length - start);
 
+	stream.seekg(static_cast<std::streamoff>(start));
+	if (not stream.good())
+	{
+		return false;
+	}
+
 	stream.read(buffer, static_cast<std::streamsize>(len));
 	if (static_cast<Index>(stream.gcount()) != len)
 	{
