@@ -87,16 +87,19 @@ ASTContainer::ASTContainer()
 	from a node stack.
 	@param st stack.
  */
-void ASTContainer::construct(const InputRange &r, ASTStack &st)
+bool ASTContainer::construct(const InputRange &r, ASTStack &st)
 {
+	bool success = true;
+
 	for(auto it = members.rbegin(); it != members.rend(); ++it)
 	{
 		ASTMember *member = *it;
-		member->construct(r, st);
+		success |= member->construct(r, st);
 	}
 	// We don't need the members vector anymore, so clean up the storage it
 	// uses.
 	ASTMember_vector().swap(members);
+	return success;
 }
 
 ASTMember::ASTMember()

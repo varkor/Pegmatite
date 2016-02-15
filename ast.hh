@@ -126,7 +126,7 @@ public:
 	 * Interface for constructing the AST node.  The input range `r` is the
 	 * range within the source.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st) = 0;
+	virtual bool construct(const InputRange &r, ASTStack &st) = 0;
 
 private:
 	/**
@@ -225,7 +225,7 @@ public:
 	 * The input range (`r`) is unused, because the leaf nodes have already
 	 * constructed themselves at this point.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st);
+	virtual bool construct(const InputRange &r, ASTStack &st);
 
 private:
 	/**
@@ -264,7 +264,7 @@ public:
 	/**
 	 * Interface for constructing references to AST objects from the stack.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st) = 0;
+	virtual bool construct(const InputRange &r, ASTStack &st) = 0;
 	virtual ~ASTMember();
 protected:
 	/**
@@ -333,11 +333,11 @@ public:
 	/**
 	 * Pops the next matching object from the AST stack `st` and claims it.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st)
+	virtual bool construct(const InputRange &r, ASTStack &st)
 	{
 		if (st.empty() && Optional)
 		{
-			return;
+			return false;
 		}
 		assert(!st.empty() && "Stack must not be empty");
 		ASTStackEntry &e = st.back();
@@ -349,19 +349,20 @@ public:
 			(childRange.end() > r.end()))
 		{
 			assert(Optional && "Required object not found");
-			return;
+			return false;
 		}
 		//get the node
 		ASTNode *node = e.second.get();
 
 		//get the object
 		T *obj = node->get_as<T>();
+		if (obj == nullptr and not Optional)
+			return false;
 
-		assert((obj || Optional) && "Required objects must exist!");
 		//if the object is optional, simply return
 		if (Optional && !obj)
 		{
-			return;
+			return false;
 		}
 		debug_log("Popped", st.size()-1, obj);
 		//set the new object
@@ -370,6 +371,8 @@ public:
 		st.back().second.release();
 		st.pop_back();
 		ptr->parent_node = container_node;
+
+		return true;
 	}
 
 private:
@@ -438,7 +441,7 @@ public:
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
 	 */
-	virtual void construct(const InputRange &r, ASTStack &st)
+	virtual bool construct(const InputRange &r, ASTStack &st)
 	{
 		for(;;)
 		{
@@ -464,7 +467,7 @@ public:
 
 			//if the object was not not of the appropriate type,
 			//end the list parsing
-			if (!obj) return;
+			if (!obj) return false;
 			debug_log("Popped", st.size()-1, obj);
 
 			//remove the node from the stack
@@ -477,6 +480,8 @@ public:
 			//set the object's parent
 			obj->parent_node = ASTMember::container();
 		}
+
+		return true;
 	}
 	virtual ~ASTList() {}
 
@@ -593,7 +598,11 @@ public:
 				ASTStack *st = reinterpret_cast<ASTStack *>(d);
 				T *obj = new T();
 				debug_log("Constructing", st->size(), obj);
-				obj->construct(range, *st);
+				if (not obj->construct(range, *st))
+				{
+					debug_log("Failed", st->size(), obj);
+					return false;
+				}
 				st->push_back(std::make_pair(range, std::unique_ptr<ASTNode>(obj)));
 				debug_log("Constructed", st->size()-1, obj);
 				return true;
@@ -606,11 +615,13 @@ public:
  */
 struct ASTString : public ASTMember, std::string
 {
-	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
 	{
 		std::stringstream stream;
 		for_each(r.begin(), r.end(), [&](char c) {stream << c;});
 		this->std::string::operator=(stream.str());
+
+		return true;
 	}
 };
 
@@ -621,9 +632,10 @@ template<typename T>
 struct ASTValue : ASTMember
 {
 	T value;
-	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
 	{
 		constructValue(r, value);
+		return true;
 	}
 };
 
