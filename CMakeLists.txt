@@ -15,7 +15,15 @@ set_target_properties(pegmatite-static PROPERTIES
 	POSITION_INDEPENDENT_CODE true
 	OUTPUT_NAME "pegmatite")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	set(CLANG_FLAGS "-Weverything -Wno-c++98-compat -Wno-conversion -Wno-deprecated -Wno-documentation -Wno-exit-time-destructors -Wno-padded -Wno-unused-parameter -Wno-unused-member-function")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_FLAGS}")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+endif()
+
 option(USE_RTTI "Use native C++ RTTI" ON)
 option(BUILD_DOCUMENTATION "Use Doxygen to create the HTML based API documentation" OFF)
 if (USE_RTTI)
