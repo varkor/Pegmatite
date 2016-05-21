@@ -1067,7 +1067,9 @@ class TraceExpr : public Expr
 		                con.position.col);
 	}
 public:
+#ifdef DEBUG_PARSING
 	TraceExpr(const char *m, const ExprPtr e) : message(m), expr(e) {}
+#endif
 
 	virtual bool parse_non_term(Context &con) const
 	{
