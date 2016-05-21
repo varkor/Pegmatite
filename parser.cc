@@ -1398,7 +1398,7 @@ Input::Input(const Input& orig)
 
 const std::string& Input::iterator::filename() const
 {
-	static std::string None("<invalid input>");
+	static std::string& None = *new std::string("<invalid input>");
 	return buffer ? buffer->name() : None;
 }
 
