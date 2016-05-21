@@ -367,7 +367,7 @@ private:
 /** A list of objects.
 	It pops objects of the given type from the ast stack, until no more objects can be popped.
 	It assumes ownership of objects.
-	@param T type of object to control.
+	@tparam T type of object to control.
  */
 template <class T> class ASTList : public ASTMember
 {
