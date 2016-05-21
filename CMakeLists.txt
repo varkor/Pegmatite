@@ -18,7 +18,7 @@ set_target_properties(pegmatite-static PROPERTIES
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	set(CLANG_FLAGS "-Weverything -Wno-c++98-compat -Wno-exit-time-destructors -Wno-padded -Wno-unused-parameter -Wno-unused-member-function")
+	set(CLANG_FLAGS "-Weverything -Wno-c++98-compat -Wno-exit-time-destructors -Wno-padded -Wno-unused-member-function")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_FLAGS}")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")

@@ -39,9 +39,9 @@
 
 namespace pegmatite {
 
+#ifdef DEBUG_AST_CONSTRUCTION
 template <class T> void debug_log(const char *msg, int depth, T *obj)
 {
-#ifdef DEBUG_AST_CONSTRUCTION
 	const char *mangled = typeid(*obj).name();
 	char *buffer = static_cast<char*>(malloc(strlen(mangled)));
 	int err;
@@ -52,8 +52,10 @@ template <class T> void debug_log(const char *msg, int depth, T *obj)
 			depth, msg,
 		demangled ? demangled : mangled, obj);
 	free(static_cast<void*>(demangled ? demangled : buffer));
-#endif // DEBUG_AST_CONSTRUCTION
 }
+#else
+template <class T> void debug_log(const char *, int /* depth */, T *) {}
+#endif // DEBUG_AST_CONSTRUCTION
 
 class ASTNode;
 template <class T, bool OPT> class ASTPtr;
