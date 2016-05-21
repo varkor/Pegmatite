@@ -1464,9 +1464,10 @@ bool AsciiFileInput::fillBuffer(Index start, Index &length, char32_t *&b)
 	// This should be a no-op
 	length = std::min(length, static_buffer_size);
 	length = std::min(length, file_size - start);
-	int bytes_to_read = length;
+	Index bytes_to_read = length;
 	do {
-		int ret = pread(fd, buffer, length, static_cast<off_t>(start));
+		ssize_t ret = pread(fd, buffer, length,
+		                    static_cast<off_t>(start));
 		if (ret < 1)
 		{
 			return false;
@@ -1595,9 +1596,9 @@ std::string InputRange::str() const
 {
 	std::stringstream s;
 
-	for (char c : *this)
+	for (char32_t c : *this)
 	{
-		s << c;
+		s << static_cast<char>(c);
 	}
 
 	return s.str();
