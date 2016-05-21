@@ -267,6 +267,10 @@ class Input
 	 * Virtual destructor.
 	 */
 	virtual ~Input();
+	/**
+	 * Copy constructor.
+	 */
+	Input(const Input&);
 };
 
 /**

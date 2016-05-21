@@ -1390,6 +1390,10 @@ char32_t Input::slowCharacterLookup(Index n)
 }
 Input::~Input() {}
 
+Input::Input(const Input& orig)
+	: user_name(orig.user_name), buffer(orig.buffer),
+	  buffer_start(orig.buffer_start), buffer_end(orig.buffer_end) {}
+
 const std::string& Input::iterator::filename() const
 {
 	static std::string None("<invalid input>");
