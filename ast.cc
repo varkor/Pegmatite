@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <cassert>
+#include <cstdlib>
 #include "ast.hh"
 
 

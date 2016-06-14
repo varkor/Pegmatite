@@ -1067,7 +1067,9 @@ class TraceExpr : public Expr
 		                con.position.col);
 	}
 public:
+#ifdef DEBUG_PARSING
 	TraceExpr(const char *m, const ExprPtr e) : message(m), expr(e) {}
+#endif
 
 	virtual bool parse_non_term(Context &con) const
 	{
@@ -1390,9 +1392,13 @@ char32_t Input::slowCharacterLookup(Index n)
 }
 Input::~Input() {}
 
+Input::Input(const Input& orig)
+	: user_name(orig.user_name), buffer(orig.buffer),
+	  buffer_start(orig.buffer_start), buffer_end(orig.buffer_end) {}
+
 const std::string& Input::iterator::filename() const
 {
-	static std::string None("<invalid input>");
+	static std::string& None = *new std::string("<invalid input>");
 	return buffer ? buffer->name() : None;
 }
 
@@ -1460,9 +1466,10 @@ bool AsciiFileInput::fillBuffer(Index start, Index &length, char32_t *&b)
 	// This should be a no-op
 	length = std::min(length, static_buffer_size);
 	length = std::min(length, file_size - start);
-	int bytes_to_read = length;
+	Index bytes_to_read = length;
 	do {
-		int ret = pread(fd, buffer, length, static_cast<off_t>(start));
+		ssize_t ret = pread(fd, buffer, length,
+		                    static_cast<off_t>(start));
 		if (ret < 1)
 		{
 			return false;
@@ -1591,9 +1598,9 @@ std::string InputRange::str() const
 {
 	std::stringstream s;
 
-	for (char c : *this)
+	for (char32_t c : *this)
 	{
-		s << c;
+		s << static_cast<char>(c);
 	}
 
 	return s.str();

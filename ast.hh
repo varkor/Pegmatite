@@ -39,9 +39,9 @@
 
 namespace pegmatite {
 
+#ifdef DEBUG_AST_CONSTRUCTION
 template <class T> void debug_log(const char *msg, int depth, T *obj)
 {
-#ifdef DEBUG_AST_CONSTRUCTION
 	const char *mangled = typeid(*obj).name();
 	char *buffer = static_cast<char*>(malloc(strlen(mangled)));
 	int err;
@@ -52,8 +52,10 @@ template <class T> void debug_log(const char *msg, int depth, T *obj)
 			depth, msg,
 		demangled ? demangled : mangled, obj);
 	free(static_cast<void*>(demangled ? demangled : buffer));
-#endif // DEBUG_AST_CONSTRUCTION
 }
+#else
+template <class T> void debug_log(const char *, int /* depth */, T *) {}
+#endif // DEBUG_AST_CONSTRUCTION
 
 class ASTNode;
 template <class T, bool OPT> class ASTPtr;
@@ -367,7 +369,7 @@ private:
 /** A list of objects.
 	It pops objects of the given type from the ast stack, until no more objects can be popped.
 	It assumes ownership of objects.
-	@param T type of object to control.
+	@tparam T type of object to control.
  */
 template <class T> class ASTList : public ASTMember
 {
