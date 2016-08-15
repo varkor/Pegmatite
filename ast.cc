@@ -101,7 +101,7 @@ void ASTContainer::construct(const InputRange &r, ASTStack &st)
 
 ASTMember::ASTMember()
 {
-	assert(current);
+	assert(current && "ASTMember must be contained within an ASTContainer");
 	container_node = current;
 	current->members.push_back(this);
 }
