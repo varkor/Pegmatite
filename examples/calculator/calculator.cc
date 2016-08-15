@@ -69,6 +69,7 @@ private:
  * Superclass for all of the binary expressions.  Contains pointers to the left
  * and right children.  Subclasses encode the operation type.
  */
+template<class func, char op>
 class BinaryExpression : public Expression 
 {
 protected:
@@ -79,92 +80,20 @@ protected:
 	 */
 	ASTPtr<Expression> left, right;
 public:
-
-	virtual void print(int depth) const
+	double eval() const override
 	{
-		left->print(depth);
-		right->print(depth);
+		func f;
+		return f(left->eval(), right->eval());
+	}
+
+	void print(int depth) const override
+	{
+		cout << string(depth, '\t') << op << endl;
+		left->print(depth+1);
+		right->print(depth+1);
 	}
 };
 
-/**
- * Add expression node.
- */
-class AddExpression : public BinaryExpression
-{
-public:
-	virtual double eval() const
-	{
-		return left->eval() + right->eval();
-	}
-
-	virtual void print(int depth) const
-	{
-		cout << string(depth, '\t') << "+" << endl;
-		BinaryExpression::print(depth+1);
-	}
-};
-
-
-/**
- * Subtract expression node.
- */
-class SubtractExpression : public BinaryExpression
-{
-public:
-	virtual double eval() const
-	{
-		return left->eval() - right->eval();
-	}
-
-	virtual void print(int depth) const
-	{
-		cout << string(depth, '\t') << "-" << endl;
-		BinaryExpression::print(depth+1);
-	}
-};
-
-/**
- * Multiply expression node.
- */
-class MultiplyExpression : public BinaryExpression
-{
-public:
-	virtual double eval() const
-	{
-		return left->eval() * right->eval();
-	}
-
-	virtual void print(int depth) const
-	{
-		cout << string(depth, '\t') << "*" << endl;
-		BinaryExpression::print(depth+1);
-	}
-};
-
-/**
- * Divide expression node.
- */
-class DivideExpression : public BinaryExpression
-{
-public:
-	virtual double eval() const
-	{
-		double ret = 0;
-		double rval = right->eval();
-		if (rval != 0)
-		{
-			ret = left->eval() / rval;
-		}
-		return ret;
-	}
-
-	virtual void print(int depth) const
-	{
-		cout << string(depth, '\t') << "/" << endl;
-		BinaryExpression::print(depth+1);
-	}
-};
 }
 
 namespace Parser
@@ -248,10 +177,10 @@ struct CalculatorGrammar
 class CalculatorParser : public ASTParserDelegate
 {
 	BindAST<AST::Number> num = CalculatorGrammar::get().num;
-	BindAST<AST::AddExpression> add = CalculatorGrammar::get().add_op;
-	BindAST<AST::SubtractExpression> sub = CalculatorGrammar::get().sub_op;
-	BindAST<AST::MultiplyExpression> mul = CalculatorGrammar::get().mul_op;
-	BindAST<AST::DivideExpression> div = CalculatorGrammar::get().div_op;
+	BindAST<AST::BinaryExpression<std::plus<double>,'+'>> add = CalculatorGrammar::get().add_op;
+	BindAST<AST::BinaryExpression<std::minus<double>,'-'>> sub = CalculatorGrammar::get().sub_op;
+	BindAST<AST::BinaryExpression<std::multiplies<double>,'*'>> mul = CalculatorGrammar::get().mul_op;
+	BindAST<AST::BinaryExpression<std::divides<double>,'/'>> div = CalculatorGrammar::get().div_op;
 	public:
 	const CalculatorGrammar &g = CalculatorGrammar::get();
 };
