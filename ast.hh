@@ -397,6 +397,7 @@ public:
 	}
 
 	size_t size() { return child_objects.size(); }
+	bool empty() const { return child_objects.size() == 0; }
 	typename container::iterator begin() { return child_objects.begin(); }
 	typename container::iterator end() { return child_objects.end(); }
 	typename container::reverse_iterator rbegin() { return child_objects.rbegin(); }
