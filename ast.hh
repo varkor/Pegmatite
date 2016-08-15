@@ -474,7 +474,7 @@ private:
 		The return object must be deleted by the caller.
  */
 std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
-                               ErrorReporter &err, const ParserDelegate &d);
+                               ErrorReporter err, const ParserDelegate &d);
 
 /**
  * A parser delegate that is responsible for creating AST nodes from the input.
