@@ -402,6 +402,23 @@ public:
 	typename container::reverse_iterator rbegin() { return child_objects.rbegin(); }
 	typename container::reverse_iterator rend() { return child_objects.rend(); }
 
+	typename container::const_iterator begin() const
+	{
+		return child_objects.begin();
+	}
+	typename container::const_iterator end() const
+	{
+		return child_objects.end();
+	}
+	typename container::const_reverse_iterator rbegin() const
+	{
+		return child_objects.rbegin();
+	}
+	typename container::const_reverse_iterator rend() const
+	{
+		return child_objects.rend();
+	}
+
 	/** 
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
