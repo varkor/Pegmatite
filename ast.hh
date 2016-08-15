@@ -184,7 +184,8 @@ public:
 	 */
 	template <class T> T* get_as()
 	{
-		return this ? (isa<T>() ? static_cast<T*>(this) : nullptr) : nullptr;
+		auto *t = this;
+		return t ? (isa<T>() ? static_cast<T*>(this) : nullptr) : nullptr;
 	}
 #else
 public:
