@@ -84,7 +84,7 @@ protected:                                               \
 		return &thisclass ## id;                         \
 	}                                                    \
 public:                                                  \
-	virtual bool isa(char *x)                            \
+	virtual bool isa(char *x) override                   \
 	{                                                    \
 		return (x == classKind()) ||                     \
 				(superclass::isa(x));                    \
