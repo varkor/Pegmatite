@@ -273,9 +273,12 @@ int main()
 		StringInput i(std::move(s));
 
 		//parse
-		ErrorList el;
+		ErrorReporter er = [](const InputRange &ir, const std::string &s)
+		{
+			cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << s;
+		};
 		unique_ptr<AST::Expression> root = 0;
-		p.parse(i, p.g.expr, p.g.ws, el, root);
+		p.parse(i, p.g.expr, p.g.ws, er, root);
 
 		//on success
 		if (root)
@@ -285,17 +288,6 @@ int main()
 			cout << "result = " << v << endl;
 			cout << "parse tree:\n";
 			root->print(0);
-		}
-
-		//on error
-		else
-		{
-			cout << "errors: \n";
-			for (auto &err : el)
-			{
-				cout << "line " << err.start.line << ", col " << err.finish.col << ": ";
-				wcout << "syntax error" << endl;
-			}
 		}
 
 		//next input
