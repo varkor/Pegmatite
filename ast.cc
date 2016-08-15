@@ -50,6 +50,10 @@ __thread pegmatite::ASTParserDelegate *currentParserDelegate;
 namespace pegmatite {
 
 
+/**
+ * Demangle an ABI-specific C++ type name, if possible.
+ * @returns   the demangled name or, if not possible, the original name
+ */
 std::string demangle(std::string mangled)
 {
 	int err;
