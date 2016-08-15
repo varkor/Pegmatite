@@ -57,7 +57,7 @@ template <class T> void debug_log(const char *, int /* depth */, T *) {}
 #endif // DEBUG_AST_CONSTRUCTION
 
 class ASTNode;
-template <class T, bool OPT> class ASTPtr;
+template <class T, bool Optional> class ASTPtr;
 template <class T> class ASTList;
 template <class T> class BindAST;
 
@@ -133,7 +133,7 @@ private:
 	 */
 	ASTNode *parent_node;
 	
-	template <class T, bool OPT> friend class ASTPtr;
+	template <class T, bool Optional> friend class ASTPtr;
 	template <class T> friend class ASTList;
 	template <class T> friend class BindAST;
 
@@ -278,7 +278,7 @@ protected:
  * to be a member of an `ASTContainer` and will automatically pop the top item
  * from the stack and claim it when building the AST..
  */
-template <class T, bool OPT = false> class ASTPtr : public ASTMember
+template <class T, bool Optional = false> class ASTPtr : public ASTMember
 {
 public:
 	/** 
@@ -321,7 +321,7 @@ public:
 	 */
 	virtual void construct(const InputRange &r, ASTStack &st)
 	{
-		if (st.empty() && OPT)
+		if (st.empty() && Optional)
 		{
 			return;
 		}
@@ -334,7 +334,7 @@ public:
 		if ((childRange.begin() < r.begin()) ||
 			(childRange.end() > r.end()))
 		{
-			assert(OPT && "Required object not found");
+			assert(Optional && "Required object not found");
 			return;
 		}
 		//get the node
@@ -343,9 +343,9 @@ public:
 		//get the object
 		T *obj = node->get_as<T>();
 		
-		assert((obj || OPT) && "Required objects must exist!");
+		assert((obj || Optional) && "Required objects must exist!");
 		//if the object is optional, simply return
-		if (OPT && !obj)
+		if (Optional && !obj)
 		{
 			return;
 		}
