@@ -177,10 +177,10 @@ struct CalculatorGrammar
 class CalculatorParser : public ASTParserDelegate
 {
 	BindAST<AST::Number> num = CalculatorGrammar::get().num;
-	BindAST<AST::BinaryExpression<std::plus<double>,'+'>> add = CalculatorGrammar::get().add_op;
-	BindAST<AST::BinaryExpression<std::minus<double>,'-'>> sub = CalculatorGrammar::get().sub_op;
-	BindAST<AST::BinaryExpression<std::multiplies<double>,'*'>> mul = CalculatorGrammar::get().mul_op;
-	BindAST<AST::BinaryExpression<std::divides<double>,'/'>> div = CalculatorGrammar::get().div_op;
+	BindAST<AST::BinaryExpression<plus<double>,'+'>> add = CalculatorGrammar::get().add_op;
+	BindAST<AST::BinaryExpression<minus<double>,'-'>> sub = CalculatorGrammar::get().sub_op;
+	BindAST<AST::BinaryExpression<multiplies<double>,'*'>> mul = CalculatorGrammar::get().mul_op;
+	BindAST<AST::BinaryExpression<divides<double>,'/'>> div = CalculatorGrammar::get().div_op;
 	public:
 	const CalculatorGrammar &g = CalculatorGrammar::get();
 };
@@ -199,10 +199,10 @@ int main()
 		if (s.empty()) break;
 
 		//convert the string to input
-		StringInput i(std::move(s));
+		StringInput i(move(s));
 
 		//parse
-		ErrorReporter er = [](const InputRange &ir, const std::string &s)
+		ErrorReporter er = [](const InputRange &ir, const string &s)
 		{
 			cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << s;
 		};
