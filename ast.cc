@@ -128,7 +128,7 @@ parse_proc ASTParserDelegate::get_parse_proc(const Rule &r) const
 }
 
 /** parses the given input.
-	@param i input.
+	@param input input.
 	@param g root rule of grammar.
 	@param ws whitespace rule.
 	@param err callback for reporting errors.
