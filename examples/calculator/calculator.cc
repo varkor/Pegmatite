@@ -45,7 +45,7 @@ public:
 		stringstream stream;
 		for (char32_t c : r)
 		{
-			stream << c;
+			stream << static_cast<char>(c);
 		}
 		stream >> value;
 	}
