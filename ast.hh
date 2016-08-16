@@ -46,14 +46,14 @@ namespace pegmatite {
 std::string demangle(std::string);
 
 #ifdef DEBUG_AST_CONSTRUCTION
-template <class T> void debug_log(const char *msg, int depth, T *obj)
+template <class T> void debug_log(const char *msg, size_t depth, T *obj)
 {
 	std::string demangled = demangle(typeid(*obj).name());
 	fprintf(stderr, "[%d] %s %s (%p) off the AST stack\n",
 			depth, msg, demangled.c_str(), obj);
 }
 #else
-template <class T> void debug_log(const char *, int /* depth */, T *) {}
+template <class T> void debug_log(const char *, size_t /* depth */, T *) {}
 #endif // DEBUG_AST_CONSTRUCTION
 
 class ASTNode;
