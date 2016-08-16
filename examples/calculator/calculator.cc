@@ -40,7 +40,7 @@ public:
 	/**
 	 * Construct the numerical value from the text in the input range.
 	 */
-	virtual void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
 	{
 		stringstream stream;
 		for (char32_t c : r)
@@ -50,12 +50,12 @@ public:
 		stream >> value;
 	}
 
-	virtual double eval() const override
+	double eval() const override
 	{
 		return value;
 	}
 
-	virtual void print(size_t depth) const override
+	void print(size_t depth) const override
 	{
 		cout << string(depth, '\t') << value << endl;
 	}
