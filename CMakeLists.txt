@@ -45,4 +45,7 @@ if(BUILD_DOCUMENTATION)
 endif()
 
 include_directories(.)
-add_subdirectory(examples)
+option(BUILD_EXAMPLES "Build examples" OFF)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
