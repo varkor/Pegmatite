@@ -47,10 +47,7 @@ public:
 	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
 	{
 		stringstream stream;
-		for (char32_t c : r)
-		{
-			stream << static_cast<char>(c);
-		}
+		for_each(r.begin(), r.end(), [&](char c) {stream << c;});
 		stream >> value;
 	}
 
