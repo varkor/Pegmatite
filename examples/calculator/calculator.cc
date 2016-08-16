@@ -70,7 +70,6 @@ public:
 template<class func, char op>
 class BinaryExpression : public Expression 
 {
-protected:
 	/**
 	 * The pointers to the left and right nodes.  The `ASTPtr` class will
 	 * automatically fill these in when this node is constructed, popping the
