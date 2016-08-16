@@ -36,6 +36,10 @@ public:
  */
 class Number : public Expression
 {
+	/**
+	 * The parsed value for this number.
+	 */
+	double value;
 public:
 	/**
 	 * Construct the numerical value from the text in the input range.
@@ -59,9 +63,6 @@ public:
 	{
 		cout << string(depth, '\t') << value << endl;
 	}
-
-private:
-	double value;
 };
 
 
