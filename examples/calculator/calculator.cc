@@ -83,7 +83,7 @@ public:
 		return f(left->eval(), right->eval());
 	}
 
-	void print(size_t depth) const override
+	void print(size_t depth=0) const override
 	{
 		cout << string(depth, '\t') << op << endl;
 		left->print(depth+1);
@@ -214,7 +214,7 @@ int main()
 			cout << "success\n";
 			cout << "result = " << v << endl;
 			cout << "parse tree:\n";
-			root->print(0);
+			root->print();
 		}
 
 		//next input
