@@ -26,8 +26,8 @@ public:
 	/**
 	 * Print the node, at the specified indent depth.
 	 */
-	virtual void print(int depth = 0) const = 0;
-	PEGMATITE_RTTI(Expression, ASTContainer);
+	virtual void print(size_t depth = 0) const = 0;
+	PEGMATITE_RTTI(Expression, ASTContainer)
 };
 
 
@@ -40,10 +40,10 @@ public:
 	/**
 	 * Construct the numerical value from the text in the input range.
 	 */
-	virtual void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &st)
+	virtual void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &)
 	{
 		stringstream stream;
-		for (char c : r)
+		for (char32_t c : r)
 		{
 			stream << c;
 		}
@@ -55,7 +55,7 @@ public:
 		return value;
 	}
 
-	virtual void print(int depth) const
+	virtual void print(size_t depth) const
 	{
 		cout << string(depth, '\t') << value << endl;
 	}
@@ -86,7 +86,7 @@ public:
 		return f(left->eval(), right->eval());
 	}
 
-	void print(int depth) const override
+	void print(size_t depth) const override
 	{
 		cout << string(depth, '\t') << op << endl;
 		left->print(depth+1);
@@ -166,7 +166,7 @@ struct CalculatorGrammar
 	 * Private constructor.  This class is immutable, and so only the `get()`
 	 * method should be used to return the singleton instance.
 	 */
-	CalculatorGrammar() {};
+	CalculatorGrammar() {}
 };
 
 
@@ -203,9 +203,9 @@ int main()
 		StringInput i(move(s));
 
 		//parse
-		ErrorReporter er = [](const InputRange &ir, const string &s)
+		ErrorReporter er = [](const InputRange &ir, const string &str)
 		{
-			cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << s;
+			cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << str;
 		};
 		unique_ptr<AST::Expression> root = 0;
 		p.parse(i, p.g.expr, p.g.ws, er, root);
