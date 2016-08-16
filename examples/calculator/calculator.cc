@@ -176,13 +176,13 @@ struct CalculatorGrammar
  */
 class CalculatorParser : public ASTParserDelegate
 {
-	BindAST<AST::Number> num = CalculatorGrammar::get().num;
-	BindAST<AST::BinaryExpression<plus<double>,'+'>> add = CalculatorGrammar::get().add_op;
-	BindAST<AST::BinaryExpression<minus<double>,'-'>> sub = CalculatorGrammar::get().sub_op;
-	BindAST<AST::BinaryExpression<multiplies<double>,'*'>> mul = CalculatorGrammar::get().mul_op;
-	BindAST<AST::BinaryExpression<divides<double>,'/'>> div = CalculatorGrammar::get().div_op;
-	public:
 	const CalculatorGrammar &g = CalculatorGrammar::get();
+
+	BindAST<AST::Number> num = g.num;
+	BindAST<AST::BinaryExpression<plus<double>,'+'>> add = g.add_op;
+	BindAST<AST::BinaryExpression<minus<double>,'-'>> sub = g.sub_op;
+	BindAST<AST::BinaryExpression<multiplies<double>,'*'>> mul = g.mul_op;
+	BindAST<AST::BinaryExpression<divides<double>,'/'>> div = g.div_op;
 };
 
 }
