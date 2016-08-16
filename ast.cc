@@ -137,7 +137,7 @@ parse_proc ASTParserDelegate::get_parse_proc(const Rule &r) const
 		The return object must be deleted by the caller.
  */
 std::unique_ptr<ASTNode> parse(Input &input, const Rule &g, const Rule &ws,
-                               ErrorReporter err, const ParserDelegate &d)
+                               ErrorReporter &err, const ParserDelegate &d)
 {
 	ASTStack st;
 	if (!parse(input, g, ws, err, d, &st)) return 0;
