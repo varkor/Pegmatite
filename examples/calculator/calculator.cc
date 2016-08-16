@@ -188,26 +188,28 @@ public:
 int main()
 {
 	Parser::CalculatorParser p;
+	string s;
+	// Report errors.
+	ErrorReporter er = [](const InputRange &ir, const string &str)
+	{
+		cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << str << endl;
+	};
+	// Loop until the user gives us an empty line.
 	for (;;)
 	{
-		string s;
-
-		cout << "enter a math expression (+ - * /, floats, parentheses) or enter to exit:\n";
+		// Read a line from the user.
+		cout << "Enter an expression (+ - * /, floats, parentheses) or enter to exit:\n";
 		getline(cin, s);
 		if (s.empty()) break;
 
 		//convert the string to input
 		StringInput i(move(s));
 
-		//parse
-		ErrorReporter er = [](const InputRange &ir, const string &str)
-		{
-			cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << str;
-		};
+		// Parse the input
 		unique_ptr<AST::Expression> root = 0;
 		p.parse(i, p.g.expr, p.g.ws, er, root);
 
-		//on success
+		// If we got an AST, print the result and the AST
 		if (root)
 		{
 			double v = root->eval();
@@ -215,10 +217,9 @@ int main()
 			cout << "result = " << v << endl;
 			cout << "parse tree:\n";
 			root->print();
+			cout << endl;
 		}
 
-		//next input
-		cout << endl;
 	}
 	return 0;
 }
