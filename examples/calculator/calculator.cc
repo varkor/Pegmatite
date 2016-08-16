@@ -176,6 +176,7 @@ struct CalculatorGrammar
  */
 class CalculatorParser : public ASTParserDelegate
 {
+public:
 	const CalculatorGrammar &g = CalculatorGrammar::get();
 
 	BindAST<AST::Number> num = g.num;
