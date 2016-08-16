@@ -44,3 +44,5 @@ if(BUILD_DOCUMENTATION)
 	                   SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
 endif()
 
+include_directories(.)
+add_subdirectory(examples)
