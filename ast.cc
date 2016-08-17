@@ -53,8 +53,8 @@ namespace pegmatite {
 std::string demangle(std::string mangled)
 {
 	int err;
-	size_t s;
-	char *buffer = static_cast<char*>(malloc(mangled.length()));
+	size_t s = 0;
+	char *buffer = static_cast<char*>(malloc(mangled.length() + 1));
 
 	char *demangled = abi::__cxa_demangle(mangled.c_str(), buffer, &s, &err);
 	std::string result = demangled ? demangled : mangled;
