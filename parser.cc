@@ -1,6 +1,7 @@
 /*-
  * Copyright (c) 2012, Achilleas Margaritis
  * Copyright (c) 2014, David T. Chisnall
+ * Copyright (c) 2016, Jonathan Anderson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +29,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
-#include <istream>
+#include <iostream>
 #include <stdexcept>
 #include <sstream>
 #include <regex>
@@ -111,6 +112,14 @@ private:
 }
 namespace pegmatite
 {
+
+void defaultErrorReporter(const InputRange& ir, const std::string& message)
+{
+	std::cerr
+		<< "error at " << ir.start.line << ":" << ir.finish.col
+		<< ": " << message << std::endl
+		;
+}
 
 /**
  * Out-of-line virtual destructor forces vtable to be emitted in this
