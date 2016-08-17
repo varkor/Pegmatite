@@ -121,7 +121,7 @@ public:
 	 */
 	ASTNode *parent() const { return parent_node; }
 
-	/** 
+	/**
 	 * Interface for constructing the AST node.  The input range `r` is the
 	 * range within the source.
 	 */
@@ -175,7 +175,7 @@ public:
 	}
 	/**
 	 * Returns a pointer to this object as a pointer to a child class, or
-	 * `nullptr` if the cast would be unsafe.  
+	 * `nullptr` if the cast would be unsafe.
 	 *
 	 * Note that AST nodes are intended to be always used as unique pointers
 	 * and so the returned object is *only* valid as long as the unique pointer
@@ -203,7 +203,7 @@ class ASTMember;
  */
 
 
-/** 
+/**
  * The base class for non-leaf AST nodes.  Subclasses can have instances of
  * `ASTMember` subclasses as fields and will automatically construct them.
  */
@@ -217,9 +217,9 @@ public:
 	 */
 	ASTContainer();
 
-	/** 
+	/**
 	 * Asks all members to construct themselves from the stack. The members are
-	 * asked to construct themselves in reverse order from a node stack (`st`). 
+	 * asked to construct themselves in reverse order from a node stack (`st`).
 	 *
 	 * The input range (`r`) is unused, because the leaf nodes have already
 	 * constructed themselves at this point.
@@ -255,7 +255,7 @@ public:
 	 */
 	ASTMember();
 
-	/** 
+	/**
 	 * Returns the container of which this object is a field.
 	 */
 	ASTContainer *container() const { return container_node; }
@@ -281,8 +281,8 @@ protected:
 template <class T, bool Optional = false> class ASTPtr : public ASTMember
 {
 public:
-	/** 
-	 * Constructs the object in the 
+	/**
+	 * Constructs the object in the
 	 */
 	ASTPtr() : ptr(nullptr) {}
 
@@ -420,7 +420,7 @@ public:
 		return child_objects.rend();
 	}
 
-	/** 
+	/**
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
 	 */
