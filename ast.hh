@@ -106,33 +106,33 @@ public:
 	 * Copying AST nodes is not supported.
 	 */
 	ASTNode(const ASTNode&) = delete;
-	
+
 	/**
 	 * Destructor does nothing, virtual for subclasses to use.
 	 * Defined out-of-line to avoid emitting vtables in every translation
 	 * unit that includes this header.
 	 */
 	virtual ~ASTNode();
-	
+
 	/**
 	 * Returns the parent of this AST node, or `nullptr` if there isn't one
 	 * (either if this is the root, or if it is still in the stack waiting to
 	 * be added to the tree).
 	 */
 	ASTNode *parent() const { return parent_node; }
-	
+
 	/** 
 	 * Interface for constructing the AST node.  The input range `r` is the
 	 * range within the source.
 	 */
 	virtual void construct(const InputRange &r, ASTStack &st) = 0;
-	
+
 private:
 	/**
 	 * The parent AST node.
 	 */
 	ASTNode *parent_node;
-	
+
 	template <class T, bool Optional> friend class ASTPtr;
 	template <class T> friend class ASTList;
 	template <class T> friend class BindAST;
@@ -339,10 +339,10 @@ public:
 		}
 		//get the node
 		ASTNode *node = e.second.get();
-		
+
 		//get the object
 		T *obj = node->get_as<T>();
-		
+
 		assert((obj || Optional) && "Required objects must exist!");
 		//if the object is optional, simply return
 		if (Optional && !obj)
@@ -441,25 +441,25 @@ public:
 			{
 				break;
 			}
-			
+
 			//get the node
 			ASTNode *node = e.second.get();
-			
+
 			//get the object
 			T *obj = node->get_as<T>();
-			
+
 			//if the object was not not of the appropriate type,
 			//end the list parsing
 			if (!obj) return;
 			debug_log("Popped", st.size()-1, obj);
-			
+
 			//remove the node from the stack
 			e.second.release();
 			st.pop_back();
-			
+
 			//insert the object in the list, in reverse order
 			child_objects.push_front(std::unique_ptr<T>(obj));
-			
+
 			//set the object's parent
 			obj->parent_node = ASTMember::container();
 		}
