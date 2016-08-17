@@ -572,16 +572,20 @@ public:
 	 * initialisation without performing copying.
 	 */
 	Rule(const Rule &&r);
+	/**
+	 * Assignment operator.  This is used when we want to replace a rule in a
+	 * subclass.
+	 */
+	Rule& operator=(Rule &&);
 private:
 	/**
 	 * The expression that this rule invokes.
 	 */
-	const ExprPtr expr;
+	ExprPtr expr;
 
 	/**
 	 * Copying rules is not allowed.
 	 */
-	Rule &operator = (const Rule &) = delete;
 
 	friend class Context;
 };

@@ -1618,6 +1618,11 @@ Rule::Rule(const ExprPtr e) :
 {
 }
 
+Rule& Rule::operator=(Rule &&r)
+{
+	expr = std::move(r.expr);
+	return *this;
+}
 
 /** constructor from rule.
 	@param r rule.
