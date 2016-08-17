@@ -15,6 +15,7 @@ namespace AST
 /**
  * The base class for expressions in our language.
  */
+template<typename T>
 class Expression : public ASTContainer
 {
 public:
@@ -22,7 +23,7 @@ public:
 	 * Evaluate this expression.  Returns a `double` representing the result of
 	 * the evaluation.
 	 */
-	virtual double eval() const = 0;
+	virtual T eval() const = 0;
 	/**
 	 * Print the node, at the specified indent depth.
 	 */
@@ -34,12 +35,13 @@ public:
 /**
  * AST node representing a number.
  */
-class Number : public Expression
+template<typename T>
+class Number : public Expression<T>
 {
 	/**
 	 * The parsed value for this number.
 	 */
-	double value;
+	T value;
 public:
 	/**
 	 * Construct the numerical value from the text in the input range.
@@ -51,7 +53,7 @@ public:
 		stream >> value;
 	}
 
-	double eval() const override
+	T eval() const override
 	{
 		return value;
 	}
@@ -67,19 +69,19 @@ public:
  * Superclass for all of the binary expressions.  Contains pointers to the left
  * and right children.  Subclasses encode the operation type.
  */
-template<class func, char op>
-class BinaryExpression : public Expression 
+template<typename T, class Func, char op>
+class BinaryExpression : public Expression<T>
 {
 	/**
 	 * The pointers to the left and right nodes.  The `ASTPtr` class will
 	 * automatically fill these in when this node is constructed, popping the
 	 * two top values from the AST stack.
 	 */
-	ASTPtr<Expression> left, right;
+	ASTPtr<Expression<T>> left, right;
 public:
-	double eval() const override
+	T eval() const override
 	{
-		func f;
+		Func f;
 		return f(left->eval(), right->eval());
 	}
 
@@ -158,7 +160,7 @@ struct CalculatorGrammar
 		static CalculatorGrammar g;
 		return g;
 	}
-	private:
+	protected:
 	/**
 	 * Private constructor.  This class is immutable, and so only the `get()`
 	 * method should be used to return the singleton instance.
@@ -171,23 +173,72 @@ struct CalculatorGrammar
 /**
  * CalculatorParser, constructs an AST from an input string.
  */
-class CalculatorParser : public ASTParserDelegate
+template<class T>
+struct CalculatorParser : public ASTParserDelegate
 {
-public:
 	const CalculatorGrammar &g = CalculatorGrammar::get();
 
-	BindAST<AST::Number> num = g.num;
-	BindAST<AST::BinaryExpression<plus<double>,'+'>> add = g.add_op;
-	BindAST<AST::BinaryExpression<minus<double>,'-'>> sub = g.sub_op;
-	BindAST<AST::BinaryExpression<multiplies<double>,'*'>> mul = g.mul_op;
-	BindAST<AST::BinaryExpression<divides<double>,'/'>> div = g.div_op;
+	BindAST<AST::Number<T>> num = g.num;
+	BindAST<AST::BinaryExpression<T,plus<T>,'+'>> add = g.add_op;
+	BindAST<AST::BinaryExpression<T,minus<T>,'-'>> sub = g.sub_op;
+	BindAST<AST::BinaryExpression<T,multiplies<T>,'*'>> mul = g.mul_op;
+	BindAST<AST::BinaryExpression<T,divides<T>,'/'>> div = g.div_op;
+};
+
+
+/**
+ * Extend the calculator grammar to provide operations that are only applicable
+ * to integers.
+ */
+struct IntCalculatorGrammar : public CalculatorGrammar
+{
+	/**
+	 * A new rule that parses 
+	 */
+	Rule mod_op = mul >> '%' >> mul;
+	/**
+	 * Return the singleton instance of this grammar.
+	 */
+	static const IntCalculatorGrammar& get()
+	{
+		static IntCalculatorGrammar g;
+		return g;
+	}
+	private:
+	/**
+	 * Replace rules in the CalculatorGrammar that we need.
+	 */
+	IntCalculatorGrammar() : CalculatorGrammar()
+	{
+		// The `mul` rule should now use the mod operation.
+		mul    = mul_op | div_op | mod_op | val;
+		// In the integer version, we don't support 
+		num    = digits >> -("eE"_S >> -("+-"_S) >> digits);
+	}
+};
+
+/**
+ * Parser for the integer version.
+ */
+struct IntCalculatorParser : public ASTParserDelegate
+{
+	typedef long long T;
+	const IntCalculatorGrammar &g = IntCalculatorGrammar::get();
+
+	BindAST<AST::Number<T>> num = g.num;
+	BindAST<AST::BinaryExpression<T,plus<T>,'+'>> add = g.add_op;
+	BindAST<AST::BinaryExpression<T,minus<T>,'-'>> sub = g.sub_op;
+	BindAST<AST::BinaryExpression<T,multiplies<T>,'*'>> mul = g.mul_op;
+	BindAST<AST::BinaryExpression<T,divides<T>,'/'>> div = g.div_op;
+	BindAST<AST::BinaryExpression<T,modulus<T>,'%'>> mod = g.mod_op;
 };
 
 }
 
-int main()
+template<class Parser, class Value>
+void runCalculator(const char *ops)
 {
-	Parser::CalculatorParser p;
+	Parser p;
 	string s;
 	// Report errors.
 	ErrorReporter er = [](const InputRange &ir, const string &str)
@@ -198,20 +249,18 @@ int main()
 	for (;;)
 	{
 		// Read a line from the user.
-		cout << "Enter an expression (+ - * /, floats, parentheses) or enter to exit:\n";
+		cout << "Enter an expression " << ops << " or enter to exit:\n";
 		getline(cin, s);
 		if (s.empty()) break;
 
-		//convert the string to input
+		// Create an input that wraps the string.
 		StringInput i(move(s));
 
 		// Parse the input
-		unique_ptr<AST::Expression> root = 0;
-		p.parse(i, p.g.expr, p.g.ws, er, root);
-
-		// If we got an AST, print the result and the AST
-		if (root)
+		unique_ptr<AST::Expression<Value>> root = 0;
+		if (p.parse(i, p.g.expr, p.g.ws, er, root))
 		{
+			// If we got an AST, print the result and the AST
 			double v = root->eval();
 			cout << "success\n";
 			cout << "result = " << v << endl;
@@ -219,7 +268,23 @@ int main()
 			root->print();
 			cout << endl;
 		}
+	}
+}
 
+int main()
+{
+	cout << "Use floating point version?" << endl;
+	string l;
+	getline(cin, l);
+	// If the user answers y/Y, use the floating point version, otherwise use
+	// the integer version.
+	if (l.size() < 1 || (l[0] != 'y' && l[0] != 'Y'))
+	{
+		runCalculator<Parser::IntCalculatorParser, long long>("(+ - * / %, integers, parentheses)");
+	}
+	else
+	{
+		runCalculator<Parser::CalculatorParser<double>, double>("(+ - * /, floats, parentheses)");
 	}
 	return 0;
 }
