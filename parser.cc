@@ -1350,14 +1350,14 @@ static ParserPosition _next_pos(const ParserPosition &p)
 
 
 //get syntax error
-static void _syntax_Error(ErrorReporter err, Context &con)
+static void _syntax_Error(ErrorReporter &err, Context &con)
 {
 	err(InputRange(con.error_pos, _next_pos(con.error_pos)), "syntax error");
 }
 
 
 //get eof error
-static void _eof_Error(ErrorReporter err, Context &con)
+static void _eof_Error(ErrorReporter &err, Context &con)
 {
 	err(InputRange(con.error_pos, con.error_pos), "EOF");
 }
@@ -1757,7 +1757,7 @@ ExprPtr trace_debug(const char *msg, const ExprPtr e)
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, const Rule &g, const Rule &ws, ErrorReporter err,
+bool parse(Input &i, const Rule &g, const Rule &ws, ErrorReporter &err,
            const ParserDelegate &delegate, void *d)
 {
 	//prepare context

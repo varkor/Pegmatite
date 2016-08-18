@@ -812,7 +812,7 @@ struct ParserDelegate
 	@param d user data, passed to the parse procedures.
 	@return true on parsing success, false on failure.
  */
-bool parse(Input &i, const Rule &g, const Rule &ws, ErrorReporter err,
+bool parse(Input &i, const Rule &g, const Rule &ws, ErrorReporter &err,
            const ParserDelegate &delegate, void *d);
 
 

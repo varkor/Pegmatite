@@ -492,7 +492,7 @@ private:
 		The return object must be deleted by the caller.
  */
 std::unique_ptr<ASTNode> parse(Input &i, const Rule &g, const Rule &ws,
-                               ErrorReporter err, const ParserDelegate &d);
+                               ErrorReporter &err, const ParserDelegate &d);
 
 /**
  * A parser delegate that is responsible for creating AST nodes from the input.
@@ -545,7 +545,7 @@ class ASTParserDelegate : ParserDelegate
 	 * This function returns true on a successful parse, or false otherwise.
 	 */
 	template <class T> bool parse(Input &i, const Rule &g, const Rule &ws,
-	                              ErrorReporter &err,
+	                              ErrorReporter err,
 	                              std::unique_ptr<T> &ast) const
 	{
 		std::unique_ptr<ASTNode> node = pegmatite::parse(i, g, ws, err, *this);
