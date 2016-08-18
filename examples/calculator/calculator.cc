@@ -48,9 +48,7 @@ public:
 	 */
 	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
 	{
-		stringstream stream;
-		for_each(r.begin(), r.end(), [&](char c) {stream << c;});
-		stream >> value;
+		pegmatite::constructValue(r, value);
 	}
 
 	T eval() const override

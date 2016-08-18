@@ -32,6 +32,7 @@
 #include <cassert>
 #include <list>
 #include <unordered_map>
+#include <sstream>
 #include <memory>
 #include <cxxabi.h>
 #include "parser.hh"
@@ -272,6 +273,19 @@ protected:
 	ASTContainer *container_node;
 };
 
+/**
+ * Convenience function that takes an input range and produces a value.  This
+ * supports all value types that `std::stringstream`'s `operator::>>` can
+ * construct.
+ */
+template<typename T>
+T& constructValue(const pegmatite::InputRange &r, T& value)
+{
+	std::stringstream stream;
+	for_each(r.begin(), r.end(), [&](char c) {stream << c;});
+	stream >> value;
+	return value;
+}
 
 /**
  * An `ASTPtr` is a wrapper around a pointer to an AST object.  It is intended
