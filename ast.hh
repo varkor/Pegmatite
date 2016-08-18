@@ -601,6 +601,31 @@ public:
 	}
 };
 
+/**
+ * Helper class for adopting strings as children of AST nodes.
+ */
+struct ASTString : public ASTMember, std::string
+{
+	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	{
+		std::stringstream stream;
+		for_each(r.begin(), r.end(), [&](char c) {stream << c;});
+		this->std::string::operator=(stream.str());
+	}
+};
+
+/**
+ * Helper class for adopting values as children of AST nodes.
+ */
+template<typename T>
+struct ASTValue : ASTMember
+{
+	T value;
+	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
+	{
+		constructValue(r, value);
+	}
+};
 
 } //namespace pegmatite
 

@@ -41,24 +41,16 @@ class Number : public Expression<T>
 	/**
 	 * The parsed value for this number.
 	 */
-	T value;
+	ASTValue<T> n;
 public:
-	/**
-	 * Construct the numerical value from the text in the input range.
-	 */
-	void construct(const pegmatite::InputRange &r, pegmatite::ASTStack &) override
-	{
-		pegmatite::constructValue(r, value);
-	}
-
 	T eval() const override
 	{
-		return value;
+		return n.value;
 	}
 
 	void print(size_t depth) const override
 	{
-		cout << string(depth, '\t') << value << endl;
+		cout << string(depth, '\t') << n.value << endl;
 	}
 };
 
