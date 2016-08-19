@@ -200,7 +200,7 @@ class ASTMember;
  * The base class for non-leaf AST nodes.  Subclasses can have instances of
  * `ASTMember` subclasses as fields and will automatically construct them.
  */
-class ASTContainer : public ASTNode
+class ASTContainer : public virtual ASTNode
 {
 public:
 	/**
