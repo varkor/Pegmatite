@@ -101,27 +101,14 @@ class ASTNode
 {
 public:
 	/**
-	 * Constructs the AST node, with a null parent.
+	 * Default constructor.
 	 */
-	ASTNode() : parent_node(0) {}
+	ASTNode() {}
+
 	/**
 	 * Copying AST nodes is not supported.
 	 */
 	ASTNode(const ASTNode&) = delete;
-
-	/**
-	 * Destructor does nothing, virtual for subclasses to use.
-	 * Defined out-of-line to avoid emitting vtables in every translation
-	 * unit that includes this header.
-	 */
-	virtual ~ASTNode();
-
-	/**
-	 * Returns the parent of this AST node, or `nullptr` if there isn't one
-	 * (either if this is the root, or if it is still in the stack waiting to
-	 * be added to the tree).
-	 */
-	ASTNode *parent() const { return parent_node; }
 
 	/**
 	 * Interface for constructing the AST node.  The input range `r` is the
@@ -130,11 +117,14 @@ public:
 	virtual bool construct(const InputRange &r, ASTStack &st,
 	                       const ErrorReporter&) = 0;
 
-private:
 	/**
-	 * The parent AST node.
+	 * Destructor does nothing, virtual for subclasses to use.
+	 * Defined out-of-line to avoid emitting vtables in every translation
+	 * unit that includes this header.
 	 */
-	ASTNode *parent_node;
+	virtual ~ASTNode();
+
+private:
 
 	template <class T, bool Optional> friend class ASTPtr;
 	template <class T> friend class ASTList;
@@ -260,11 +250,6 @@ public:
 	ASTMember();
 
 	/**
-	 * Returns the container of which this object is a field.
-	 */
-	ASTContainer *container() const { return container_node; }
-
-	/**
 	 * Interface for constructing references to AST objects from the stack.
 	 */
 	virtual bool construct(const InputRange &r, ASTStack &st,
@@ -380,7 +365,6 @@ public:
 		//pop the node from the stack
 		st.back().second.release();
 		st.pop_back();
-		ptr->parent_node = container_node;
 
 		return true;
 	}
@@ -488,8 +472,6 @@ public:
 			//insert the object in the list, in reverse order
 			child_objects.push_front(std::unique_ptr<T>(obj));
 
-			//set the object's parent
-			obj->parent_node = ASTMember::container();
 		}
 
 		return true;
@@ -507,7 +489,6 @@ private:
 		{
 			T *obj = new T(child.get());
 			child_objects.push_back(obj);
-			obj->parent_node = ASTMember::container();
 		}
 	}
 };
