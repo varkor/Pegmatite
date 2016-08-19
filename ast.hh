@@ -217,8 +217,8 @@ public:
 	 * The input range (`r`) is unused, because the leaf nodes have already
 	 * constructed themselves at this point.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st,
-	                       const ErrorReporter&) override;
+	bool construct(const InputRange &r, ASTStack &st,
+	               const ErrorReporter&) override;
 
 private:
 	/**
