@@ -333,7 +333,8 @@ public:
 		if ((childRange.begin() < r.begin()) ||
 			(childRange.end() > r.end()))
 		{
-			assert(Optional && "Required object not found");
+			err(childRange,
+				"Non-optional " + demangle(typeid(T).name()) + " expected.");
 			return false;
 		}
 		//get the node
