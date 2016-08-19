@@ -100,7 +100,7 @@ bool ASTContainer::construct(const InputRange &r, ASTStack &st,
 	}
 	// We don't need the members vector anymore, so clean up the storage it
 	// uses.
-	ASTMember_vector().swap(members);
+	members.clear();
 	return success;
 }
 
