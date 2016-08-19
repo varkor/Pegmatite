@@ -230,11 +230,6 @@ void runCalculator(const char *ops)
 {
 	Parser p;
 	string s;
-	// Report errors.
-	ErrorReporter er = [](const InputRange &ir, const string &str)
-	{
-		cout << "line " << ir.start.line << ", col " << ir.finish.col << ": " << str << endl;
-	};
 	// Loop until the user gives us an empty line.
 	for (;;)
 	{
@@ -248,7 +243,10 @@ void runCalculator(const char *ops)
 
 		// Parse the input
 		unique_ptr<AST::Expression<Value>> root = 0;
-		if (p.parse(i, p.g.expr, p.g.ws, er, root))
+		p.parse(i, p.g.expr, p.g.ws, defaultErrorReporter, root);
+
+		//on success
+		if (root)
 		{
 			// If we got an AST, print the result and the AST
 			double v = root->eval();

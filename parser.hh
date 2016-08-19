@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2012, Achilleas Margaritis
+ * Copyright (c) 2016, Jonathan Anderson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -508,6 +509,7 @@ typedef std::function<bool(const InputRange&, void*)> parse_proc;
 
 /// A function type for reporting parser errors.
 typedef std::function<void (const InputRange&, const std::string&)> ErrorReporter;
+void defaultErrorReporter(const InputRange& ir, const std::string& message);
 
 /**
  * CharacterExpr is a concrete subclass of Expr, which is exposed to allow it to be 
