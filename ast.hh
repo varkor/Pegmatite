@@ -50,7 +50,7 @@ std::string demangle(std::string);
 template <class T> void debug_log(const char *msg, size_t depth, T *obj)
 {
 	std::string demangled = demangle(typeid(*obj).name());
-	fprintf(stderr, "[%ld] %s %s (%p) off the AST stack\n",
+	fprintf(stderr, "[%zd] %s %s (%p) off the AST stack\n",
 			depth, msg, demangled.c_str(), static_cast<const void*>(obj));
 }
 #else
