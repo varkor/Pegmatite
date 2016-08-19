@@ -239,8 +239,9 @@ private:
 /**
  * Base class for children of `ASTContainer`.
  */
-class ASTMember
+class ASTMember : public virtual ASTNode
 {
+	PEGMATITE_RTTI(ASTMember, ASTNode)
 public:
 	/**
 	 * On construction, `ASTMember` sets its `container_node` field to the
@@ -248,12 +249,6 @@ public:
 	 * the container, to be notified during the construction phase.
 	 */
 	ASTMember();
-
-	/**
-	 * Interface for constructing references to AST objects from the stack.
-	 */
-	virtual bool construct(const InputRange &r, ASTStack &st,
-	                       const ErrorReporter&) = 0;
 	virtual ~ASTMember();
 protected:
 	/**
