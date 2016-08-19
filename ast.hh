@@ -276,43 +276,13 @@ T& constructValue(const pegmatite::InputRange &r, T& value)
  * to be a member of an `ASTContainer` and will automatically pop the top item
  * from the stack and claim it when building the AST..
  */
-template <class T, bool Optional = false> class ASTPtr : public ASTMember
+template <class T, bool Optional = false> class ASTPtr : public ASTMember, public std::unique_ptr<T>
 {
 public:
 	/**
 	 * Constructs the object in the
 	 */
-	ASTPtr() : ptr(nullptr) {}
-
-	/** gets the underlying ptr value.
-		@return the underlying ptr value.
-	 */
-	T *get() const
-	{
-		return ptr.get();
-	}
-
-	/** auto conversion to the underlying object ptr.
-		@return the underlying ptr value.
-	 */
-	const std::unique_ptr<T> &operator *() const
-	{
-		return ptr;
-	}
-
-	/** member access.
-		@return the underlying ptr value.
-	 */
-	const std::unique_ptr<T> &operator ->() const
-	{
-		assert(ptr);
-		return ptr;
-	}
-
-	explicit operator bool() const noexcept
-	{
-		return static_cast<bool>(ptr);
-	}
+	ASTPtr() : std::unique_ptr<T>(nullptr) {}
 
 	/**
 	 * Pops the next matching object from the AST stack `st` and claims it.
@@ -357,20 +327,55 @@ public:
 		}
 		debug_log("Popped", st.size()-1, obj);
 		//set the new object
-		ptr.reset(obj);
+		this->reset(obj);
 		//pop the node from the stack
 		st.back().second.release();
 		st.pop_back();
 
 		return true;
 	}
-
-private:
-	/**
-	 * The node that we are pointing to.
-	 */
-	std::unique_ptr<T> ptr;
 };
+
+template <class T> class ASTChild : public ASTMember, public T
+{
+public:
+	/**
+	 * Constructs the object in the
+	 */
+	ASTChild() : T() {}
+
+	/**
+	 * Pops the next matching object from the AST stack `st` and claims it.
+	 */
+	bool construct(const InputRange &r, ASTStack &st,
+	               const ErrorReporter&) override
+	{
+		assert(!st.empty() && "Stack must not be empty");
+		ASTStackEntry &e = st.back();
+		const InputRange &childRange = e.first;
+		// If the entry isn't within the range of this, then it's just
+		// something of the same type that happens to be adjacent to this
+		// entry.
+		if ((childRange.begin() < r.begin()) ||
+			(childRange.end() > r.end()))
+		{
+			return false;
+		}
+		//get the node
+		T *obj = e.second.get()->get_as<T>();
+		if (!obj)
+		{
+			return false;
+		}
+		debug_log("Popped", st.size()-1, obj);
+		//set the new object
+		this->T::operator=(std::move(*obj));
+		//pop the node from the stack
+		st.pop_back();
+		return true;
+	}
+};
+
 
 
 /** A list of objects.
@@ -378,11 +383,9 @@ private:
 	It assumes ownership of objects.
 	@tparam T type of object to control.
  */
-template <class T> class ASTList : public ASTMember
+template <class T> class ASTList : public ASTMember, public std::list<std::unique_ptr<T>>
 {
 public:
-	///list type.
-	typedef std::list<std::unique_ptr<T>> container;
 
 	///the default constructor.
 	ASTList() {}
@@ -390,49 +393,16 @@ public:
 	/** duplicates the objects of the given list.
 		@param src source object.
 	 */
-	ASTList(const ASTList<T> &src)
+	ASTList(const ASTList<T> &src) : std::list<std::unique_ptr<T>>(src)
 	{
-		_dup(src);
-	}
-
-	/** returns the container of objects.
-		@return the container of objects.
-	 */
-	const container &objects() const
-	{
-		return child_objects;
-	}
-
-	size_t size() { return child_objects.size(); }
-	bool empty() const { return child_objects.size() == 0; }
-	typename container::iterator begin() { return child_objects.begin(); }
-	typename container::iterator end() { return child_objects.end(); }
-	typename container::reverse_iterator rbegin() { return child_objects.rbegin(); }
-	typename container::reverse_iterator rend() { return child_objects.rend(); }
-
-	typename container::const_iterator begin() const
-	{
-		return child_objects.begin();
-	}
-	typename container::const_iterator end() const
-	{
-		return child_objects.end();
-	}
-	typename container::const_reverse_iterator rbegin() const
-	{
-		return child_objects.rbegin();
-	}
-	typename container::const_reverse_iterator rend() const
-	{
-		return child_objects.rend();
 	}
 
 	/**
 	 * Pops objects of type T from the stack (`st`) until no more objects can
 	 * be popped.
 	 */
-	virtual bool construct(const InputRange &r, ASTStack &st,
-	                       const ErrorReporter&) override
+	bool construct(const InputRange &r, ASTStack &st,
+	               const ErrorReporter&) override
 	{
 		for(;;)
 		{
@@ -466,27 +436,13 @@ public:
 			st.pop_back();
 
 			//insert the object in the list, in reverse order
-			child_objects.push_front(std::unique_ptr<T>(obj));
-
+			this->push_front(std::unique_ptr<T>(obj));
 		}
 
 		return true;
 	}
 	virtual ~ASTList() {}
 
-private:
-	//objects
-	container child_objects;
-
-	//duplicate the given list.
-	void _dup(const ASTList<T> &src)
-	{
-		for (auto child : src.child_objects)
-		{
-			T *obj = new T(child.get());
-			child_objects.push_back(obj);
-		}
-	}
 };
 
 /** parses the given input.
