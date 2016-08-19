@@ -558,7 +558,7 @@ public:
 /**
  * Helper class for adopting strings as children of AST nodes.
  */
-struct ASTString : public ASTMember, std::string
+struct ASTString : public virtual ASTNode, std::string
 {
 	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &,
 	               const ErrorReporter &) override
