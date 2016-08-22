@@ -278,6 +278,58 @@ T& constructValue(const pegmatite::InputRange &r, T& value)
 	return value;
 }
 
+template<class T, bool Optional>
+std::pair<bool, std::unique_ptr<T>> popFromASTStack(const InputRange &r,
+                                                    ASTStack &st,
+                                                    const ErrorReporter &err)
+{
+	if (st.empty() && Optional)
+	{
+		return {false, nullptr};
+	}
+	assert(!st.empty() && "Stack must not be empty");
+	ASTStackEntry &e = st.back();
+	const InputRange &childRange = e.first;
+	// If the entry isn't within the range of this, then it's just
+	// something of the same type that happens to be adjacent to this
+	// entry.
+	if ((childRange.begin() < r.begin()) ||
+		(childRange.end() > r.end()))
+	{
+		// If this child is optional, then we succeed in parsing nothing.
+		if (Optional)
+		{
+			return {true, nullptr};
+		}
+		err(childRange,
+			"Non-optional " + demangle(typeid(T).name()) + " expected.");
+		return {false, nullptr};
+	}
+	//get the node
+	ASTNode *node = e.second.get();
+
+	//get the object
+	T *obj = node->get_as<T>();
+	if (obj == nullptr and not Optional)
+	{
+		err(childRange,
+			"Expected " + demangle(typeid(T).name())
+			+ ", found " + demangle(typeid(*node).name()));
+		return {false, nullptr};
+	}
+
+	//if the object is optional, simply return
+	if (Optional && !obj)
+	{
+		return {false, nullptr};
+	}
+	debug_log("Popped", st.size()-1, obj);
+	//pop the node from the stack
+	st.back().second.release();
+	st.pop_back();
+	return {true, std::unique_ptr<T>(obj)};
+}
+
 /**
  * An `ASTPtr` is a wrapper around a pointer to an AST object.  It is intended
  * to be a member of an `ASTContainer` and will automatically pop the top item
@@ -298,54 +350,12 @@ public:
 	virtual bool construct(const InputRange &r, ASTStack &st,
 	                       const ErrorReporter &err)
 	{
-		if (st.empty() && Optional)
+		auto popped = popFromASTStack<T,Optional>(r, st, err);
+		if (popped.first)
 		{
-			return false;
+			this->swap(popped.second);
 		}
-		assert(!st.empty() && "Stack must not be empty");
-		ASTStackEntry &e = st.back();
-		const InputRange &childRange = e.first;
-		// If the entry isn't within the range of this, then it's just
-		// something of the same type that happens to be adjacent to this
-		// entry.
-		if ((childRange.begin() < r.begin()) ||
-			(childRange.end() > r.end()))
-		{
-			// If this child is optional, then we succeed in parsing nothing.
-			if (Optional)
-			{
-				return true;
-			}
-			err(childRange,
-				"Non-optional " + demangle(typeid(T).name()) + " expected.");
-			return false;
-		}
-		//get the node
-		ASTNode *node = e.second.get();
-
-		//get the object
-		T *obj = node->get_as<T>();
-		if (obj == nullptr and not Optional)
-		{
-			err(childRange,
-				"Expected " + demangle(typeid(T).name())
-				+ ", found " + demangle(typeid(*node).name()));
-			return false;
-		}
-
-		//if the object is optional, simply return
-		if (Optional && !obj)
-		{
-			return false;
-		}
-		debug_log("Popped", st.size()-1, obj);
-		//set the new object
-		this->reset(obj);
-		//pop the node from the stack
-		st.back().second.release();
-		st.pop_back();
-
-		return true;
+		return popped.first;
 	}
 };
 
@@ -366,31 +376,14 @@ public:
 	 * Pops the next matching object from the AST stack `st` and claims it.
 	 */
 	bool construct(const InputRange &r, ASTStack &st,
-	               const ErrorReporter&) override
+	               const ErrorReporter &err) override
 	{
-		assert(!st.empty() && "Stack must not be empty");
-		ASTStackEntry &e = st.back();
-		const InputRange &childRange = e.first;
-		// If the entry isn't within the range of this, then it's just
-		// something of the same type that happens to be adjacent to this
-		// entry.
-		if ((childRange.begin() < r.begin()) ||
-			(childRange.end() > r.end()))
+		auto popped = popFromASTStack<T,false>(r, st, err);
+		if (popped.first)
 		{
-			return false;
+			this->T::operator=(std::move(*popped.second.get()));
 		}
-		//get the node
-		T *obj = e.second.get()->get_as<T>();
-		if (!obj)
-		{
-			return false;
-		}
-		debug_log("Popped", st.size()-1, obj);
-		//set the new object
-		this->T::operator=(std::move(*obj));
-		//pop the node from the stack
-		st.pop_back();
-		return true;
+		return popped.first;
 	}
 };
 
