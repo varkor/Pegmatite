@@ -124,6 +124,13 @@ public:
 	 */
 	virtual ~ASTNode();
 
+	/**
+	 * Explicitly default the copy-assignment operator.  This is required
+	 * by subclasses as C++11 deprecates implicitly defaulted copy-assignment
+	 * operators in classes that have user-defined destructors.
+	 */
+	ASTNode& operator=(const ASTNode&) = default;
+
 private:
 
 	template <class T, bool Optional> friend class ASTPtr;
@@ -561,14 +568,7 @@ public:
 struct ASTString : public virtual ASTNode, std::string
 {
 	bool construct(const pegmatite::InputRange &r, pegmatite::ASTStack &,
-	               const ErrorReporter &) override
-	{
-		std::stringstream stream;
-		for_each(r.begin(), r.end(), [&](char c) {stream << c;});
-		this->std::string::operator=(stream.str());
-
-		return true;
-	}
+	               const ErrorReporter &) override;
 };
 
 /**

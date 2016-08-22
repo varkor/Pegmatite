@@ -298,6 +298,7 @@ public:
 		for(const auto &m : matches)
 		{
 			parse_proc p = get_parse_proc(*(m.matched_rule));
+			assert(p);
 			if (not p(m.source, d))
 				return false;
 		}

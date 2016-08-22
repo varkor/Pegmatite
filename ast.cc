@@ -157,5 +157,14 @@ std::unique_ptr<ASTNode> parse(Input &input, const Rule &g, const Rule &ws,
 	assert(st.size() == 1);
 	return std::move(st[0].second);
 }
+bool ASTString::construct(const pegmatite::InputRange &r, pegmatite::ASTStack &,
+                          const ErrorReporter &)
+{
+	std::stringstream stream;
+	for_each(r.begin(), r.end(), [&](char c) {stream << c;});
+	this->std::string::operator=(stream.str());
+
+	return true;
+}
 
 } //namespace pegmatite
