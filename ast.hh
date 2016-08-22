@@ -287,7 +287,8 @@ template <class T, bool Optional = false> class ASTPtr : public ASTMember, publi
 {
 public:
 	/**
-	 * Constructs the object in the
+	 * Constructs an uninitialised instance of this object, with the pointer
+	 * set to null.
 	 */
 	ASTPtr() : std::unique_ptr<T>(nullptr) {}
 
@@ -348,11 +349,16 @@ public:
 	}
 };
 
+/**
+ * ASTChild adopts a child AST node into the class that uses it as a member.
+ * This is intended for simple children such as string identifiers or numbers,
+ * for which move construction is cheap.
+ */
 template <class T> class ASTChild : public ASTMember, public T
 {
 public:
 	/**
-	 * Constructs the object in the
+	 * Constructs the object.
 	 */
 	ASTChild() : T() {}
 
