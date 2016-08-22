@@ -310,6 +310,11 @@ public:
 		if ((childRange.begin() < r.begin()) ||
 			(childRange.end() > r.end()))
 		{
+			// If this child is optional, then we succeed in parsing nothing.
+			if (Optional)
+			{
+				return true;
+			}
 			err(childRange,
 				"Non-optional " + demangle(typeid(T).name()) + " expected.");
 			return false;
