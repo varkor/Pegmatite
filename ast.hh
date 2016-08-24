@@ -30,6 +30,7 @@
 #define PEGMATITE_AST_HPP
 
 
+#include <algorithm>
 #include <cassert>
 #include <list>
 #include <unordered_map>
