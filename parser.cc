@@ -1439,9 +1439,10 @@ bool  StringInput::fillBuffer(Index start, Index &length, char32_t *&b)
 		return false;
 	}
 	length = std::min(length, str.size() - start);
-	for (Index i=start ; i<length ; i++)
+	std::size_t j = 0;
+	for (Index i = start; i < start + length; ++i, ++j)
 	{
-		b[i] = static_cast<char32_t>(str[i]);
+		b[j] = static_cast<char32_t>(str[i]);
 	}
 	return true;
 }
