@@ -579,7 +579,6 @@ public:
 	 * subclass.
 	 */
 	Rule& operator=(Rule &&);
-private:
 	/**
 	 * The expression that this rule invokes.
 	 */
